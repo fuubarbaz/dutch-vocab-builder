@@ -21,6 +21,7 @@ const iconMap: Record<string, LucideIcon> = {
   'Languages': Languages,
   'MessageCircle': MessageCircle,
   'Smile': Smile,
+  'Upload': Upload,
 };
 
 export default function CategoriesScreen() {
@@ -29,13 +30,29 @@ export default function CategoriesScreen() {
   const router = useRouter();
   const { customWords, learnedIds } = useFavorites();
 
-  const mergedData = VOCABULARY_DATA.map(category => {
-    const categoryCustomWords = customWords.filter(cw => cw.categoryId === category.id);
-    return {
-      ...category,
-      words: [...category.words, ...categoryCustomWords]
-    };
-  });
+  const mergedData = React.useMemo(() => {
+    const data = VOCABULARY_DATA.map(category => {
+      const categoryCustomWords = customWords.filter(cw => cw.categoryId === category.id);
+      return {
+        ...category,
+        words: [...category.words, ...categoryCustomWords]
+      };
+    });
+
+    const importedWords = customWords.filter(cw => cw.categoryId === 'imported');
+    if (importedWords.length > 0) {
+      data.push({
+        id: 'imported',
+        title: 'Imported Words',
+        titleDutch: 'Geïmporteerde Woorden',
+        description: 'Words added from CSV',
+        iconName: 'Upload',
+        words: importedWords
+      });
+    }
+
+    return data;
+  }, [customWords]);
 
   const renderItem = ({ item }: { item: typeof VOCABULARY_DATA[0] }) => {
     const Icon = iconMap[item.iconName] || Book;
@@ -58,13 +75,24 @@ export default function CategoriesScreen() {
           <Text style={[styles.description, { color: theme.text + '99' }]}>{item.description}</Text>
         </View>
         <View style={styles.countContainer}>
-          <Text style={[styles.count, { color: theme.text + '60' }]}>{item.words.length} words</Text>
           {(() => {
             const learnedCount = item.words.filter(word => learnedIds.includes(word.id)).length;
-            if (learnedCount > 0) {
-              return <Text style={[styles.learnedCount, { color: theme.primary }]}>• {learnedCount} learned</Text>
-            }
-            return null;
+            const totalCount = item.words.length;
+            const remainingCount = totalCount - learnedCount;
+            const percentage = Math.round((learnedCount / totalCount) * 100);
+
+            return (
+              <>
+                <Text style={[styles.count, { color: theme.text + '60' }]}>
+                  {remainingCount} {remainingCount === 1 ? 'flash card' : 'flash cards'}
+                </Text>
+                {learnedCount > 0 && (
+                  <Text style={[styles.learnedCount, { color: theme.primary }]}>
+                    {percentage}% complete
+                  </Text>
+                )}
+              </>
+            );
           })()}
         </View>
       </TouchableOpacity>

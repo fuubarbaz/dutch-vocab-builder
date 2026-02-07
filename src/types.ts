@@ -4,6 +4,7 @@ export interface Word {
   english: string;
   exampleDutch: string;
   exampleEnglish: string;
+  isCustom?: boolean;
 }
 
 export interface CustomWord extends Word {

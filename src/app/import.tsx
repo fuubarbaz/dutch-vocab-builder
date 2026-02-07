@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+
 import Papa from 'papaparse';
 import { useFavorites } from '@/context/FavoritesContext';
-import { Upload, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { Upload, CheckCircle, AlertCircle, Trash2 } from 'lucide-react-native';
 import { CustomWord } from '@/types';
 
 export default function ImportScreen() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
-    const { importWords } = useFavorites();
+    const { importWords, clearImportedWords, customWords } = useFavorites();
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
@@ -34,7 +34,10 @@ export default function ImportScreen() {
 
             setLoading(true);
             const fileUri = result.assets[0].uri;
-            const fileContent = await FileSystem.readAsStringAsync(fileUri);
+
+            // Use fetch instead of FileSystem.readAsStringAsync to avoid deprecation warning
+            const response = await fetch(fileUri);
+            const fileContent = await response.text();
 
             Papa.parse(fileContent, {
                 header: true,
@@ -148,6 +151,25 @@ export default function ImportScreen() {
                     )}
                 </TouchableOpacity>
 
+                {customWords.some(w => w.categoryId === 'imported') && (
+                    <TouchableOpacity
+                        style={[styles.button, styles.clearButton]}
+                        onPress={() => {
+                            Alert.alert(
+                                "Clear All Imported Words",
+                                "Are you sure? This cannot be undone.",
+                                [
+                                    { text: "Cancel", style: "cancel" },
+                                    { text: "Clear All", style: "destructive", onPress: clearImportedWords }
+                                ]
+                            );
+                        }}
+                    >
+                        <Trash2 size={20} color="#ef4444" />
+                        <Text style={[styles.buttonText, { color: '#ef4444' }]}>Clear All Imported</Text>
+                    </TouchableOpacity>
+                )}
+
             </ScrollView>
         </View>
     );
@@ -227,4 +249,11 @@ const styles = StyleSheet.create({
         flex: 1,
         fontWeight: '500',
     },
+    clearButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#ef4444',
+        shadowOpacity: 0,
+        elevation: 0,
+    }
 });

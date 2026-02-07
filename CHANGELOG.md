@@ -2,13 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.0] - 2026-02-07
+## [1.2.0] - 2024-05-22
 
 ### Added
-- **Audio Pronunciation**: Tap the speaker icon on flashcards to hear Dutch pronunciation using text-to-speech.
-- **CSV Import**: Users can now import their own words via CSV files.
-- **Learned Count**: Dashboard now shows how many words you've learned in each category.
+- **CSV Import**: Users can now import custom vocabulary from CSV files.
+- **Audio Pronunciation**: Text-to-speech support for Dutch words using `expo-speech`.
+- **Imported Words Category**: A dynamic category on the home screen for imported words.
+- **Delete Functionality**:
+    - Individual delete button (trash icon) for imported/custom words.
+    - "Clear All Imported Words" button in the Import screen.
+- **Manual Add Improvements**:
+    - Option to add words directly to the "Imported Words" category.
+    - Manually added words are now marked as custom and can be deleted.
 
 ### Fixed
-- **Category Counts**: Fixed a bug where the category word count on the dashboard didn't reflect learned words status.
-- **Layout**: Fixed an issue where long words would overlap with UI elements on flashcards.
+- **Card Skipping**: Fixed a bug where learning a word would skip the subsequent card in the deck.
+- **Infinite Loop**: Fixed a crash related to `useMemo` in category views.
+- **Dashboard Counts**: Fixed stats to correctly include imported and custom words in total counts.
+- **Navigation**: resolved navigation issues with dynamic categories.
+
+## [1.1.0] - Previous Release
+- Initial release handling.

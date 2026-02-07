@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS, interpolate, Extrapolate, withTiming } from 'react-native-reanimated';
 import { Word } from '@/types';
@@ -7,7 +7,7 @@ import FlashCard from './FlashCard';
 import { useFavorites } from '@/context/FavoritesContext';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Check, X, Heart } from 'lucide-react-native';
+import { Check, X, Heart, Trash2 } from 'lucide-react-native';
 
 interface SwipeDeckProps {
     words: Word[];
@@ -18,7 +18,7 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 export default function SwipeDeck({ words }: SwipeDeckProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const { toggleFavorite, markAsLearned } = useFavorites();
+    const { toggleFavorite, markAsLearned, deleteCustomWord } = useFavorites();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -153,6 +153,19 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
                             <Text style={styles.overlayText}>NEXT</Text>
                         </Animated.View>
 
+                        {/* Delete Button for Custom Words */}
+                        {currentWord.isCustom && (
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={() => {
+                                    deleteCustomWord(currentWord.id);
+                                    handleNext('left'); // Skip to next card after deleting
+                                }}
+                            >
+                                <Trash2 size={24} color="#ef4444" />
+                            </TouchableOpacity>
+                        )}
+
                     </Animated.View>
                 </GestureDetector>
             </View>
@@ -218,5 +231,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginTop: 4
+    },
+    deleteButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: '#fee2e2',
+        padding: 12,
+        borderRadius: 30,
+        zIndex: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     }
 });

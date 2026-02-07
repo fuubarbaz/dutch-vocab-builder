@@ -16,7 +16,12 @@ export default function AddWordScreen() {
     const [english, setEnglish] = useState('');
     const [exampleDutch, setExampleDutch] = useState('');
     const [exampleEnglish, setExampleEnglish] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(VOCABULARY_DATA[0].id);
+    const categories = [
+        { id: 'imported', title: 'Imported Words' },
+        ...VOCABULARY_DATA
+    ];
+
+    const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
     const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
 
     const handleSave = async () => {
@@ -29,6 +34,7 @@ export default function AddWordScreen() {
             exampleDutch,
             exampleEnglish,
             categoryId: selectedCategory,
+            isCustom: true,
         };
 
         await addCustomWord(newWord);
@@ -56,7 +62,7 @@ export default function AddWordScreen() {
                             onPress={() => setIsCategoryPickerOpen(!isCategoryPickerOpen)}
                         >
                             <Text style={{ color: theme.text }}>
-                                {VOCABULARY_DATA.find(c => c.id === selectedCategory)?.title || 'Select Category'}
+                                {categories.find(c => c.id === selectedCategory)?.title || 'Select Category'}
                             </Text>
                             <ChevronDown size={20} color={theme.text} />
                         </TouchableOpacity>
@@ -64,7 +70,7 @@ export default function AddWordScreen() {
                         {isCategoryPickerOpen && (
                             <View style={[styles.pickerList, { backgroundColor: theme.cardBackground, borderColor: theme.text + '20' }]}>
                                 <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
-                                    {VOCABULARY_DATA.map((cat) => (
+                                    {categories.map((cat) => (
                                         <TouchableOpacity
                                             key={cat.id}
                                             style={styles.pickerItem}

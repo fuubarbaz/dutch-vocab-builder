@@ -14,6 +14,8 @@ interface FavoritesContextType {
     isLearned: (id: string) => boolean;
     addCustomWord: (word: CustomWord) => Promise<void>;
     importWords: (words: CustomWord[]) => Promise<void>;
+    deleteCustomWord: (id: string) => Promise<void>;
+    clearImportedWords: () => Promise<void>;
     resetProgress: () => Promise<void>;
 }
 
@@ -139,11 +141,31 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
     };
 
+    const deleteCustomWord = async (id: string) => {
+        try {
+            const newWords = customWords.filter(w => w.id !== id);
+            setCustomWords(newWords);
+            await AsyncStorage.setItem('custom_words', JSON.stringify(newWords));
+        } catch (e) {
+            console.error('Failed to delete custom word', e);
+        }
+    };
+
+    const clearImportedWords = async () => {
+        try {
+            const newWords = customWords.filter(w => w.categoryId !== 'imported');
+            setCustomWords(newWords);
+            await AsyncStorage.setItem('custom_words', JSON.stringify(newWords));
+        } catch (e) {
+            console.error('Failed to clear imported words', e);
+        }
+    };
+
     const isFavorite = (id: string) => favorites.includes(id);
     const isLearned = (id: string) => learnedIds.includes(id);
 
     return (
-        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, importWords, resetProgress }}>
+        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, importWords, deleteCustomWord, clearImportedWords, resetProgress }}>
             {children}
         </FavoritesContext.Provider>
     );

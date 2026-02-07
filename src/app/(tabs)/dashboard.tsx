@@ -12,9 +12,9 @@ const screenWidth = Dimensions.get('window').width;
 export default function DashboardScreen() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
-    const { learnedIds, favorites, resetProgress } = useFavorites();
+    const { learnedIds, favorites, customWords, resetProgress } = useFavorites();
 
-    const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + category.words.length, 0);
+    const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + category.words.length, 0) + customWords.length;
     const learnedCount = learnedIds.length;
     // Unique words favorited? Assuming favorite words are separate logic, but let's count them too.
     // Actually, requirement is "swiped left as done and rest as todo".

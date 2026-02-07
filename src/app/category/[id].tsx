@@ -13,7 +13,22 @@ export default function CategoryScreen() {
     const theme = Colors[colorScheme ?? 'light'];
     const { customWords, learnedIds } = useFavorites();
 
-    const staticCategory = VOCABULARY_DATA.find((c) => c.id === id);
+    const staticCategory = React.useMemo(() => {
+        const found = VOCABULARY_DATA.find((c) => c.id === id);
+        if (found) return found;
+
+        if (id === 'imported') {
+            return {
+                id: 'imported',
+                title: 'Imported Words',
+                titleDutch: 'Geïmporteerde Woorden',
+                description: 'Words added from CSV',
+                iconName: 'Upload',
+                words: []
+            };
+        }
+        return undefined;
+    }, [id]);
 
     if (!staticCategory) {
         return (
@@ -23,14 +38,30 @@ export default function CategoryScreen() {
         );
     }
 
-    const categoryCustomWords = customWords.filter(cw => cw.categoryId === id);
-    const allWords = [...staticCategory.words, ...categoryCustomWords];
-    const unlearnedWords = allWords.filter(word => !learnedIds.includes(word.id));
+    const [sessionWords, setSessionWords] = React.useState<typeof VOCABULARY_DATA[0]['words'] | null>(null);
+
+    React.useEffect(() => {
+        if (staticCategory) {
+            const categoryCustomWords = customWords.filter(cw => cw.categoryId === id);
+            const allWords = [...staticCategory.words, ...categoryCustomWords];
+            // Filter unlearned words ONCE when entering the screen
+            const unlearned = allWords.filter(word => !learnedIds.includes(word.id));
+            setSessionWords(unlearned);
+        }
+    }, [id, staticCategory]); // Intentionally omit learnedIds so we don't re-filter on every swipe
+
+    if (!staticCategory || !sessionWords) {
+        return (
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
+                {/* Optional: Add a loading spinner here */}
+            </View>
+        );
+    }
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <Stack.Screen options={{ title: staticCategory.title }} />
-            <SwipeDeck words={unlearnedWords} />
+            <SwipeDeck words={sessionWords} />
         </View>
     );
 }
