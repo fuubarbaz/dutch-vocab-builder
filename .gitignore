@@ -56,3 +56,7 @@ coverage/
 
 # Misc
 .npm-cache
+
+# SSH Keys
+fuubarbaz_github
+fuubarbaz_github.pub
