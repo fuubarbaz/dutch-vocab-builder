@@ -8,6 +8,7 @@ export interface Word {
 
 export interface CustomWord extends Word {
   categoryId: string;
+  isCustom?: boolean;
 }
 
 export interface Category {

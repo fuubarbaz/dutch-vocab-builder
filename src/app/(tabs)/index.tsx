@@ -5,7 +5,7 @@ import { Link, useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload } from 'lucide-react-native';
 
 const iconMap: Record<string, LucideIcon> = {
   'Hand': Hand,
@@ -27,7 +27,7 @@ export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { customWords } = useFavorites();
+  const { customWords, learnedIds } = useFavorites();
 
   const mergedData = VOCABULARY_DATA.map(category => {
     const categoryCustomWords = customWords.filter(cw => cw.categoryId === category.id);
@@ -57,13 +57,28 @@ export default function CategoriesScreen() {
           <Text style={[styles.title, { color: theme.text }]}>{item.title} / {item.titleDutch}</Text>
           <Text style={[styles.description, { color: theme.text + '99' }]}>{item.description}</Text>
         </View>
-        <Text style={[styles.count, { color: theme.text + '60' }]}>{item.words.length} words</Text>
+        <View style={styles.countContainer}>
+          <Text style={[styles.count, { color: theme.text + '60' }]}>{item.words.length} words</Text>
+          {(() => {
+            const learnedCount = item.words.filter(word => learnedIds.includes(word.id)).length;
+            if (learnedCount > 0) {
+              return <Text style={[styles.learnedCount, { color: theme.primary }]}>• {learnedCount} learned</Text>
+            }
+            return null;
+          })()}
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <TouchableOpacity style={[styles.importButton, { backgroundColor: theme.primary }]} onPress={() => router.push('/import')}>
+          <Upload size={16} color="#fff" />
+          <Text style={styles.importButtonText}>Import CSV</Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={mergedData}
         renderItem={renderItem}
@@ -112,9 +127,34 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
   },
+  countContainer: {
+    alignItems: 'flex-end',
+  },
   count: {
     fontSize: 12,
-    alignSelf: 'flex-start',
     marginTop: 4,
   },
+  learnedCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  header: {
+    padding: 16,
+    paddingBottom: 0,
+    alignItems: 'flex-end',
+  },
+  importButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  importButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  }
 });

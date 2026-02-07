@@ -13,6 +13,7 @@ interface FavoritesContextType {
     markAsLearned: (id: string) => Promise<void>;
     isLearned: (id: string) => boolean;
     addCustomWord: (word: CustomWord) => Promise<void>;
+    importWords: (words: CustomWord[]) => Promise<void>;
     resetProgress: () => Promise<void>;
 }
 
@@ -127,11 +128,22 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
     };
 
+    const importWords = async (words: CustomWord[]) => {
+        try {
+            const newWords = [...customWords, ...words];
+            setCustomWords(newWords);
+            await AsyncStorage.setItem('custom_words', JSON.stringify(newWords));
+        } catch (e) {
+            console.error('Failed to import words', e);
+            throw e;
+        }
+    };
+
     const isFavorite = (id: string) => favorites.includes(id);
     const isLearned = (id: string) => learnedIds.includes(id);
 
     return (
-        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, resetProgress }}>
+        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, importWords, resetProgress }}>
             {children}
         </FavoritesContext.Provider>
     );

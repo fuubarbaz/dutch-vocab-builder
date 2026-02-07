@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TouchableOpacity } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Word } from '@/types';
+import * as Speech from 'expo-speech';
+import { Volume2 } from 'lucide-react-native';
 
 interface FlashCardProps {
     word: Word;
@@ -13,8 +15,17 @@ export default function FlashCard({ word }: FlashCardProps) {
     const theme = Colors[colorScheme ?? 'light'];
     const [showAnswer, setShowAnswer] = useState(false);
 
+    const playAudio = (e: any) => {
+        e.stopPropagation(); // Prevent card flip when clicking audio
+        Speech.speak(word.dutch, { language: 'nl' });
+    };
+
     return (
         <Pressable onPress={() => setShowAnswer(!showAnswer)} style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: theme.text }]}>
+            <TouchableOpacity onPress={playAudio} style={styles.audioButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Volume2 size={24} color={theme.primary} />
+            </TouchableOpacity>
+
             <View style={styles.content}>
                 <Text style={[styles.dutch, { color: theme.primary }]}>{word.dutch}</Text>
 
@@ -45,6 +56,16 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
         padding: 24,
+        position: 'relative', // Ensure absolute positioning works relative to card
+    },
+    audioButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        padding: 10,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderRadius: 24,
+        zIndex: 10,
     },
     content: {
         alignItems: 'center',
