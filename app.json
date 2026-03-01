@@ -40,8 +40,7 @@
         "expo-asset",
         {
           "assets": [
-            "./src/assets/tts_model/nl_rdh_medium.onnx",
-            "./src/assets/tts_model/nl_rdh_medium_onnx_json.txt"
+            "./src/assets/tts_model.zip"
           ]
         }
       ],
