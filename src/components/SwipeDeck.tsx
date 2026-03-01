@@ -7,7 +7,7 @@ import FlashCard from './FlashCard';
 import { useFavorites } from '@/context/FavoritesContext';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Check, X, Heart, Trash2 } from 'lucide-react-native';
+import { Check, X, Heart, Trash2, Undo2 } from 'lucide-react-native';
 
 interface SwipeDeckProps {
     words: Word[];
@@ -18,7 +18,7 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 export default function SwipeDeck({ words }: SwipeDeckProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const { toggleFavorite, markAsLearned, deleteCustomWord } = useFavorites();
+    const { toggleFavorite, markAsLearned, deleteCustomWord, isFavorite } = useFavorites();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -31,18 +31,15 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
     const handleNext = (direction: 'left' | 'right') => {
         const word = words[currentIndex];
         if (direction === 'right') {
-            if (currentIndex < words.length) {
-                toggleFavorite(word.id);
-                // Also mark as learned when favorited? Usually yes, user has seen it. 
-                // Requirement says "swiped left as done and rest as to do". 
-                // I will ONLY mark as learned on LEFT swipe as specifically requested.
+            if (currentIndex > 0) {
+                setCurrentIndex((prev) => prev - 1);
             }
         } else if (direction === 'left') {
             if (currentIndex < words.length) {
                 markAsLearned(word.id);
             }
+            setCurrentIndex((prev) => prev + 1);
         }
-        setCurrentIndex((prev) => prev + 1);
         translateX.value = 0;
         translateY.value = 0;
     };
@@ -57,8 +54,8 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
             translateY.value = contextY.value + event.translationY;
         })
         .onEnd(() => {
-            if (translateX.value > SWIPE_THRESHOLD) {
-                // Swipe Right (Favorite)
+            if (translateX.value > SWIPE_THRESHOLD && currentIndex > 0) {
+                // Swipe Right (Go Back)
                 translateX.value = withTiming(SCREEN_WIDTH + 100, {}, () => {
                     runOnJS(handleNext)('right');
                 });
@@ -72,6 +69,16 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
                 translateY.value = withSpring(0);
             }
         });
+
+    const doubleTap = Gesture.Tap()
+        .numberOfTaps(2)
+        .onEnd(() => {
+            if (currentIndex < words.length) {
+                runOnJS(toggleFavorite)(words[currentIndex].id);
+            }
+        });
+
+    const composedGesture = Gesture.Simultaneous(gesture, doubleTap);
 
     const animatedStyle = useAnimatedStyle(() => {
         const rotate = interpolate(
@@ -126,6 +133,7 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
 
     const currentWord = words[currentIndex];
     const nextWord = words[currentIndex + 1];
+    const currentIsFavorite = currentWord ? isFavorite(currentWord.id) : false;
 
     return (
         <GestureHandlerRootView style={styles.container}>
@@ -138,15 +146,23 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
                 )}
 
                 {/* Foreground Card (Current) */}
-                <GestureDetector gesture={gesture}>
+                <GestureDetector gesture={composedGesture}>
                     <Animated.View style={[styles.cardWrapper, animatedStyle]}>
                         <FlashCard word={currentWord} />
 
+                        {currentIsFavorite && (
+                            <View style={styles.favoriteIcon}>
+                                <Heart size={32} color="#FF3B30" fill="#FF3B30" />
+                            </View>
+                        )}
+
                         {/* Overlays */}
-                        <Animated.View style={[styles.overlay, styles.choiceLike, rightOpacity]}>
-                            <Heart size={50} color="#fff" fill="#fff" />
-                            <Text style={styles.overlayText}>FAVORITE</Text>
-                        </Animated.View>
+                        {currentIndex > 0 && (
+                            <Animated.View style={[styles.overlay, styles.choiceLike, rightOpacity]}>
+                                <Undo2 size={50} color="#fff" />
+                                <Text style={styles.overlayText}>BACK</Text>
+                            </Animated.View>
+                        )}
 
                         <Animated.View style={[styles.overlay, styles.choiceNope, leftOpacity]}>
                             <X size={50} color="#fff" />
@@ -171,7 +187,8 @@ export default function SwipeDeck({ words }: SwipeDeckProps) {
             </View>
 
             <View style={styles.instructions}>
-                <Text style={{ color: theme.text + '80' }}>Swipe Right to Favorite • Swipe Left to Skip</Text>
+                <Text style={{ color: theme.text + '80', textAlign: 'center' }}>Swipe Right to Go Back • Swipe Left to Skip</Text>
+                <Text style={{ color: theme.text + '80', marginTop: 4, textAlign: 'center', fontWeight: 'bold' }}>Double Tap to Favorite</Text>
             </View>
         </GestureHandlerRootView>
     );
@@ -245,5 +262,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+    },
+    favoriteIcon: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        zIndex: 20,
+        padding: 10,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 20,
     }
 });

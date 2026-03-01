@@ -1,6 +1,5 @@
 import { Category } from '../types';
-
-export const VOCABULARY_DATA: Category[] = [
+import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULARY_DATA: Category[] = [
     {
         id: 'home',
         title: 'Home & Daily Life',
@@ -587,4 +586,14 @@ export const VOCABULARY_DATA: Category[] = [
         ],
     },
     // End of Time/Numbers/Adjectives
+    {
+        id: 'traffic_signs_parent',
+        title: 'Traffic Signs',
+        titleDutch: 'Verkeersborden',
+        description: 'Official road signs of the Netherlands',
+        iconName: 'Octagon',
+        words: [],
+        subCategories: TRAFFIC_CATEGORIES
+    }
 ];
+

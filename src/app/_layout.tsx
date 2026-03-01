@@ -46,19 +46,23 @@ export default function RootLayout() {
 }
 
 import { FavoritesProvider } from '@/context/FavoritesContext';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <FavoritesProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="add-word" options={{ presentation: 'modal', headerShown: false }} />
-        </Stack>
-      </ThemeProvider>
-    </FavoritesProvider>
+    <SettingsProvider>
+      <FavoritesProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="add-word" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="import" options={{ presentation: 'modal', headerTitle: 'Import Words' }} />
+          </Stack>
+        </ThemeProvider>
+      </FavoritesProvider>
+    </SettingsProvider>
   );
 }

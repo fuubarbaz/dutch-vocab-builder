@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TouchableOpacity, Image } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Word } from '@/types';
-import * as Speech from 'expo-speech';
+import { speak } from '@/utils/tts';
 import { Volume2 } from 'lucide-react-native';
+import { useSettings } from '@/context/SettingsContext';
 
 interface FlashCardProps {
     word: Word;
@@ -14,10 +15,11 @@ export default function FlashCard({ word }: FlashCardProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
     const [showAnswer, setShowAnswer] = useState(false);
+    const { speechRate } = useSettings();
 
-    const playAudio = (e: any) => {
+    const playAudio = async (e: any) => {
         e.stopPropagation(); // Prevent card flip when clicking audio
-        Speech.speak(word.dutch, { language: 'nl' });
+        await speak(word.dutch, speechRate);
     };
 
     return (
@@ -27,6 +29,11 @@ export default function FlashCard({ word }: FlashCardProps) {
             </TouchableOpacity>
 
             <View style={styles.content}>
+                {word.imageAsset && (
+                    <View style={styles.imageContainer}>
+                        <Image source={word.imageAsset} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
+                    </View>
+                )}
                 <Text style={[styles.dutch, { color: theme.primary }]}>{word.dutch}</Text>
 
                 {showAnswer ? (
@@ -72,10 +79,15 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     dutch: {
-        fontSize: 42,
+        fontSize: 32, // slightly smaller to fit image better
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 24,
+    },
+    imageContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
     },
     hint: {
         fontSize: 16,
