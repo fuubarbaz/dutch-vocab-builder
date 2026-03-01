@@ -4,6 +4,7 @@ export interface Word {
   english: string;
   exampleDutch: string;
   exampleEnglish: string;
+  imageAsset?: any;
   isCustom?: boolean;
 }
 
@@ -19,4 +20,5 @@ export interface Category {
   description: string;
   iconName: any; // Lucide icon name string or component
   words: Word[];
+  subCategories?: Category[];
 }

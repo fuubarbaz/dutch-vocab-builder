@@ -1,0 +1,1706 @@
+[
+    {
+        "id": "traffic_speed_restrictions",
+        "title": "Speed restrictions",
+        "words": [
+            {
+                "id": "tr_a1",
+                "dutch": "A1",
+                "english": "Speed limit",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "a1.png"
+            },
+            {
+                "id": "tr_a2",
+                "dutch": "A2",
+                "english": "End of speed limit (50\u00a0km/h)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "a2.png"
+            },
+            {
+                "id": "tr_a3",
+                "dutch": "A3",
+                "english": "Speed limit displayed on an electronic display panel",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "a3.png"
+            },
+            {
+                "id": "tr_a4",
+                "dutch": "A4",
+                "english": "Recommended speed",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "a4.png"
+            },
+            {
+                "id": "tr_a5",
+                "dutch": "A5",
+                "english": "End of recommended speed",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "a5.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_priority",
+        "title": "Priority",
+        "words": [
+            {
+                "id": "tr_b1",
+                "dutch": "B1",
+                "english": "Priority road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b1.png"
+            },
+            {
+                "id": "tr_b2",
+                "dutch": "B2",
+                "english": "End of priority road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b2.png"
+            },
+            {
+                "id": "tr_b3",
+                "dutch": "B3",
+                "english": "Crossroads with priority",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b3.png"
+            },
+            {
+                "id": "tr_b4",
+                "dutch": "B4",
+                "english": "Road junction with priority over minor road from the left",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b4.png"
+            },
+            {
+                "id": "tr_b5",
+                "dutch": "B5",
+                "english": "Road junction with priority over minor road from the right",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b5.png"
+            },
+            {
+                "id": "tr_b6",
+                "dutch": "B6",
+                "english": "Give Way sign",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b6.png"
+            },
+            {
+                "id": "tr_b7",
+                "dutch": "B7",
+                "english": "Stop: Give priority to traffic on the main road ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b7.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_road_closed_prohibition_and_mandatory",
+        "title": "Road closed prohibition and mandatory",
+        "words": [
+            {
+                "id": "tr_c2",
+                "dutch": "C2",
+                "english": "No entry in this direction for vehicular traffic, horse riders and persons in charge of animals or livestock",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c2.png"
+            },
+            {
+                "id": "tr_c1",
+                "dutch": "C1",
+                "english": "Road closed in both directions to vehicles, riders and persons in charge of animals or livestock",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c1.png"
+            },
+            {
+                "id": "tr_c6",
+                "dutch": "C6",
+                "english": "No access for vehicles with more than two wheels",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c6.png"
+            },
+            {
+                "id": "tr_c11",
+                "dutch": "C11",
+                "english": "No access for motor cycles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c11.png"
+            },
+            {
+                "id": "tr_c14",
+                "dutch": "C14",
+                "english": "No access for bicycles or for non-motor-powered invalid carriages",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c14.png"
+            },
+            {
+                "id": "tr_c13",
+                "dutch": "C13",
+                "english": "No access for mopeds, motor-assisted bicycles or motor-powered invalid carriages",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c13.png"
+            },
+            {
+                "id": "tr_c7",
+                "dutch": "C7",
+                "english": "No access for goods vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c7.png"
+            },
+            {
+                "id": "tr_c7a",
+                "dutch": "C7a",
+                "english": "Closed to buses",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c7a.png"
+            },
+            {
+                "id": "tr_c7b",
+                "dutch": "C7b",
+                "english": "Closed to buses and goods vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c7b.png"
+            },
+            {
+                "id": "tr_c8",
+                "dutch": "C8",
+                "english": "No access for agricultural vehicles.",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c8.png"
+            },
+            {
+                "id": "tr_c9",
+                "dutch": "C9",
+                "english": "No access for riders, cattle, wagons, agricultural vehicles, microcars, bicycles, mopeds or invalid carriages",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c9.png"
+            },
+            {
+                "id": "tr_c10",
+                "dutch": "C10",
+                "english": "No access for motor vehicle towing trailers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c10.png"
+            },
+            {
+                "id": "tr_c12",
+                "dutch": "C12",
+                "english": "No access for motor vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c12.png"
+            },
+            {
+                "id": "tr_c15",
+                "dutch": "C15",
+                "english": "No access for bicycles, mopeds and invalid carriages",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c15.png"
+            },
+            {
+                "id": "tr_c16",
+                "dutch": "C16",
+                "english": "No access for pedestrians",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c16.png"
+            },
+            {
+                "id": "tr_c17",
+                "dutch": "C17",
+                "english": "No access for vehicles or combinations of vehicles with a length, including the load, greater than indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c17.png"
+            },
+            {
+                "id": "tr_c18",
+                "dutch": "C18",
+                "english": "No access for vehicles with a width, including the load, greater than indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c18.png"
+            },
+            {
+                "id": "tr_c19",
+                "dutch": "C19",
+                "english": "No access for vehicles with a height, including the load, greater than indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c19.png"
+            },
+            {
+                "id": "tr_c20",
+                "dutch": "C20",
+                "english": "No access for vehicles with an axle load greater than indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c20.png"
+            },
+            {
+                "id": "tr_c21",
+                "dutch": "C21",
+                "english": "No access for vehicles or combinations of vehicles with a total weight greater than indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c21.png"
+            },
+            {
+                "id": "tr_c22",
+                "dutch": "C22",
+                "english": "No access for vehicles carrying hazardous substances",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c22.png"
+            },
+            {
+                "id": "tr_c22a",
+                "dutch": "C22a",
+                "english": "Environmental zone: no access for vehicles not compliant with article 86d of RVV 1990",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c22a.png"
+            },
+            {
+                "id": "tr_c22b",
+                "dutch": "C22b",
+                "english": "End of environmental zone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c22b.png"
+            },
+            {
+                "id": "tr_c3",
+                "dutch": "C3",
+                "english": "One-way street",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c3.png"
+            },
+            {
+                "id": "tr_c4",
+                "dutch": "C4",
+                "english": "One-way street",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c4.png"
+            },
+            {
+                "id": "tr_c5",
+                "dutch": "C5",
+                "english": "Access permitted for both sides",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c5.png"
+            },
+            {
+                "id": "tr_c23_01",
+                "dutch": "C23-01",
+                "english": "Rush-hour lane open",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c23_01.png"
+            },
+            {
+                "id": "tr_c23_02",
+                "dutch": "C23-02",
+                "english": "Clear rush-hour lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c23_02.png"
+            },
+            {
+                "id": "tr_c23_03",
+                "dutch": "C23-03",
+                "english": "Rush-hour lane closed",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c23_03.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_signs_giving_positive_instructions",
+        "title": "Signs giving positive instructions",
+        "words": [
+            {
+                "id": "tr_d1",
+                "dutch": "D1",
+                "english": "Roundabout",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d1.png"
+            },
+            {
+                "id": "tr_d2",
+                "dutch": "D2",
+                "english": "Instruction to all drivers to keep to the right of the sign (or left if arrow is reversed)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d2.png"
+            },
+            {
+                "id": "tr_d3",
+                "dutch": "D3",
+                "english": "The sign may be passed on either side",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d3.png"
+            },
+            {
+                "id": "tr_d4",
+                "dutch": "D4",
+                "english": "Instruction to drive ahead only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d4.png"
+            },
+            {
+                "id": "tr_d5",
+                "dutch": "D5",
+                "english": "Instruction to follow the direction ahead shown by the arrow",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d5.png"
+            },
+            {
+                "id": "tr_d6",
+                "dutch": "D6",
+                "english": "Instruction to follow one of the directions ahead shown by the arrows",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d6.png"
+            },
+            {
+                "id": "tr_d7",
+                "dutch": "D7",
+                "english": "Instruction to follow one of the directions ahead shown by the arrows",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "d7.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_parking_and_stopping",
+        "title": "Parking and stopping",
+        "words": [
+            {
+                "id": "tr_e1",
+                "dutch": "E1",
+                "english": "No parking",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e1.png"
+            },
+            {
+                "id": "tr_e2",
+                "dutch": "E2",
+                "english": "No stopping",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e2.png"
+            },
+            {
+                "id": "tr_e3",
+                "dutch": "E3",
+                "english": "No parking for bicycles or mopeds",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e3.png"
+            },
+            {
+                "id": "tr_e4",
+                "dutch": "E4",
+                "english": "Parking area",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e4.png"
+            },
+            {
+                "id": "tr_e5",
+                "dutch": "E5",
+                "english": "Taxi rank",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e5.png"
+            },
+            {
+                "id": "tr_e6",
+                "dutch": "E6",
+                "english": "Parking for disabled drivers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e6.png"
+            },
+            {
+                "id": "tr_e7",
+                "dutch": "E7",
+                "english": "Parking permitted for the immediate loading and unloading of goods only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e7.png"
+            },
+            {
+                "id": "tr_e8",
+                "dutch": "E8",
+                "english": "Parking facilities only for the category or group of vehicle shown",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e8.png"
+            },
+            {
+                "id": "tr_e9",
+                "dutch": "E9",
+                "english": "Parking for permit-holders only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e9.png"
+            },
+            {
+                "id": "tr_e10",
+                "dutch": "E10",
+                "english": "Entrance to controlled parking zone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e10.png"
+            },
+            {
+                "id": "tr_e11",
+                "dutch": "E11",
+                "english": "End of controlled parking zone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e11.png"
+            },
+            {
+                "id": "tr_e12",
+                "dutch": "E12",
+                "english": "Park and ride facilities",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e12.png"
+            },
+            {
+                "id": "tr_e13",
+                "dutch": "E13",
+                "english": "Parking facilities for car sharers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "e13.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_other_signs_giving_orders",
+        "title": "Other signs giving orders",
+        "words": [
+            {
+                "id": "tr_f1",
+                "dutch": "F1",
+                "english": "No overtaking",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f1.png"
+            },
+            {
+                "id": "tr_f2",
+                "dutch": "F2",
+                "english": "End of no overtaking zone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f2.png"
+            },
+            {
+                "id": "tr_f3",
+                "dutch": "F3",
+                "english": "No overtaking of cars by lorries",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f3.png"
+            },
+            {
+                "id": "tr_f4",
+                "dutch": "F4",
+                "english": "End of zone with no overtaking of cars by lorries",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f4.png"
+            },
+            {
+                "id": "tr_f5",
+                "dutch": "F5",
+                "english": "Give way to oncoming vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f5.png"
+            },
+            {
+                "id": "tr_f6",
+                "dutch": "F6",
+                "english": "Priority over oncoming vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f6.png"
+            },
+            {
+                "id": "tr_f7",
+                "dutch": "F7",
+                "english": "No",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f7.png"
+            },
+            {
+                "id": "tr_f8",
+                "dutch": "F8",
+                "english": "End of all restrictions imposed by traffic signs",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f8.png"
+            },
+            {
+                "id": "tr_f9",
+                "dutch": "F9",
+                "english": "End of all restrictions imposed by electronic signalling panels",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f9.png"
+            },
+            {
+                "id": "tr_f10",
+                "dutch": "F10",
+                "english": "Stop. The sign can also contain further information as to whom it is directed and why",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f10.png"
+            },
+            {
+                "id": "tr_f11",
+                "dutch": "F11",
+                "english": "Compulsory use of passing lane for slow motor vehicles (under 25\u00a0km/h)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f11.png"
+            },
+            {
+                "id": "tr_f12",
+                "dutch": "F12",
+                "english": "End of passing lane for slow motor vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f12.png"
+            },
+            {
+                "id": "tr_f13",
+                "dutch": "F13",
+                "english": "Bus lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f13.png"
+            },
+            {
+                "id": "tr_f14",
+                "dutch": "F14",
+                "english": "End of bus lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f14.png"
+            },
+            {
+                "id": "tr_f15",
+                "dutch": "F15",
+                "english": "Tram lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f15.png"
+            },
+            {
+                "id": "tr_f16",
+                "dutch": "F16",
+                "english": "End of tram lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f16.png"
+            },
+            {
+                "id": "tr_f17",
+                "dutch": "F17",
+                "english": "Bus and tram lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f17.png"
+            },
+            {
+                "id": "tr_f18",
+                "dutch": "F18",
+                "english": "End of bus and tram lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f18.png"
+            },
+            {
+                "id": "tr_f19",
+                "dutch": "F19",
+                "english": "Compulsory use of lane only for trucks and buses",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f19.png"
+            },
+            {
+                "id": "tr_f20",
+                "dutch": "F20",
+                "english": "End of lane only for trucks and buses",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f20.png"
+            },
+            {
+                "id": "tr_f21",
+                "dutch": "F21",
+                "english": "Compulsory use of lane only for trucks",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f21.png"
+            },
+            {
+                "id": "tr_f22",
+                "dutch": "F22",
+                "english": "End of lane only for trucks",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "f22.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_traffic_regulations",
+        "title": "Traffic regulations",
+        "words": [
+            {
+                "id": "tr_g1",
+                "dutch": "G1",
+                "english": "Motorway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g1.png"
+            },
+            {
+                "id": "tr_g2",
+                "dutch": "G2",
+                "english": "End of motorway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g2.png"
+            },
+            {
+                "id": "tr_g3",
+                "dutch": "G3",
+                "english": "Expressway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g3.png"
+            },
+            {
+                "id": "tr_g4",
+                "dutch": "G4",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g4.png"
+            },
+            {
+                "id": "tr_g5",
+                "dutch": "G5",
+                "english": "Living street",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g5.png"
+            },
+            {
+                "id": "tr_g6",
+                "dutch": "G6",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g6.png"
+            },
+            {
+                "id": "tr_g7",
+                "dutch": "G7",
+                "english": "Footpath",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g7.png"
+            },
+            {
+                "id": "tr_g8",
+                "dutch": "G8",
+                "english": "End of footpath",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g8.png"
+            },
+            {
+                "id": "tr_g9",
+                "dutch": "G9",
+                "english": "Bridleway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g9.png"
+            },
+            {
+                "id": "tr_g10",
+                "dutch": "G10",
+                "english": "End of bridleway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g10.png"
+            },
+            {
+                "id": "tr_g11",
+                "dutch": "G11",
+                "english": "Route for pedal cycles only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g11.png"
+            },
+            {
+                "id": "tr_g12",
+                "dutch": "G12",
+                "english": "End of pedal cycles route",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g12.png"
+            },
+            {
+                "id": "tr_g12a",
+                "dutch": "G12a",
+                "english": "Route for pedal cycle and mopeds only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g12a.png"
+            },
+            {
+                "id": "tr_g12b",
+                "dutch": "G12b",
+                "english": "End of route for pedal cycles and mopeds",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g12b.png"
+            },
+            {
+                "id": "tr_g13",
+                "dutch": "G13",
+                "english": "Optional cycle path",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g13.png"
+            },
+            {
+                "id": "tr_g14",
+                "dutch": "G14",
+                "english": "End of optional cycle path",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g14.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_built-up_area",
+        "title": "Built-up area",
+        "words": [
+            {
+                "id": "tr_h1",
+                "dutch": "H1",
+                "english": "Built-up area",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "h1.png"
+            },
+            {
+                "id": "tr_h2",
+                "dutch": "H2",
+                "english": "End of built-up area",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "h2.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_warning_signs",
+        "title": "Warning signs",
+        "words": [
+            {
+                "id": "tr_j1",
+                "dutch": "J1",
+                "english": "Uneven road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j1.png"
+            },
+            {
+                "id": "tr_j2",
+                "dutch": "J2",
+                "english": "Bend to right",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j2.png"
+            },
+            {
+                "id": "tr_j3",
+                "dutch": "J3",
+                "english": "Bend to left",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j3.png"
+            },
+            {
+                "id": "tr_j4",
+                "dutch": "J4",
+                "english": "Double bend, first to right",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j4.png"
+            },
+            {
+                "id": "tr_j5",
+                "dutch": "J5",
+                "english": "Double bend, first to left",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j5.png"
+            },
+            {
+                "id": "tr_j6",
+                "dutch": "J6",
+                "english": "Steep hill upward",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j6.png"
+            },
+            {
+                "id": "tr_j7",
+                "dutch": "J7",
+                "english": "Steep hill downward",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j7.png"
+            },
+            {
+                "id": "tr_j8",
+                "dutch": "J8",
+                "english": "Dangerous crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j8.png"
+            },
+            {
+                "id": "tr_j9",
+                "dutch": "J9",
+                "english": "Roundabout",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j9.png"
+            },
+            {
+                "id": "tr_j10",
+                "dutch": "J10",
+                "english": "Level crossing with barrier or gates ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j10.png"
+            },
+            {
+                "id": "tr_j11",
+                "dutch": "J11",
+                "english": "Level crossing without barrier or gates ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j11.png"
+            },
+            {
+                "id": "tr_j12",
+                "dutch": "J12",
+                "english": "Level crossing with single track",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j12.png"
+            },
+            {
+                "id": "tr_j13",
+                "dutch": "J13",
+                "english": "Level crossing with two or more tracks",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j13.png"
+            },
+            {
+                "id": "tr_j14",
+                "dutch": "J14",
+                "english": "Tram (crossing) ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j14.png"
+            },
+            {
+                "id": "tr_j15",
+                "dutch": "J15",
+                "english": "Opening or swing bridge ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j15.png"
+            },
+            {
+                "id": "tr_j16",
+                "dutch": "J16",
+                "english": "Road works ahead",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j16.png"
+            },
+            {
+                "id": "tr_j17",
+                "dutch": "J17",
+                "english": "Road narrows on both sides",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j17.png"
+            },
+            {
+                "id": "tr_j18",
+                "dutch": "J18",
+                "english": "Road narrows on the right side",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j18.png"
+            },
+            {
+                "id": "tr_j19",
+                "dutch": "J19",
+                "english": "Road narrows on the left side",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j19.png"
+            },
+            {
+                "id": "tr_j20",
+                "dutch": "J20",
+                "english": "Slippery road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j20.png"
+            },
+            {
+                "id": "tr_j21",
+                "dutch": "J21",
+                "english": "School crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j21.png"
+            },
+            {
+                "id": "tr_j22",
+                "dutch": "J22",
+                "english": "Pedestrian crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j22.png"
+            },
+            {
+                "id": "tr_j23",
+                "dutch": "J23",
+                "english": "Pedestrians",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j23.png"
+            },
+            {
+                "id": "tr_j24",
+                "dutch": "J24",
+                "english": "Cyclists and moped riders",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j24.png"
+            },
+            {
+                "id": "tr_j25",
+                "dutch": "J25",
+                "english": "Loose chippings",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j25.png"
+            },
+            {
+                "id": "tr_j26",
+                "dutch": "J26",
+                "english": "Quayside or river bank",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j26.png"
+            },
+            {
+                "id": "tr_j27",
+                "dutch": "J27",
+                "english": "Wild animals",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j27.png"
+            },
+            {
+                "id": "tr_j28",
+                "dutch": "J28",
+                "english": "Domesticated animals",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j28.png"
+            },
+            {
+                "id": "tr_j29",
+                "dutch": "J29",
+                "english": "Two-way traffic",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j29.png"
+            },
+            {
+                "id": "tr_j30",
+                "dutch": "J30",
+                "english": "Low-flying aircraft",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j30.png"
+            },
+            {
+                "id": "tr_j31",
+                "dutch": "J31",
+                "english": "Side winds",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j31.png"
+            },
+            {
+                "id": "tr_j32",
+                "dutch": "J32",
+                "english": "Traffic lights",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j32.png"
+            },
+            {
+                "id": "tr_j33",
+                "dutch": "J33",
+                "english": "Queues likely",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j33.png"
+            },
+            {
+                "id": "tr_j34",
+                "dutch": "J34",
+                "english": "Danger of accidents",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j34.png"
+            },
+            {
+                "id": "tr_j35",
+                "dutch": "J35",
+                "english": "Reduced visibility because of snow, rain or fog",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j35.png"
+            },
+            {
+                "id": "tr_j36",
+                "dutch": "J36",
+                "english": "Risk of ice or snow",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j36.png"
+            },
+            {
+                "id": "tr_j37",
+                "dutch": "J37",
+                "english": "Other dangers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j37.png"
+            },
+            {
+                "id": "tr_j38",
+                "dutch": "J38",
+                "english": "Warning bump",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j38.png"
+            },
+            {
+                "id": "tr_j39",
+                "dutch": "J39",
+                "english": "Warning for retractable bollard (poller) in the traffic lane that can be used to regulate access to streets and areas.",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j39.png"
+            },
+            {
+                "id": "tr_level",
+                "dutch": "level",
+                "english": "crossing distance board(close)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "level.png"
+            },
+            {
+                "id": "tr_level",
+                "dutch": "level",
+                "english": "crossing distance board(between)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "level.png"
+            },
+            {
+                "id": "tr_level",
+                "dutch": "level",
+                "english": "crossing distance board(far)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "level.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_direction",
+        "title": "Direction",
+        "words": [
+            {
+                "id": "tr_k1",
+                "dutch": "K1",
+                "english": "Low level motorway information sign showing both main and intermediary destinations and the motorway number (old)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k1.png"
+            },
+            {
+                "id": "tr_k2",
+                "dutch": "K2",
+                "english": "Advance warning sign of a motorway showing the distance to the next exit and destinations after the exit (the top destination is the name of the exit), direction to aerodrome/airport and the road number (non-motorway)(old)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k2.png"
+            },
+            {
+                "id": "tr_k3",
+                "dutch": "K3",
+                "english": "Information sign for exit to",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k3.png"
+            },
+            {
+                "id": "tr_k4",
+                "dutch": "K4",
+                "english": "High level motorway information sign showing lane instructions for through traffic and exit panel showing intermediary destinations, with the motorway number and European route numbers (old)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k4.png"
+            },
+            {
+                "id": "tr_k5",
+                "dutch": "K5",
+                "english": "Non-motorway advance information panel showing intermediary destinations, road numbers, a viaduct symbol and a sign for an industrial zone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k5.png"
+            },
+            {
+                "id": "tr_k6",
+                "dutch": "K6",
+                "english": "Non-motorway information panels showing intermediary destinations and non-motorway road numbers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k6.png"
+            },
+            {
+                "id": "tr_k7",
+                "dutch": "K7",
+                "english": "Signposts for cyclists and moped riders (finger posts) showing local and intermediary destinations, municipal cycle route numbers (above) and showing intermediary destinations and intermediary cycle route numbers (below)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k7.png"
+            },
+            {
+                "id": "tr_k8",
+                "dutch": "K8",
+                "english": "Signposts (multiple) for cyclists and moped riders showing intermediary destinations and indicating an alternative route (in italics) to one of the destinations",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k8.png"
+            },
+            {
+                "id": "tr_k9",
+                "dutch": "K9",
+                "english": "Diversion with alternative route shown on an advance warning panel for a non-motorway highway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k9.png"
+            },
+            {
+                "id": "tr_k10",
+                "dutch": "K10",
+                "english": "Advance warning panel within a built-up area showing an intermediary destination, local destinations, local tourist sights, local facilities and road numbers through the town",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k10.png"
+            },
+            {
+                "id": "tr_k11",
+                "dutch": "K11",
+                "english": "Lane instructions on a non-motorway highway. Panel showing intermediary destinations, road numbers and directions to a motorway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k11.png"
+            },
+            {
+                "id": "tr_k12",
+                "dutch": "K12",
+                "english": "Local signpost within a built-up area showing names of individual districts (in traffic areas)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k12.png"
+            },
+            {
+                "id": "tr_k13",
+                "dutch": "K13",
+                "english": "Signpost within a built-up area showing district numbers (in traffic areas)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k13.png"
+            },
+            {
+                "id": "tr_k14",
+                "dutch": "K14",
+                "english": "Route for the conveyance of hazardous materials",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "k14.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_information",
+        "title": "Information",
+        "words": [
+            {
+                "id": "tr_l1",
+                "dutch": "L1",
+                "english": "No vehicles over height shown, underpass",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l1.png"
+            },
+            {
+                "id": "tr_l2",
+                "dutch": "L2",
+                "english": "Pedestrian crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l2.png"
+            },
+            {
+                "id": "tr_l3a",
+                "dutch": "L3a",
+                "english": "Tram stop/bus stop",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l3a.png"
+            },
+            {
+                "id": "tr_l3b",
+                "dutch": "L3b",
+                "english": "Bus stop",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l3b.png"
+            },
+            {
+                "id": "tr_l3c",
+                "dutch": "L3c",
+                "english": "Tram stop",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l3c.png"
+            },
+            {
+                "id": "tr_l4",
+                "dutch": "L4",
+                "english": "Get in lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l4.png"
+            },
+            {
+                "id": "tr_l5",
+                "dutch": "L5",
+                "english": "End of lane",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l5.png"
+            },
+            {
+                "id": "tr_l6",
+                "dutch": "L6",
+                "english": "Lane fork",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l6.png"
+            },
+            {
+                "id": "tr_l7",
+                "dutch": "L7",
+                "english": "Number of through lanes",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l7.png"
+            },
+            {
+                "id": "tr_l8",
+                "dutch": "L8",
+                "english": "No through road for vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l8.png"
+            },
+            {
+                "id": "tr_l9",
+                "dutch": "L9",
+                "english": "Advance warning of a no through road for vehicles",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l9.png"
+            },
+            {
+                "id": "tr_l10",
+                "dutch": "L10",
+                "english": "Advance warning of traffic information for the direction shown",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l10.png"
+            },
+            {
+                "id": "tr_l11",
+                "dutch": "L11",
+                "english": "Information on panel applies only to the lane(s) indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l11.png"
+            },
+            {
+                "id": "tr_l12",
+                "dutch": "L12",
+                "english": "Information on panel applies only to the lane indicated",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l12.png"
+            },
+            {
+                "id": "tr_l13",
+                "dutch": "L13",
+                "english": "Model sign traffic tunnel",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l13.png"
+            },
+            {
+                "id": "tr_l14",
+                "dutch": "L14",
+                "english": "Hard shoulder",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l14.png"
+            },
+            {
+                "id": "tr_l15",
+                "dutch": "L15",
+                "english": "Hard shoulder equipped with emergency telephone and fire extinguisher",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l15.png"
+            },
+            {
+                "id": "tr_l16",
+                "dutch": "L16",
+                "english": "Emergency telephone",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l16.png"
+            },
+            {
+                "id": "tr_l17",
+                "dutch": "L17",
+                "english": "Fire extinguisher",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l17.png"
+            },
+            {
+                "id": "tr_l18",
+                "dutch": "L18",
+                "english": "Emergency telephone and fire extinguisher",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l18.png"
+            },
+            {
+                "id": "tr_l19",
+                "dutch": "L19",
+                "english": "Nearest exit or second nearest exits in the directions and at the distances indicated on the sign",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l19.png"
+            },
+            {
+                "id": "tr_l20",
+                "dutch": "L20",
+                "english": "Passing area on right-hand side of the road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l20.png"
+            },
+            {
+                "id": "tr_l21",
+                "dutch": "L21",
+                "english": "Passing area on left-hand side of the road",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l21.png"
+            },
+            {
+                "id": "tr_road",
+                "dutch": "Road",
+                "english": "Barriers",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "road.png"
+            }
+        ]
+    },
+    {
+        "id": "traffic_retired_signs_(no_longer_used)",
+        "title": "Retired signs (no longer used)",
+        "words": [
+            {
+                "id": "tr_b1",
+                "dutch": "B1",
+                "english": "Priority road (1941-1990)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b1.png"
+            },
+            {
+                "id": "tr_b1",
+                "dutch": "B1",
+                "english": "End of priority road (1941-1950)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b1.png"
+            },
+            {
+                "id": "tr_b2",
+                "dutch": "B2",
+                "english": "End of priority road (1950-1990)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b2.png"
+            },
+            {
+                "id": "tr_b7",
+                "dutch": "B7",
+                "english": "Stop: Give priority to traffic on the main road ahead (1950-1966)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b7.png"
+            },
+            {
+                "id": "tr_b7",
+                "dutch": "B7",
+                "english": "Stop: Give priority to traffic on the main road ahead (1966-1979)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "b7.png"
+            },
+            {
+                "id": "tr_c6",
+                "dutch": "C6",
+                "english": "No access for vehicles with more than two wheels (1966-1990)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c6.png"
+            },
+            {
+                "id": "tr_c7",
+                "dutch": "C7",
+                "english": "No access for goods vehicles (1966-1990)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c7.png"
+            },
+            {
+                "id": "tr_c8",
+                "dutch": "C8",
+                "english": "No access for motor vehicles that cannot exceed 25\u00a0km/h (1966-1990)",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "c8.png"
+            },
+            {
+                "id": "tr_no",
+                "dutch": "no",
+                "english": "pedestrians",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "no.png"
+            },
+            {
+                "id": "tr_pedestrians",
+                "dutch": "Pedestrians",
+                "english": "only",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "pedestrians.png"
+            },
+            {
+                "id": "tr_g3",
+                "dutch": "G3",
+                "english": "Expressway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g3.png"
+            },
+            {
+                "id": "tr_g4",
+                "dutch": "G4",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g4.png"
+            },
+            {
+                "id": "tr_g3",
+                "dutch": "G3",
+                "english": "Expressway",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g3.png"
+            },
+            {
+                "id": "tr_g4",
+                "dutch": "G4",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g4.png"
+            },
+            {
+                "id": "tr_g5",
+                "dutch": "G5",
+                "english": "Living street",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g5.png"
+            },
+            {
+                "id": "tr_g6",
+                "dutch": "G6",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g6.png"
+            },
+            {
+                "id": "tr_g5",
+                "dutch": "G5",
+                "english": "Living street",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g5.png"
+            },
+            {
+                "id": "tr_g6",
+                "dutch": "G6",
+                "english": "End of",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "g6.png"
+            },
+            {
+                "id": "tr_j37",
+                "dutch": "J37",
+                "english": "Danger",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j37.png"
+            },
+            {
+                "id": "tr_j24",
+                "dutch": "J24",
+                "english": "Cyclist crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "j24.png"
+            },
+            {
+                "id": "tr_ob618",
+                "dutch": "OB618",
+                "english": "Uneven road, larger trucks or other big vehicles may get stuck. This sign is placed before a railroad crossing.",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "ob618.png"
+            },
+            {
+                "id": "tr_l2",
+                "dutch": "L2",
+                "english": "Pedestrian crossing",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "l2.png"
+            },
+            {
+                "id": "tr_underpass",
+                "dutch": "Underpass",
+                "english": "",
+                "exampleDutch": "",
+                "exampleEnglish": "",
+                "filename": "underpass.png"
+            }
+        ]
+    }
+]

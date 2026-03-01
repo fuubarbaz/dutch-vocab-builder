@@ -14,7 +14,18 @@ export default function DashboardScreen() {
     const theme = Colors[colorScheme ?? 'light'];
     const { learnedIds, favorites, customWords, resetProgress } = useFavorites();
 
-    const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + category.words.length, 0) + customWords.length;
+    // Helper to recursively get all words from a category and its subcategories
+    const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
+        let words = [...category.words];
+        if (category.subCategories) {
+            category.subCategories.forEach(sub => {
+                words = [...words, ...getAllWords(sub)];
+            });
+        }
+        return words;
+    }, []);
+
+    const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + getAllWords(category).length, 0) + customWords.length;
     const learnedCount = learnedIds.length;
     // Unique words favorited? Assuming favorite words are separate logic, but let's count them too.
     // Actually, requirement is "swiped left as done and rest as todo".

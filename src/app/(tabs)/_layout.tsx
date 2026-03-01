@@ -1,8 +1,8 @@
 import React, { ComponentProps } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs, useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
-import { PlusCircle } from 'lucide-react-native';
+import { Pressable, View } from 'react-native';
+import { PlusCircle, Languages } from 'lucide-react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -41,15 +41,26 @@ export default function TabLayout() {
           title: 'Dutch Vocab Builder',
           tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />,
           headerRight: () => (
-            <Pressable onPress={() => router.push('/add-word')}>
-              {({ pressed }) => (
-                <PlusCircle
-                  size={25}
-                  color={Colors[colorScheme ?? 'light'].text}
-                  style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                />
-              )}
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+              <Pressable onPress={() => router.push('/translate-word' as any)}>
+                {({ pressed }) => (
+                  <Languages
+                    size={25}
+                    color={Colors[colorScheme ?? 'light'].text}
+                    style={{ marginRight: 20, opacity: pressed ? 0.5 : 1 }}
+                  />
+                )}
+              </Pressable>
+              <Pressable onPress={() => router.push('/add-word')}>
+                {({ pressed }) => (
+                  <PlusCircle
+                    size={25}
+                    color={Colors[colorScheme ?? 'light'].text}
+                    style={{ opacity: pressed ? 0.5 : 1 }}
+                  />
+                )}
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -65,6 +76,13 @@ export default function TabLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => <TabBarIcon name="bar-chart" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <TabBarIcon name="cog" color={color} />,
         }}
       />
     </Tabs>

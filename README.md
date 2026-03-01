@@ -6,7 +6,7 @@ A modern, interactive React Native application designed to help users learn Dutc
 
 -   **Categorized Vocabulary**: Words are organized into intuitive categories like Home, Travel, Food, Work, and more.
 -   **Interactive Flashcards**: Learn words with their English translations and example sentences in both Dutch and English.
--   **Audio Pronunciation**: Hear how words are pronounced using native text-to-speech.
+-   **Audio Pronunciation**: Hear how words are pronounced using high-quality, 100% offline native text-to-speech.
 -   **Favorites**: Save difficult or interesting words to your personal favorites list for quick review.
 -   **Progress Dashboard**: Track your learning journey with visual charts and statistics.
 -   **Dark Mode Support**: Fully optimized for both light and dark system themes.
