@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -170,6 +170,15 @@ export default function QuizScreen() {
             </View>
 
             <View style={styles.quizContent}>
+                {/* Image Prompt (If available) */}
+                {currentQ.targetWord.imageAsset && (
+                    <Image
+                        source={currentQ.targetWord.imageAsset}
+                        style={styles.quizImage}
+                        resizeMode="contain"
+                    />
+                )}
+
                 {/* Question Prompt */}
                 <Text style={[styles.promptText, { color: theme.text, opacity: 0.6 }]}>
                     What is the meaning of:
@@ -264,6 +273,11 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 24,
         alignItems: 'center',
+    },
+    quizImage: {
+        width: 120,
+        height: 120,
+        marginBottom: 16,
     },
     promptText: {
         fontSize: 18,
