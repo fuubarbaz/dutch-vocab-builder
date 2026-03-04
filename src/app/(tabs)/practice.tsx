@@ -132,6 +132,15 @@ export default function PracticeScreen() {
                     <Text style={styles.startText}>Start Quiz</Text>
                     <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
                 </Pressable>
+
+                {/* Pronunciation specific button */}
+                <Pressable
+                    style={[styles.startButton, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.tint, marginTop: 16 }]}
+                    onPress={() => router.push('/pronunciation')}
+                >
+                    <Ionicons name="mic-outline" size={20} color={theme.tint} style={{ marginRight: 8 }} />
+                    <Text style={[styles.startText, { color: theme.tint }]}>Practice Pronunciation</Text>
+                </Pressable>
             </View>
         </ScrollView>
     );

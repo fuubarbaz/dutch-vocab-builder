@@ -51,6 +51,19 @@
             "deploymentTarget": "16.0"
           }
         }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to measure volume levels for the live audio visualizer."
+        }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to record your speech for pronunciation feedback.",
+          "speechRecognitionPermission": "Allow Dutch Vocab Builder to securely transcribe your speech offline to provide pronunciation accuracy scores."
+        }
       ]
     ],
     "experiments": {
