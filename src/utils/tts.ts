@@ -36,12 +36,12 @@ export const initTTS = async () => {
                 }
             }
 
-            const modelExtractedPath = `${ttsDir}nl_NL-ronnie-medium.onnx`;
+            const modelExtractedPath = `${ttsDir}nl_NL-miro-high.onnx`;
             const tokensExtractedPath = `${ttsDir}tokens.txt`;
             const dataDirPath = `${ttsDir}espeak-ng-data`;
 
-            const tokensInfo = await FileSystem.getInfoAsync(tokensExtractedPath);
-            if (!tokensInfo.exists) {
+            const modelInfo = await FileSystem.getInfoAsync(modelExtractedPath);
+            if (!modelInfo.exists) {
                 console.log('Extracting TTS model...');
                 await unzip(destZipPath, ttsDir);
             }
