@@ -44,11 +44,24 @@ export default function TranslateWordScreen() {
 
             if (data.responseStatus === 200) {
                 let text = data.responseData.translatedText;
+
+                // MyMemory frequently returns cached database inputs that contain raw URI encodings
+                text = text.replace(/%20/g, ' ')
+                    .replace(/%2C/g, ',')
+                    .replace(/%2E/g, '.')
+                    .replace(/%0A/g, '\n');
+
                 try {
                     text = decodeURIComponent(text);
                 } catch {
-                    text = text.replace(/%20/g, ' ');
+                    // Fallback for strings containing unescaped '%' literals
                 }
+
+                // Decode HTML entities commonly returned by MyMemory
+                text = text.replace(/&#39;/g, "'")
+                    .replace(/&quot;/g, '"')
+                    .replace(/&amp;/g, '&');
+
                 setTranslatedText(text);
             } else {
                 Alert.alert('Translation Error', 'Could not translate the text. Please try again.');
