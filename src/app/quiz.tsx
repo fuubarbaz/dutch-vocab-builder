@@ -17,7 +17,7 @@ type Question = {
 };
 
 export default function QuizScreen() {
-    const { category, count } = useLocalSearchParams<{ category: string; count: string }>();
+    const { domain, category, count } = useLocalSearchParams<{ domain: string; category: string; count: string }>();
     const router = useRouter();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
@@ -35,13 +35,13 @@ export default function QuizScreen() {
 
     // Combine and flat map all words based on category selection
     const allWords = useMemo(() => {
-        const allCats = [...VOCABULARY_DATA, ...TRAFFIC_CATEGORIES];
+        const dataSource = domain === 'traffic' ? TRAFFIC_CATEGORIES : VOCABULARY_DATA;
         if (category === 'All Categories') {
-            return allCats.flatMap(c => c.words);
+            return dataSource.flatMap(c => c.words);
         }
-        const specificCat = allCats.find(c => c.title === category);
+        const specificCat = dataSource.find(c => c.title === category);
         return specificCat ? specificCat.words : [];
-    }, [category]);
+    }, [domain, category]);
 
     // Generate Questions on Mount
     useEffect(() => {

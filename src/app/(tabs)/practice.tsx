@@ -13,14 +13,15 @@ export default function PracticeScreen() {
     const theme = Colors[colorScheme ?? 'light'];
     const router = useRouter();
 
-    // Combine categories and add "All Categories" option
+    const [selectedDomain, setSelectedDomain] = useState<'vocabulary' | 'traffic'>('vocabulary');
+    const [selectedCategory, setSelectedCategory] = useState('All Categories');
+
+    // Dynamically update categories based on selected domain
+    const currentCategories = selectedDomain === 'vocabulary' ? VOCABULARY_DATA : TRAFFIC_CATEGORIES;
     const allCategories = [
         { title: 'All Categories' },
-        ...VOCABULARY_DATA,
-        ...TRAFFIC_CATEGORIES,
+        ...currentCategories,
     ];
-
-    const [selectedCategory, setSelectedCategory] = useState('All Categories');
     const [questionCount, setQuestionCount] = useState(10);
     const counts = [5, 10, 15, 20];
 
@@ -29,6 +30,7 @@ export default function PracticeScreen() {
         router.push({
             pathname: '/quiz',
             params: {
+                domain: selectedDomain,
                 category: selectedCategory,
                 count: questionCount.toString(),
             },
@@ -40,8 +42,42 @@ export default function PracticeScreen() {
             <View style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: colorScheme === 'dark' ? '#fff' : '#000' }]}>
                 <Text style={[styles.headerText, { color: theme.text }]}>Quiz Configuration</Text>
 
+                {/* Domain Selection */}
+                <View style={styles.domainToggleContainer}>
+                    <Pressable
+                        style={[
+                            styles.domainToggleBtn,
+                            selectedDomain === 'vocabulary' ? { backgroundColor: theme.tint } : { backgroundColor: theme.background }
+                        ]}
+                        onPress={() => {
+                            setSelectedDomain('vocabulary');
+                            setSelectedCategory('All Categories');
+                        }}
+                    >
+                        <Text style={[
+                            styles.domainToggleText,
+                            { color: selectedDomain === 'vocabulary' ? '#fff' : theme.text }
+                        ]}>Vocabulary</Text>
+                    </Pressable>
+                    <Pressable
+                        style={[
+                            styles.domainToggleBtn,
+                            selectedDomain === 'traffic' ? { backgroundColor: theme.tint } : { backgroundColor: theme.background }
+                        ]}
+                        onPress={() => {
+                            setSelectedDomain('traffic');
+                            setSelectedCategory('All Categories');
+                        }}
+                    >
+                        <Text style={[
+                            styles.domainToggleText,
+                            { color: selectedDomain === 'traffic' ? '#fff' : theme.text }
+                        ]}>Traffic Signs</Text>
+                    </Pressable>
+                </View>
+
                 {/* Category Selection */}
-                <Text style={[styles.label, { color: theme.text }]}>Select Category:</Text>
+                <Text style={[styles.label, { color: theme.text, marginTop: 16 }]}>Select Category:</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectorScroll}>
                     {allCategories.map((cat, index) => (
                         <Pressable
@@ -157,5 +193,22 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    domainToggleContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderRadius: 8,
+        padding: 4,
+        marginBottom: 8,
+    },
+    domainToggleBtn: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: 6,
+        alignItems: 'center',
+    },
+    domainToggleText: {
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
