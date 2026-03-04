@@ -47,9 +47,13 @@ export default function RootLayout() {
 
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { SettingsProvider } from '@/context/SettingsContext';
+import { useVersionCheck } from '@/hooks/useVersionCheck';
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+
+  // Passively check for an update when the app launches
+  useVersionCheck();
 
   return (
     <SettingsProvider>
