@@ -8,17 +8,16 @@ import stringSimilarity from 'string-similarity';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { VOCABULARY_DATA } from '@/data/vocabulary';
-import { Word } from '@/types';
+import { PRACTICE_SENTENCES, Sentence } from '@/data/sentences';
 
-export default function PronunciationScreen() {
-    const { wordId } = useLocalSearchParams<{ wordId: string }>();
+export default function SentencePracticeScreen() {
+    const { sentenceId } = useLocalSearchParams<{ sentenceId: string }>();
     const router = useRouter();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
     // Data State
-    const [targetWord, setTargetWord] = useState<Word | null>(null);
+    const [targetSentence, setTargetSentence] = useState<Sentence | null>(null);
     const [isRecording, setIsRecording] = useState(false);
 
     // Results State
@@ -32,24 +31,17 @@ export default function PronunciationScreen() {
     // Animation values
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    // Load Word
+    // Load Sentence
     useEffect(() => {
-        let foundWord: Word | undefined;
-        // Search in vocabulary categories exclusively
-        const allCats = [...VOCABULARY_DATA];
-        for (const cat of allCats) {
-            foundWord = cat.words.find(w => w.id === wordId);
-            if (foundWord) break;
+        let foundSentence = PRACTICE_SENTENCES.find(s => s.id === sentenceId);
+
+        // If no specifically requested sentence, pick a random one
+        if (!foundSentence) {
+            foundSentence = PRACTICE_SENTENCES[Math.floor(Math.random() * PRACTICE_SENTENCES.length)];
         }
 
-        // If no specifically requested word, pick a random one for practice mode
-        if (!foundWord) {
-            const allWords = allCats.flatMap(c => c.words);
-            foundWord = allWords[Math.floor(Math.random() * allWords.length)];
-        }
-
-        setTargetWord(foundWord);
-    }, [wordId]);
+        setTargetSentence(foundSentence);
+    }, [sentenceId]);
 
     // Setup Voice API
     useEffect(() => {
@@ -106,10 +98,10 @@ export default function PronunciationScreen() {
     };
 
     const evaluatePronunciation = (transcript: string) => {
-        if (!targetWord) return;
+        if (!targetSentence) return;
 
         // Clean up strings before compare
-        const cleanTarget = targetWord.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+        const cleanTarget = targetSentence.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
         const cleanSpoken = transcript.toLowerCase().replace(/[.,!?;:]/g, '').trim();
 
         const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
@@ -179,7 +171,7 @@ export default function PronunciationScreen() {
         pulseAnim.setValue(1);
     };
 
-    if (!targetWord) {
+    if (!targetSentence) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.header}>
@@ -188,7 +180,7 @@ export default function PronunciationScreen() {
                     </Pressable>
                 </View>
                 <View style={styles.content}>
-                    <Text style={{ color: theme.text }}>Loading practice word...</Text>
+                    <Text style={{ color: theme.text }}>Loading practice sentence...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -217,17 +209,17 @@ export default function PronunciationScreen() {
                 <Pressable onPress={() => router.back()}>
                     <Ionicons name="close" size={28} color={theme.text} />
                 </Pressable>
-                <Text style={[styles.titleText, { color: theme.text }]}>Pronunciation</Text>
+                <Text style={[styles.titleText, { color: theme.text }]}>Sentence Practice</Text>
                 <View style={{ width: 28 }} />
             </View>
 
             <View style={styles.content}>
 
-                {/* Target Word Display */}
+                {/* Target Sentence Display */}
                 <View style={styles.wordCard}>
-                    <Text style={[styles.label, { color: theme.text, opacity: 0.6 }]}>Say this in Dutch:</Text>
-                    <Text style={[styles.targetDutch, { color: theme.text }]}>{targetWord.dutch}</Text>
-                    <Text style={[styles.targetEnglish, { color: theme.tint }]}>{targetWord.english}</Text>
+                    <Text style={[styles.label, { color: theme.text, opacity: 0.6 }]}>Say this sentence:</Text>
+                    <Text style={[styles.targetDutch, { color: theme.text, fontSize: 24, paddingHorizontal: 20 }]}>{targetSentence.dutch}</Text>
+                    <Text style={[styles.targetEnglish, { color: theme.tint, paddingHorizontal: 20, marginTop: 10 }]}>{targetSentence.english}</Text>
                 </View>
 
                 {/* Score & Feedback Area */}

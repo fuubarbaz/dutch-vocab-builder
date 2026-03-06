@@ -53,6 +53,10 @@ export const initTTS = async () => {
             };
 
             await TTSManager.initialize(JSON.stringify(cfg));
+
+            // Add a dummy listener to silence 'VolumeUpdate' warnings
+            TTSManager.addVolumeListener?.(() => { });
+
             isInitialized = true;
             console.log('Sherpa-ONNX TTS Initialized successfully.');
         } catch (error) {

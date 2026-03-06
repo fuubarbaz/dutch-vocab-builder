@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-03-06
+
+### Added
+- **Sentence Practice Component**: A dedicated interactive space to practice 1,000+ random Dutch sentences (powered by on-device Speech Recognition).
+- **100% Offline Dictation and Translation Engine**: Migrated the translation engine completely offline using Google's local ML Kit, seamlessly translating bidirectional English and Dutch locally on the device instantly.
+
+### Fixed
+- **Translating Engine Bug**: Eliminated a spam-translation side-effect by introducing smart transcription debouncing when pausing speech during translation.
+- **Microphone Crashing/Hooks Locking**: Corrected lifecycle management of the `react-native-voice` modules to prevent "Speech Recognition Already Started" errors that previously crashed the visualizer natively.
+
 ## [1.4.0] - 2026-03-01
 
 ### Added

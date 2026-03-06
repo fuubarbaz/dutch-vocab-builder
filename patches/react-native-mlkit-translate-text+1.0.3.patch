@@ -1,0 +1,118 @@
+diff --git a/node_modules/react-native-mlkit-translate-text/android/src/main/java/com/yaaliuzhipeng/mlkit/translatetext/MlkitTranslateTextModule.java b/node_modules/react-native-mlkit-translate-text/android/src/main/java/com/yaaliuzhipeng/mlkit/translatetext/MlkitTranslateTextModule.java
+index 7b26672..63a9d21 100644
+--- a/node_modules/react-native-mlkit-translate-text/android/src/main/java/com/yaaliuzhipeng/mlkit/translatetext/MlkitTranslateTextModule.java
++++ b/node_modules/react-native-mlkit-translate-text/android/src/main/java/com/yaaliuzhipeng/mlkit/translatetext/MlkitTranslateTextModule.java
+@@ -88,10 +88,17 @@ public class MlkitTranslateTextModule extends ReactContextBaseJavaModule {
+                 .setTargetLanguage(targetL)
+                 .build();
+         final Translator translator = Translation.getClient(options);
+-        translator.translate(text)
++        translator.downloadModelIfNeeded()
+                 .addOnSuccessListener(v -> {
+-                    successCallback.invoke(v);
+-                    translator.close();
++                    translator.translate(text)
++                            .addOnSuccessListener(translatedText -> {
++                                successCallback.invoke(translatedText);
++                                translator.close();
++                            })
++                            .addOnFailureListener(e -> {
++                                failCallback.invoke(e.getLocalizedMessage());
++                                translator.close();
++                            });
+                 })
+                 .addOnFailureListener(e -> {
+                     failCallback.invoke(e.getLocalizedMessage());
+diff --git a/node_modules/react-native-mlkit-translate-text/ios/MlkitTranslateText.m b/node_modules/react-native-mlkit-translate-text/ios/MlkitTranslateText.m
+index 0c3ea61..ad8db5a 100644
+--- a/node_modules/react-native-mlkit-translate-text/ios/MlkitTranslateText.m
++++ b/node_modules/react-native-mlkit-translate-text/ios/MlkitTranslateText.m
+@@ -57,12 +57,19 @@ @implementation MlkitTranslateText
+ {
+     MLKTranslatorOptions *options = [[MLKTranslatorOptions alloc] initWithSourceLanguage:sourceLanguageTag targetLanguage:targetLanguageTag];
+     MLKTranslator *translator = [MLKTranslator translatorWithOptions: options];
+-    [translator translateText:text completion:^(NSString *_Nullable translatedText, NSError *_Nullable error) {
++    [translator downloadModelIfNeededWithCompletion:^(NSError * _Nullable error) {
+         if (error != nil) {
+             failCallback(@[error.localizedDescription]);
+             return;
+         }
+-        successCallback(@[translatedText]);
++        
++        [translator translateText:text completion:^(NSString *_Nullable translatedText, NSError *_Nullable error) {
++            if (error != nil) {
++                failCallback(@[error.localizedDescription]);
++                return;
++            }
++            successCallback(@[translatedText]);
++        }];
+     }];
+ }
+ 
+diff --git a/node_modules/react-native-mlkit-translate-text/src/MLKitTranslator.ts b/node_modules/react-native-mlkit-translate-text/src/MLKitTranslator.ts
+index c2800c4..3f15cae 100644
+--- a/node_modules/react-native-mlkit-translate-text/src/MLKitTranslator.ts
++++ b/node_modules/react-native-mlkit-translate-text/src/MLKitTranslator.ts
+@@ -127,16 +127,16 @@ const identifyLanguage = (text: string) => {
+     return new Promise((resolver, rejecter) => {
+         NativeMLKitTranslateText.identifyLanguage(
+             text,
+-            (v) => { resolver(v); },
+-            (e) => { rejecter(e); });
++            (v: any) => { resolver(v); },
++            (e: any) => { rejecter(e); });
+     });
+ }
+ const identifyPossibleLanguages = (text: string) => {
+     return new Promise((resolver, rejecter) => {
+         NativeMLKitTranslateText.identifyLanguage(
+             text,
+-            (v) => { resolver(v); },
+-            (e) => { rejecter(e); });
++            (v: any) => { resolver(v); },
++            (e: any) => { rejecter(e); });
+     });
+ }
+ const translateText = (text: string, sourceLanguage: LANG_TAGS_TYPE, targetLanguage: LANG_TAGS_TYPE) => {
+@@ -149,8 +149,8 @@ const translateText = (text: string, sourceLanguage: LANG_TAGS_TYPE, targetLangu
+             text,
+             LANG_TAGS[sourceLanguage],
+             LANG_TAGS[targetLanguage],
+-            (v) => { resolver(v); },
+-            (e) => { rejecter(e); });
++            (v: any) => { resolver(v); },
++            (e: any) => { rejecter(e); });
+     });
+ }
+ const isModelDownloaded = (language: LANG_TAGS_TYPE) => {
+@@ -161,7 +161,7 @@ const isModelDownloaded = (language: LANG_TAGS_TYPE) => {
+         }
+         NativeMLKitTranslateText.isModelDownloaded(
+             LANG_TAGS[language],
+-            (v) => {
++            (v: any) => {
+                 if (Platform.OS === 'ios') {
+                     resolver(v === 1 ? true : false);
+                 } else {
+@@ -180,8 +180,8 @@ const deleteDownloadedModel = (language: LANG_TAGS_TYPE) => {
+         }
+         NativeMLKitTranslateText.deleteDownloadedModel(
+             LANG_TAGS[language],
+-            (v) => { resolver(v); },
+-            (e) => { rejecter(e); }
++            (v: any) => { resolver(v); },
++            (e: any) => { rejecter(e); }
+         );
+     });
+ }
+@@ -193,8 +193,8 @@ const downloadModel = (language: LANG_TAGS_TYPE) => {
+         }
+         NativeMLKitTranslateText.downloadModel(
+             LANG_TAGS[language],
+-            (v) => { resolver(v); },
+-            (e) => { rejecter(e); }
++            (v: any) => { resolver(v); },
++            (e: any) => { rejecter(e); }
+         );
+     });
+ }

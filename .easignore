@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+android/
+ios/
+tmp/
+*.log
+.npm-cache/
+wiki.html
+*.sh
+*.py
+.DS_Store

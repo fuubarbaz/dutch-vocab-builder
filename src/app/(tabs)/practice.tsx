@@ -133,14 +133,24 @@ export default function PracticeScreen() {
                     <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
                 </Pressable>
 
-                {/* Pronunciation specific button */}
-                <Pressable
-                    style={[styles.startButton, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.tint, marginTop: 16 }]}
-                    onPress={() => router.push('/pronunciation')}
-                >
-                    <Ionicons name="mic-outline" size={20} color={theme.tint} style={{ marginRight: 8 }} />
-                    <Text style={[styles.startText, { color: theme.tint }]}>Practice Pronunciation</Text>
-                </Pressable>
+                <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>Pronunciation Practice:</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <Pressable
+                        style={[styles.startButton, { flex: 1, backgroundColor: theme.background, borderWidth: 1, borderColor: theme.tint, marginTop: 8 }]}
+                        onPress={() => router.push('/pronunciation')}
+                    >
+                        <Ionicons name="mic-outline" size={20} color={theme.tint} style={{ marginRight: 8 }} />
+                        <Text style={[styles.startText, { color: theme.tint, fontSize: 16 }]}>Words</Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={[styles.startButton, { flex: 1, backgroundColor: theme.background, borderWidth: 1, borderColor: theme.tint, marginTop: 8 }]}
+                        onPress={() => router.push('/sentence-practice')}
+                    >
+                        <Ionicons name="chatbubbles-outline" size={20} color={theme.tint} style={{ marginRight: 8 }} />
+                        <Text style={[styles.startText, { color: theme.tint, fontSize: 16 }]}>Sentences</Text>
+                    </Pressable>
+                </View>
             </View>
         </ScrollView>
     );

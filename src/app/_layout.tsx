@@ -66,6 +66,7 @@ function RootLayoutNav() {
             <Stack.Screen name="import" options={{ presentation: 'modal', headerTitle: 'Import Words' }} />
             <Stack.Screen name="quiz" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
             <Stack.Screen name="pronunciation" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+            <Stack.Screen name="sentence-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
           </Stack>
         </ThemeProvider>
       </FavoritesProvider>
