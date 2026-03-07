@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dutchvocabbuilder.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Allow Dutch Vocab Builder to access your photos so you can attach custom images to your flashcards."
       }
     },
     "android": {
