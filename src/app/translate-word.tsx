@@ -27,6 +27,11 @@ export default function TranslateWordScreen() {
     const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const translateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const directionRef = useRef(translationDirection);
+    React.useEffect(() => {
+        directionRef.current = translationDirection;
+    }, [translationDirection]);
+
     const resetSilenceTimeout = () => {
         if (silenceTimeout.current) {
             clearTimeout(silenceTimeout.current);
@@ -79,7 +84,7 @@ export default function TranslateWordScreen() {
                 // Debounce translation so it only fires when intermediate results settle
                 if (translateTimeout.current) clearTimeout(translateTimeout.current);
                 translateTimeout.current = setTimeout(() => {
-                    const direction = translationDirection === 'nl-en' ? 'nl|en' : 'en|nl';
+                    const direction = directionRef.current === 'nl-en' ? 'nl|en' : 'en|nl';
                     translateTextManually(text, direction);
                     setIsVoiceProcessing(false);
                 }, 800);
@@ -93,7 +98,7 @@ export default function TranslateWordScreen() {
             if (translateTimeout.current) clearTimeout(translateTimeout.current);
             Voice.removeAllListeners();
         };
-    }, [translationDirection]);
+    }, []);
 
     const categories = [
         { id: 'imported', title: 'Imported Words' },
