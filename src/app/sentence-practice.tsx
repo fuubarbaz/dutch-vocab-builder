@@ -43,6 +43,11 @@ export default function SentencePracticeScreen() {
         setTargetSentence(foundSentence);
     }, [sentenceId]);
 
+    const targetSentenceRef = useRef(targetSentence);
+    useEffect(() => {
+        targetSentenceRef.current = targetSentence;
+    }, [targetSentence]);
+
     // Setup Voice API
     useEffect(() => {
         Voice.onSpeechStart = onSpeechStart;
@@ -98,10 +103,11 @@ export default function SentencePracticeScreen() {
     };
 
     const evaluatePronunciation = (transcript: string) => {
-        if (!targetSentence) return;
+        const currentTarget = targetSentenceRef.current;
+        if (!currentTarget) return;
 
         // Clean up strings before compare
-        const cleanTarget = targetSentence.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+        const cleanTarget = currentTarget.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
         const cleanSpoken = transcript.toLowerCase().replace(/[.,!?;:]/g, '').trim();
 
         const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);

@@ -51,6 +51,11 @@ export default function PronunciationScreen() {
         setTargetWord(foundWord);
     }, [wordId]);
 
+    const targetWordRef = useRef(targetWord);
+    useEffect(() => {
+        targetWordRef.current = targetWord;
+    }, [targetWord]);
+
     // Setup Voice API
     useEffect(() => {
         Voice.onSpeechStart = onSpeechStart;
@@ -106,10 +111,11 @@ export default function PronunciationScreen() {
     };
 
     const evaluatePronunciation = (transcript: string) => {
-        if (!targetWord) return;
+        const currentTarget = targetWordRef.current;
+        if (!currentTarget) return;
 
         // Clean up strings before compare
-        const cleanTarget = targetWord.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+        const cleanTarget = currentTarget.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
         const cleanSpoken = transcript.toLowerCase().replace(/[.,!?;:]/g, '').trim();
 
         const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
