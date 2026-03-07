@@ -70,16 +70,28 @@ export const initTTS = async () => {
     return initializationPromise;
 };
 
+let isSpeaking = false;
+
 export const speak = async (text: string, rate: number = 1.0) => {
+    if (isSpeaking) return;
+
     try {
+        isSpeaking = true;
+
         if (!isInitialized) {
-            await initTTS();
+            if (initializationPromise) {
+                await initializationPromise;
+            } else {
+                await initTTS();
+            }
         }
 
         // speakerId = 0 for single speaker models
         await TTSManager.generateAndPlay(text, 0, rate);
     } catch (error) {
         console.error('TTS Error:', error);
+    } finally {
+        isSpeaking = false;
     }
 };
 
