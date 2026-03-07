@@ -20,6 +20,10 @@ export default function SentencePracticeScreen() {
     const [targetSentence, setTargetSentence] = useState<Sentence | null>(null);
     const [isRecording, setIsRecording] = useState(false);
 
+    // History State
+    const [history, setHistory] = useState<Sentence[]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+
     // Results State
     const [spokenText, setSpokenText] = useState('');
     const [accuracy, setAccuracy] = useState<number | null>(null);
@@ -40,7 +44,11 @@ export default function SentencePracticeScreen() {
             foundSentence = PRACTICE_SENTENCES[Math.floor(Math.random() * PRACTICE_SENTENCES.length)];
         }
 
-        setTargetSentence(foundSentence);
+        if (foundSentence) {
+            setHistory([foundSentence]);
+            setHistoryIndex(0);
+            setTargetSentence(foundSentence);
+        }
     }, [sentenceId]);
 
     const targetSentenceRef = useRef(targetSentence);
@@ -152,6 +160,36 @@ export default function SentencePracticeScreen() {
 
         } catch (error) {
             console.error('Failed to stop recording', error);
+        }
+    };
+
+    const handleNext = () => {
+        if (historyIndex < history.length - 1) {
+            const nextIndex = historyIndex + 1;
+            setHistoryIndex(nextIndex);
+            setTargetSentence(history[nextIndex]);
+        } else {
+            const nextSentence = PRACTICE_SENTENCES[Math.floor(Math.random() * PRACTICE_SENTENCES.length)];
+
+            setHistory(prev => [...prev, nextSentence]);
+            setHistoryIndex(prev => prev + 1);
+            setTargetSentence(nextSentence);
+        }
+
+        setSpokenText('');
+        setAccuracy(null);
+        setMeterLevels(Array(30).fill(0));
+    };
+
+    const handleBack = () => {
+        if (historyIndex > 0) {
+            const prevIndex = historyIndex - 1;
+            setHistoryIndex(prevIndex);
+            setTargetSentence(history[prevIndex]);
+
+            setSpokenText('');
+            setAccuracy(null);
+            setMeterLevels(Array(30).fill(0));
         }
     };
 
@@ -270,7 +308,11 @@ export default function SentencePracticeScreen() {
                 </View>
 
                 {/* Controls Area */}
-                <View style={styles.controlsContainer}>
+                <View style={[styles.controlsContainer, { flexDirection: 'row', gap: 40 }]}>
+                    <Pressable onPress={handleBack} disabled={historyIndex <= 0} style={{ opacity: historyIndex <= 0 ? 0.3 : 1 }}>
+                        <Ionicons name="chevron-back-circle" size={54} color={theme.text} />
+                    </Pressable>
+
                     <Pressable
                         onPressIn={startRecording}
                         onPressOut={stopRecording}
@@ -287,6 +329,10 @@ export default function SentencePracticeScreen() {
                         >
                             <Ionicons name="mic" size={48} color="#fff" />
                         </Animated.View>
+                    </Pressable>
+
+                    <Pressable onPress={handleNext}>
+                        <Ionicons name="chevron-forward-circle" size={54} color={theme.text} />
                     </Pressable>
                 </View>
             </View>

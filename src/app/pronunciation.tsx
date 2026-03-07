@@ -21,6 +21,10 @@ export default function PronunciationScreen() {
     const [targetWord, setTargetWord] = useState<Word | null>(null);
     const [isRecording, setIsRecording] = useState(false);
 
+    // History State
+    const [history, setHistory] = useState<Word[]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+
     // Results State
     const [spokenText, setSpokenText] = useState('');
     const [accuracy, setAccuracy] = useState<number | null>(null);
@@ -48,7 +52,11 @@ export default function PronunciationScreen() {
             foundWord = allWords[Math.floor(Math.random() * allWords.length)];
         }
 
-        setTargetWord(foundWord);
+        if (foundWord) {
+            setHistory([foundWord]);
+            setHistoryIndex(0);
+            setTargetWord(foundWord);
+        }
     }, [wordId]);
 
     const targetWordRef = useRef(targetWord);
@@ -160,6 +168,38 @@ export default function PronunciationScreen() {
 
         } catch (error) {
             console.error('Failed to stop recording', error);
+        }
+    };
+
+    const handleNext = () => {
+        if (historyIndex < history.length - 1) {
+            const nextIndex = historyIndex + 1;
+            setHistoryIndex(nextIndex);
+            setTargetWord(history[nextIndex]);
+        } else {
+            const allCats = [...VOCABULARY_DATA];
+            const allWords = allCats.flatMap(c => c.words);
+            const nextWord = allWords[Math.floor(Math.random() * allWords.length)];
+
+            setHistory(prev => [...prev, nextWord]);
+            setHistoryIndex(prev => prev + 1);
+            setTargetWord(nextWord);
+        }
+
+        setSpokenText('');
+        setAccuracy(null);
+        setMeterLevels(Array(30).fill(0));
+    };
+
+    const handleBack = () => {
+        if (historyIndex > 0) {
+            const prevIndex = historyIndex - 1;
+            setHistoryIndex(prevIndex);
+            setTargetWord(history[prevIndex]);
+
+            setSpokenText('');
+            setAccuracy(null);
+            setMeterLevels(Array(30).fill(0));
         }
     };
 
@@ -278,7 +318,11 @@ export default function PronunciationScreen() {
                 </View>
 
                 {/* Controls Area */}
-                <View style={styles.controlsContainer}>
+                <View style={[styles.controlsContainer, { flexDirection: 'row', gap: 40 }]}>
+                    <Pressable onPress={handleBack} disabled={historyIndex <= 0} style={{ opacity: historyIndex <= 0 ? 0.3 : 1 }}>
+                        <Ionicons name="chevron-back-circle" size={54} color={theme.text} />
+                    </Pressable>
+
                     <Pressable
                         onPressIn={startRecording}
                         onPressOut={stopRecording}
@@ -295,6 +339,10 @@ export default function PronunciationScreen() {
                         >
                             <Ionicons name="mic" size={48} color="#fff" />
                         </Animated.View>
+                    </Pressable>
+
+                    <Pressable onPress={handleNext}>
+                        <Ionicons name="chevron-forward-circle" size={54} color={theme.text} />
                     </Pressable>
                 </View>
             </View>
