@@ -61,6 +61,7 @@ export default function SentencePracticeScreen() {
         Voice.onSpeechStart = onSpeechStart;
         Voice.onSpeechEnd = onSpeechEnd;
         Voice.onSpeechError = onSpeechError;
+        Voice.onSpeechPartialResults = onSpeechPartialResults;
         Voice.onSpeechResults = onSpeechResults;
         Voice.onSpeechVolumeChanged = onSpeechVolumeChanged;
 
@@ -86,6 +87,14 @@ export default function SentencePracticeScreen() {
         console.error("Speech Error:", e.error);
         setIsRecording(false);
         stopPulseAnimation();
+    };
+
+    const onSpeechPartialResults = (e: SpeechResultsEvent) => {
+        if (e.value && e.value.length > 0) {
+            const transcript = e.value[0];
+            setSpokenText(transcript);
+            evaluatePronunciation(transcript);
+        }
     };
 
     const onSpeechResults = (e: SpeechResultsEvent) => {
