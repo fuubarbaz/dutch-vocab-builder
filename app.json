@@ -38,14 +38,6 @@
     "plugins": [
       "expo-router",
       [
-        "expo-asset",
-        {
-          "assets": [
-            "./src/assets/tts_model.zip"
-          ]
-        }
-      ],
-      [
         "expo-build-properties",
         {
           "ios": {
