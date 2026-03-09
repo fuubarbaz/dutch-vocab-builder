@@ -7,6 +7,7 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Rooms, family, and daily routines',
         iconName: 'Home',
         words: [
+            { id: 'imp_444', dutch: 'keuken', english: 'kitchen', exampleDutch: '', exampleEnglish: '' },
             { id: 'h1', dutch: 'De woonkamer', english: 'The living room', exampleDutch: "We zitten 's avonds in de woonkamer.", exampleEnglish: 'We sit in the living room in the evening.' },
             { id: 'h2', dutch: 'De keuken', english: 'The kitchen', exampleDutch: 'Ik kook in de keuken.', exampleEnglish: 'I cook in the kitchen.' },
             { id: 'h3', dutch: 'De bank', english: 'The sofa/couch', exampleDutch: 'De kat slaapt op de bank.', exampleEnglish: 'The cat sleeps on the sofa.' },
@@ -185,6 +186,7 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Clothing, colors, and descriptions',
         iconName: 'Shirt',
         words: [
+            { id: 'imp_438', dutch: 'vrouwen', english: 'vrouwen', exampleDutch: '', exampleEnglish: '' },
             { id: 'c1', dutch: 'De broek', english: 'The trousers/pants', exampleDutch: 'Deze broek is te klein.', exampleEnglish: 'These trousers are too small.' },
             { id: 'c2', dutch: 'De jas', english: 'The jacket/coat', exampleDutch: 'Doe je jas aan, het is koud.', exampleEnglish: 'Put on your coat, it is cold.' },
             { id: 'c3', dutch: 'De schoenen', english: 'The shoes', exampleDutch: 'Nieuwe schoenen kopen.', exampleEnglish: 'Buying new shoes.' },
@@ -302,6 +304,11 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Structure, pronouns, and verbs',
         iconName: 'Languages',
         words: [
+            { id: 'imp_437', dutch: 'brengen', english: 'brengen', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_443', dutch: 'ik lopen', english: 'ik lopen', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_446', dutch: 'lezenen', english: 'lezenen', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_447', dutch: 'boeken', english: 'boeken', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_449', dutch: 'te sturen', english: 'te sturen', exampleDutch: '', exampleEnglish: '' },
             { id: 'v1', dutch: 'Ik', english: 'I', exampleDutch: 'Ik heet Jan.', exampleEnglish: 'My name is Jan.' },
             { id: 'v2', dutch: 'Jij/Je', english: 'You (informal)', exampleDutch: 'Wil jij koffie?', exampleEnglish: 'Do you want coffee?' },
             { id: 'v3', dutch: 'U', english: 'You (formal)', exampleDutch: 'Wilt u iets drinken?', exampleEnglish: 'Would you like something to drink?' },
@@ -454,6 +461,10 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Ingredients, meals, and beverages',
         iconName: 'Apple', // Assuming you have an Apple icon or similar
         words: [
+            { id: 'imp_435', dutch: 'groente', english: 'vegetable', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_439', dutch: 'fruit', english: 'fruit', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_442', dutch: 'drinkenen', english: 'drinkenen', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_445', dutch: 'wateren', english: 'wateren', exampleDutch: '', exampleEnglish: '' },
             { id: 'f1', dutch: 'Het brood', english: 'The bread', exampleDutch: 'Ik eet brood als ontbijt.', exampleEnglish: 'I eat bread for breakfast.' },
             { id: 'f2', dutch: 'De kaas', english: 'The cheese', exampleDutch: 'Nederlandse kaas is lekker.', exampleEnglish: 'Dutch cheese is tasty.' },
             { id: 'f3', dutch: 'De melk', english: 'The milk', exampleDutch: 'Ik drink een glas melk.', exampleEnglish: 'I drink a glass of milk.' },
@@ -494,6 +505,7 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Days, months, and telling time',
         iconName: 'Clock',
         words: [
+            { id: 'imp_450', dutch: 'minuut', english: 'minuut', exampleDutch: '', exampleEnglish: '' },
             { id: 'tm1', dutch: 'De seconde', english: 'The second', exampleDutch: 'Wacht een seconde.', exampleEnglish: 'Wait a second.' },
             { id: 'tm2', dutch: 'De minuut', english: 'The minute', exampleDutch: 'Ik ben over een minuut terug.', exampleEnglish: 'I will be back in a minute.' },
             { id: 'tm3', dutch: 'Het uur', english: 'The hour', exampleDutch: 'De film duurt twee uur.', exampleEnglish: 'The movie lasts two hours.' },
@@ -563,6 +575,12 @@ import { TRAFFIC_CATEGORIES } from './traffic_categories'; export const VOCABULA
         description: 'Describing words',
         iconName: 'Type',
         words: [
+            { id: 'imp_436', dutch: 'meest belangrijk', english: 'meest belangrijk', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_440', dutch: 'moeilijk', english: 'difficult', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_441', dutch: 'nooit', english: 'never', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_448', dutch: 'moeilijker', english: 'moeilijker', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_451', dutch: 'wie', english: 'who', exampleDutch: '', exampleEnglish: '' },
+            { id: 'imp_452', dutch: 'mij', english: 'me', exampleDutch: '', exampleEnglish: '' },
             { id: 'ad1', dutch: 'Goed', english: 'Good', exampleDutch: 'Het is een goed boek.', exampleEnglish: 'It is a good book.' },
             { id: 'ad2', dutch: 'Slecht', english: 'Bad', exampleDutch: 'Het weer is slecht.', exampleEnglish: 'The weather is bad.' },
             { id: 'ad3', dutch: 'Mooi', english: 'Beautiful', exampleDutch: 'Wat een mooie bloem.', exampleEnglish: 'What a beautiful flower.' },

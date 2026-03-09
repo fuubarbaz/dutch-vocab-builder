@@ -9,6 +9,7 @@ import stringSimilarity from 'string-similarity';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { PRACTICE_SENTENCES, Sentence } from '@/data/sentences';
+import { normalizeDutchText } from '@/utils/text';
 
 export default function SentencePracticeScreen() {
     const { sentenceId } = useLocalSearchParams<{ sentenceId: string }>();
@@ -123,9 +124,9 @@ export default function SentencePracticeScreen() {
         const currentTarget = targetSentenceRef.current;
         if (!currentTarget) return;
 
-        // Clean up strings before compare
-        const cleanTarget = currentTarget.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
-        const cleanSpoken = transcript.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+        // Clean up strings before compare by expanding digits to words
+        const cleanTarget = normalizeDutchText(currentTarget.dutch);
+        const cleanSpoken = normalizeDutchText(transcript);
 
         const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
         setAccuracy(Math.round(similarity * 100));

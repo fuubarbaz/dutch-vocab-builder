@@ -10,6 +10,7 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { Word } from '@/types';
+import { normalizeDutchText } from '@/utils/text';
 
 export default function PronunciationScreen() {
     const { wordId } = useLocalSearchParams<{ wordId: string }>();
@@ -131,9 +132,9 @@ export default function PronunciationScreen() {
         const currentTarget = targetWordRef.current;
         if (!currentTarget) return;
 
-        // Clean up strings before compare
-        const cleanTarget = currentTarget.dutch.toLowerCase().replace(/[.,!?;:]/g, '').trim();
-        const cleanSpoken = transcript.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+        // Clean up strings before compare by expanding digits to words
+        const cleanTarget = normalizeDutchText(currentTarget.dutch);
+        const cleanSpoken = normalizeDutchText(transcript);
 
         const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
         setAccuracy(Math.round(similarity * 100));
