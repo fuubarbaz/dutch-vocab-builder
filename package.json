@@ -31,7 +31,6 @@
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "~15.0.10",
     "lucide-react-native": "^0.563.0",
-    "n2words": "^4.0.0",
     "papaparse": "^5.5.3",
     "patch-package": "^8.0.1",
     "react": "19.1.0",
