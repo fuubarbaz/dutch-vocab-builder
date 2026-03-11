@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dutch Vocab Builder - Admin UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+    <div class="max-w-3xl mx-auto p-6 mt-10">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">Vocabulary Admin UI</h1>
+            
+            <form id="wordForm" class="space-y-6">
+                <!-- Data Source / Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Source</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="targetFile" value="vocab" checked onchange="loadCategories()">
+                            <span class="ml-2">Vocabulary (vocabulary.ts)</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="targetFile" value="traffic" onchange="loadCategories()">
+                            <span class="ml-2">Traffic Signs (traffic_categories.ts)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                    <select id="category" name="category" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                        <option value="">Select a category...</option>
+                    </select>
+                </div>
+
+                <!-- Word Details -->
+                <div class="space-y-4 border-t pt-4">
+                    <h3 class="text-lg font-medium">Word Details</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="id" class="block text-sm font-medium text-gray-700">ID (e.g. w1, tr_a1)</label>
+                            <input type="text" id="id" name="id" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        
+                        <div id="imageFieldContainer" class="hidden">
+                            <label for="imageAsset" class="block text-sm font-medium text-gray-700">Image Asset (e.g. a1.png)</label>
+                            <input type="text" id="imageAsset" name="imageAsset" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="dutch" class="block text-sm font-medium text-gray-700">Dutch</label>
+                            <input type="text" id="dutch" name="dutch" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="english" class="block text-sm font-medium text-gray-700">English</label>
+                            <input type="text" id="english" name="english" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="exampleDutch" class="block text-sm font-medium text-gray-700">Example Dutch</label>
+                            <input type="text" id="exampleDutch" name="exampleDutch" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="exampleEnglish" class="block text-sm font-medium text-gray-700">Example English</label>
+                            <input type="text" id="exampleEnglish" name="exampleEnglish" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add Word
+                    </button>
+                </div>
+                
+                <div id="message" class="mt-4 text-center text-sm font-medium"></div>
+            </form>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-8 mt-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Existing Words</h2>
+            <div id="existingWordsList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <p class="text-gray-500 italic">Select a category to view its words...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadCategories() {
+            const type = document.querySelector('input[name="targetFile"]:checked').value;
+            const categorySelect = document.getElementById('category');
+            const imageFieldContainer = document.getElementById('imageFieldContainer');
+            const imageAssetInput = document.getElementById('imageAsset');
+            
+            // Show/hide image field based on type
+            if (type === 'traffic') {
+                imageFieldContainer.classList.remove('hidden');
+                imageAssetInput.required = true;
+            } else {
+                imageFieldContainer.classList.add('hidden');
+                imageAssetInput.required = false;
+            }
+
+            try {
+                const response = await fetch(`/api/categories/${type}`);
+                const categories = await response.json();
+                
+                categorySelect.innerHTML = '<option value="">Select a category...</option>';
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = `${cat.title} (${cat.id})`;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showMessage('Error loading categories', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = `mt-4 text-center text-sm font-medium ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+            setTimeout(() => { msgEl.textContent = ''; }, 5000);
+        }
+
+        document.getElementById('wordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const type = document.querySelector('input[name="targetFile"]:checked').value;
+             
+            const payload = {
+                categoryId: document.getElementById('category').value,
+                word: {
+                    id: document.getElementById('id').value,
+                    dutch: document.getElementById('dutch').value,
+                    english: document.getElementById('english').value,
+                    exampleDutch: document.getElementById('exampleDutch').value,
+                    exampleEnglish: document.getElementById('exampleEnglish').value,
+                    imageAsset: document.getElementById('imageAsset').value
+                }
+            };
+
+            try {
+                const response = await fetch(`/api/words/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    showMessage('Word added successfully!', 'success');
+                    // Only clear the word details, not category
+                    document.getElementById('id').value = '';
+                    document.getElementById('dutch').value = '';
+                    document.getElementById('english').value = '';
+                    document.getElementById('exampleDutch').value = '';
+                    document.getElementById('exampleEnglish').value = '';
+                    if (type === 'traffic') {
+                        document.getElementById('imageAsset').value = '';
+                    }
+                    loadExistingWords();
+                } else {
+                    const data = await response.json();
+                    showMessage(`Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding word:', error);
+                showMessage('Network error or server down', 'error');
+            }
+        });
+
+        async function loadExistingWords() {
+            const type = document.querySelector('input[name="targetFile"]:checked').value;
+            const categoryId = document.getElementById('category').value;
+            const wordsListEl = document.getElementById('existingWordsList');
+            
+            if (!categoryId) {
+                wordsListEl.innerHTML = '<p class="text-gray-500 italic">Select a category to view its words...</p>';
+                return;
+            }
+
+            wordsListEl.innerHTML = '<p class="text-gray-500 italic">Loading words...</p>';
+
+            try {
+                const response = await fetch(`/api/words/${type}/${categoryId}`);
+                const words = await response.json();
+                
+                if (words.length === 0) {
+                    wordsListEl.innerHTML = '<p class="text-gray-500 italic">No words found in this category.</p>';
+                    return;
+                }
+
+                let html = '<ul class="divide-y divide-gray-200">';
+                words.forEach(word => {
+                    html += `
+                        <li class="py-3 flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${word.dutch} <span class="text-gray-500 ml-2 font-normal">(${word.id})</span></p>
+                                <p class="text-sm text-gray-500">${word.english}</p>
+                                ${word.exampleDutch ? `<p class="text-xs text-gray-400 mt-1 italic">Ex: ${word.exampleDutch}</p>` : ''}
+                                ${word.imageAsset ? `<p class="text-xs text-blue-500 mt-1">Image: ${word.imageAsset}</p>` : ''}
+                            </div>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                wordsListEl.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading existing words:', error);
+                wordsListEl.innerHTML = '<p class="text-red-500 text-sm">Error loading words.</p>';
+            }
+        }
+
+        document.getElementById('category').addEventListener('change', loadExistingWords);
+
+        // Initial load
+        loadCategories();
+    </script>
+</body>
+</html>
