@@ -1,7 +1,7 @@
 {
   "name": "dutch-vocab-builder",
   "main": "expo-router/entry",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -16,6 +16,7 @@
     "@react-native-voice/voice": "^3.2.4",
     "@react-navigation/native": "^7.1.8",
     "@types/papaparse": "^5.5.2",
+    "apple-intelligence": "file:./modules/apple-intelligence",
     "expo": "~54.0.33",
     "expo-asset": "~12.0.12",
     "expo-audio": "~1.1.1",

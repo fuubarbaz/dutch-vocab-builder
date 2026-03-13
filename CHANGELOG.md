@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.6.0] - 2026-03-11
 
 ### Added
+- **AI Sentence Builder**: A new interactive learning tool integrated with a custom iOS 26 Apple Intelligence Swift Local Module to evaluate user grammar constructs natively on-device.
 - **Local Admin UI**: A developer tool (`npm run admin-ui`) built with Express and `ts-morph` to easily add words to `vocabulary.ts` and `traffic_categories.ts` through a local web interface.
 
 ### Improved
