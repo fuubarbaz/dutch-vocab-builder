@@ -3,13 +3,18 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Switch } from 're
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useSettings } from '@/context/SettingsContext';
-import { Settings, Volume2, Gauge } from 'lucide-react-native';
+import { Settings, Volume2, Gauge, Cpu, Languages, ChevronRight } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
     const colorScheme = useColorScheme();
+    const router = useRouter();
     const theme = Colors[colorScheme ?? 'light'];
-    const { speechRate, setSpeechRate, showFlashcards, setShowFlashcards } = useSettings();
+    const {
+        speechRate, setSpeechRate,
+        showFlashcards, setShowFlashcards,
+    } = useSettings();
 
     const speeds = [0.5, 0.75, 0.9, 1.0, 1.25];
 
@@ -60,6 +65,8 @@ export default function SettingsScreen() {
                     <Text style={[styles.testButtonText, { color: theme.primary }]}>Test Audio Speed</Text>
                 </TouchableOpacity>
             </View>
+
+
 
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>

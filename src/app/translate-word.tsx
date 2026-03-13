@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { ChevronDown, X, ArrowLeftRight } from 'lucide-react-native';
+import { Mic, ArrowLeftRight, X, ChevronDown, Square } from 'lucide-react-native';
+import { translateText as performTranslation, isModelDownloaded, downloadModel, LANG_TAGS_TYPE } from 'react-native-mlkit-translate-text';
+import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
 export default function TranslateWordScreen() {
     const router = useRouter();
@@ -16,6 +19,86 @@ export default function TranslateWordScreen() {
     const [translatedText, setTranslatedText] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
     const [translationDirection, setTranslationDirection] = useState<'en-nl' | 'nl-en'>('en-nl');
+
+    // Voice State
+    const [isRecording, setIsRecording] = useState(false);
+    const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+    const audioLevel = useSharedValue(0);
+    const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const translateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const directionRef = useRef(translationDirection);
+    React.useEffect(() => {
+        directionRef.current = translationDirection;
+    }, [translationDirection]);
+
+    const resetSilenceTimeout = () => {
+        if (silenceTimeout.current) {
+            clearTimeout(silenceTimeout.current);
+        }
+        silenceTimeout.current = setTimeout(() => {
+            console.log('Silence detected for 3 seconds, stopping recording automatically.');
+            stopRecordingAndProcess();
+        }, 3000);
+    };
+
+    React.useEffect(() => {
+        Voice.onSpeechStart = () => {
+            setIsRecording(true);
+            resetSilenceTimeout();
+        };
+        Voice.onSpeechEnd = () => {
+            setIsRecording(false);
+            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+            audioLevel.value = withTiming(0);
+        };
+        Voice.onSpeechError = (e: SpeechErrorEvent) => {
+            console.error('Speech recognition error:', e);
+            setIsRecording(false);
+            setIsVoiceProcessing(false);
+            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+            audioLevel.value = withTiming(0);
+            if (e.error?.message !== '7/No match') {
+                Alert.alert('Voice Error', e.error?.message || 'Failed to process speech.');
+            }
+        };
+        Voice.onSpeechVolumeChanged = (e: SpeechVolumeChangeEvent) => {
+            // Animate waveform bars based on microphone pitch (0-10)
+            const normalizedLevel = Math.max(0.1, Math.min(1, (e.value || 0) / 10));
+            audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
+        };
+        Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
+            // User is actively speaking, reset the timeout
+            resetSilenceTimeout();
+            if (e.value && e.value.length > 0) {
+                setInputText(e.value[0]);
+            }
+        };
+        Voice.onSpeechResults = (e: SpeechResultsEvent) => {
+            setIsVoiceProcessing(true);
+
+            if (e.value && e.value.length > 0) {
+                const text = e.value[0];
+                setInputText(text);
+
+                // Debounce translation so it only fires when intermediate results settle
+                if (translateTimeout.current) clearTimeout(translateTimeout.current);
+                translateTimeout.current = setTimeout(() => {
+                    const direction = directionRef.current === 'nl-en' ? 'nl|en' : 'en|nl';
+                    translateTextManually(text, direction);
+                    setIsVoiceProcessing(false);
+                }, 800);
+            } else {
+                setIsVoiceProcessing(false);
+            }
+        };
+
+        return () => {
+            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+            if (translateTimeout.current) clearTimeout(translateTimeout.current);
+            Voice.removeAllListeners();
+        };
+    }, []);
 
     const categories = [
         { id: 'imported', title: 'Imported Words' },
@@ -31,31 +114,79 @@ export default function TranslateWordScreen() {
         setTranslatedText(inputText);
     };
 
+    const startRecording = async () => {
+        try {
+            setInputText('');
+            setTranslatedText('');
+
+            // Cancel any potentially hanging recognition softly, without removing event listeners
+            try { await Voice.cancel(); } catch (e) { }
+
+            // Use correct BCP-47 tags
+            const locale = translationDirection === 'nl-en' ? 'nl-NL' : 'en-US';
+            await Voice.start(locale);
+        } catch (e) {
+            console.error('Failed to start recording:', e);
+            Alert.alert('Microphone Error', 'Could not start speech recognition.');
+        }
+    };
+
+    const stopRecordingAndProcess = async () => {
+        // Force UI update immediately so the button swaps
+        setIsRecording(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+
+        try {
+            await Voice.stop();
+        } catch (e) {
+            console.error('Failed to stop recording:', e);
+            audioLevel.value = withTiming(0);
+        }
+    };
+
+    // Waveform individual bar generation
+    const renderWaveform = () => {
+        return (
+            <View style={styles.waveformContainer}>
+                {[1, 2, 3, 4, 5].map((index) => (
+                    <WaveformBar key={index} index={index} audioLevel={audioLevel} theme={theme} />
+                ))}
+            </View>
+        );
+    };
+
+    const translateTextManually = async (text: string, langpair: string) => {
+        setIsTranslating(true);
+        try {
+            const sourceLang = langpair.split('|')[0] === 'en' ? 'ENGLISH' : 'DUTCH';
+            const targetLang = langpair.split('|')[1] === 'en' ? 'ENGLISH' : 'DUTCH';
+
+            // Start ML Kit translation (native module will download missing models automatically now)
+            const translated = await performTranslation(text, sourceLang as any, targetLang as any) as string;
+
+            setTranslatedText(translated);
+        } catch (error) {
+            console.error('Manual ML Kit translation error:', error);
+            Alert.alert('Translation Error', 'Could not translate the text locally.');
+        } finally {
+            setIsTranslating(false);
+        }
+    };
+
     const handleTranslate = async () => {
         if (!inputText.trim()) return;
 
         setIsTranslating(true);
         try {
-            const langpair = translationDirection === 'en-nl' ? 'en|nl' : 'nl|en';
-            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=${langpair}`;
+            const sourceLang = translationDirection === 'en-nl' ? 'ENGLISH' : 'DUTCH';
+            const targetLang = translationDirection === 'en-nl' ? 'DUTCH' : 'ENGLISH';
 
-            const response = await fetch(url);
-            const data = await response.json();
+            const translated = await performTranslation(inputText, sourceLang as any, targetLang as any) as string;
 
-            if (data.responseStatus === 200) {
-                let text = data.responseData.translatedText;
-                try {
-                    text = decodeURIComponent(text);
-                } catch {
-                    text = text.replace(/%20/g, ' ');
-                }
-                setTranslatedText(text);
-            } else {
-                Alert.alert('Translation Error', 'Could not translate the text. Please try again.');
-            }
+            setTranslatedText(translated);
         } catch (error) {
-            console.error('Translation error:', error);
-            Alert.alert('Network Error', 'Please check your internet connection and try again.');
+            console.error('ML Kit Translation error:', error);
+            Alert.alert('Translation Error', 'Failed to translate using the offline model.');
         } finally {
             setIsTranslating(false);
         }
@@ -108,19 +239,49 @@ export default function TranslateWordScreen() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <TextInput
-                            style={[
-                                styles.textArea,
-                                { color: theme.text, backgroundColor: theme.cardBackground, borderColor: theme.text + '20' }
-                            ]}
-                            value={inputText}
-                            onChangeText={setInputText}
-                            placeholder="Type a word or phrase..."
-                            placeholderTextColor={theme.text + '60'}
-                            multiline
-                            numberOfLines={3}
-                        />
+                        <View style={styles.textAreaContainer}>
+                            <TextInput
+                                style={[
+                                    styles.textArea,
+                                    { color: theme.text, backgroundColor: theme.cardBackground, borderColor: theme.text + '20' }
+                                ]}
+                                value={inputText}
+                                onChangeText={setInputText}
+                                placeholder="Type a word or phrase..."
+                                placeholderTextColor={theme.text + '60'}
+                                multiline
+                                numberOfLines={3}
+                            />
+                            <TouchableOpacity
+                                style={[
+                                    styles.micButton,
+                                    { backgroundColor: isRecording ? theme.danger : theme.primary + '15' }
+                                ]}
+                                onPress={isRecording ? stopRecordingAndProcess : startRecording}
+                                disabled={isVoiceProcessing}
+                            >
+                                {isVoiceProcessing ? (
+                                    <ActivityIndicator size="small" color={theme.primary} />
+                                ) : isRecording ? (
+                                    <Square size={20} color="#fff" fill="#fff" />
+                                ) : (
+                                    <Mic size={24} color={theme.primary} />
+                                )}
+                            </TouchableOpacity>
+                        </View>
                     </View>
+
+                    {isRecording && (
+                        <View style={styles.recordingIndicator}>
+                            <Text style={[styles.recordingText, { color: theme.danger }]}>
+                                Listening...
+                            </Text>
+                            {renderWaveform()}
+                            <Text style={[styles.recordingSubtext, { color: theme.text + '80' }]}>
+                                (Stops automatically after 3 seconds of silence)
+                            </Text>
+                        </View>
+                    )}
 
                     <TouchableOpacity
                         style={[
@@ -192,6 +353,18 @@ export default function TranslateWordScreen() {
     );
 }
 
+const WaveformBar = ({ audioLevel, theme, index }: { audioLevel: any, theme: any, index: number }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+        const offset = 0.6 + ((index % 3) * 0.2); // Deterministic pseudo-random scale
+        const heightScale = 1 + (audioLevel.value * 2 * offset);
+        return {
+            transform: [{ scaleY: withTiming(heightScale, { duration: 100 }) }],
+            opacity: withTiming(0.3 + (audioLevel.value * 0.7), { duration: 100 })
+        };
+    });
+    return <Animated.View style={[styles.waveformBar, { backgroundColor: theme.primary }, animatedStyle]} />;
+};
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -239,13 +412,30 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginBottom: 8,
     },
+    textAreaContainer: {
+        position: 'relative',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     textArea: {
+        flex: 1,
         padding: 16,
+        paddingRight: 60, // Space for mic button
         borderRadius: 12,
         borderWidth: 1,
         fontSize: 18,
         minHeight: 100,
         textAlignVertical: 'top',
+    },
+    micButton: {
+        position: 'absolute',
+        right: 12,
+        bottom: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     translateButton: {
         padding: 16,
@@ -304,4 +494,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
     },
+    recordingIndicator: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+        gap: 8,
+    },
+    recordingText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 4,
+    },
+    recordingSubtext: {
+        fontSize: 12,
+        marginTop: 4,
+    },
+    waveformContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
+        gap: 4,
+    },
+    waveformBar: {
+        width: 6,
+        height: 12,
+        borderRadius: 3,
+    }
 });

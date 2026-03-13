@@ -1,90 +1,74 @@
-import TTSManager from 'react-native-sherpa-onnx-offline-tts';
-import * as FileSystem from 'expo-file-system/legacy';
-import { Asset } from 'expo-asset';
-import { unzip } from 'react-native-zip-archive';
+import * as Speech from 'expo-speech';
 
-let isInitialized = false;
-let initializationPromise: Promise<void> | null = null;
+let isSpeaking = false;
+let preferredVoiceIdentifier: string | undefined = undefined;
 
 export const initTTS = async () => {
-    if (isInitialized) return;
-    if (initializationPromise) return initializationPromise;
+    try {
+        const voices = await Speech.getAvailableVoicesAsync();
+        // Look for Dutch voices
+        const dutchVoices = voices.filter(v =>
+            v.language === 'nl-NL' || v.language === 'nl-BE' || v.language === 'nl'
+        );
 
-    initializationPromise = (async () => {
-        try {
-            console.log('Initializing Sherpa-ONNX TTS...');
+        // Try to find a Siri, Premium, or Enhanced voice to avoid the robotic default
+        const bestVoice = dutchVoices.find(v =>
+            v.name.toLowerCase().includes('siri') ||
+            v.identifier.toLowerCase().includes('siri') ||
+            v.identifier.toLowerCase().includes('premium') ||
+            v.identifier.toLowerCase().includes('enhanced') ||
+            v.quality === 'Enhanced'
+        );
 
-            // The model zip is bundled in the app assets
-            const modelZipAsset = Asset.fromModule(require('../assets/tts_model.zip'));
-
-            // @ts-ignore
-            const documentDir = FileSystem.documentDirectory as string;
-            const ttsDir = `${documentDir}tts_model/`;
-
-            const dirInfo = await FileSystem.getInfoAsync(ttsDir);
-            if (!dirInfo.exists) {
-                await FileSystem.makeDirectoryAsync(ttsDir);
-            }
-
-            await modelZipAsset.downloadAsync();
-            const destZipPath = `${ttsDir}tts_model.zip`;
-
-            const zipInfo = await FileSystem.getInfoAsync(destZipPath);
-            if (!zipInfo.exists) {
-                if (modelZipAsset.localUri) {
-                    await FileSystem.copyAsync({ from: modelZipAsset.localUri, to: destZipPath });
-                }
-            }
-
-            const modelExtractedPath = `${ttsDir}nl_NL-ronnie-medium.onnx`;
-            const tokensExtractedPath = `${ttsDir}tokens.txt`;
-            const dataDirPath = `${ttsDir}espeak-ng-data`;
-
-            const tokensInfo = await FileSystem.getInfoAsync(tokensExtractedPath);
-            if (!tokensInfo.exists) {
-                console.log('Extracting TTS model...');
-                await unzip(destZipPath, ttsDir);
-            }
-
-            const cfg = {
-                modelPath: modelExtractedPath.replace('file://', ''),
-                tokensPath: tokensExtractedPath.replace('file://', ''),
-                dataDirPath: dataDirPath.replace('file://', ''),
-            };
-
-            await TTSManager.initialize(JSON.stringify(cfg));
-            isInitialized = true;
-            console.log('Sherpa-ONNX TTS Initialized successfully.');
-        } catch (error) {
-            console.error('Failed to initialize Sherpa-ONNX TTS:', error);
-            throw error;
-        } finally {
-            initializationPromise = null;
+        if (bestVoice) {
+            preferredVoiceIdentifier = bestVoice.identifier;
+            console.log('Selected premium Dutch TTS voice:', bestVoice.name);
+        } else if (dutchVoices.length > 0) {
+            preferredVoiceIdentifier = dutchVoices[0].identifier;
+            console.log('Selected fallback Dutch TTS voice:', dutchVoices[0].name);
         }
-    })();
+    } catch (e) {
+        console.warn('Failed to fetch TTS voices, falling back to system default:', e);
+    }
 
-    return initializationPromise;
+    console.log('Native Speech TTS Ready.');
 };
 
 export const speak = async (text: string, rate: number = 1.0) => {
+    if (isSpeaking) {
+        Speech.stop();
+    }
+
     try {
-        if (!isInitialized) {
+        isSpeaking = true;
+
+        if (!preferredVoiceIdentifier) {
             await initTTS();
         }
 
-        // speakerId = 0 for single speaker models
-        await TTSManager.generateAndPlay(text, 0, rate);
+        Speech.speak(text, {
+            language: 'nl-NL',
+            voice: preferredVoiceIdentifier,
+            rate: rate,
+            onDone: () => { isSpeaking = false; },
+            onStopped: () => { isSpeaking = false; },
+            onError: (error) => {
+                console.error('TTS Error:', error);
+                isSpeaking = false;
+            }
+        });
     } catch (error) {
         console.error('TTS Error:', error);
+        isSpeaking = false;
     }
 };
 
 export const stopTTS = () => {
+    Speech.stop();
+    isSpeaking = false;
 };
 
 export const cleanupTTS = () => {
-    if (isInitialized) {
-        TTSManager.deinitialize();
-        isInitialized = false;
-    }
+    Speech.stop();
+    isSpeaking = false;
 };

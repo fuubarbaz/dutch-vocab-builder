@@ -29,6 +29,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (storedShowFlashcards !== null) {
                 setShowFlashcardsState(JSON.parse(storedShowFlashcards));
             }
+            if (storedShowFlashcards !== null) {
+                setShowFlashcardsState(JSON.parse(storedShowFlashcards));
+            }
         } catch (e) {
             console.error('Failed to load settings', e);
         }
@@ -52,8 +55,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     };
 
+
+
     return (
-        <SettingsContext.Provider value={{ speechRate, setSpeechRate, showFlashcards, setShowFlashcards }}>
+        <SettingsContext.Provider value={{
+            speechRate, setSpeechRate,
+            showFlashcards, setShowFlashcards
+        }}>
             {children}
         </SettingsContext.Provider>
     );
