@@ -5,8 +5,10 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Mic, ArrowLeftRight, X, ChevronDown, Square } from 'lucide-react-native';
-import { translateText as performTranslation, isModelDownloaded, downloadModel, LANG_TAGS_TYPE } from 'react-native-mlkit-translate-text';
+import { ArrowLeftRight, X, ChevronDown } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { translateText as performTranslation } from 'react-native-mlkit-translate-text';
+import { AudioModule } from 'expo-audio';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
@@ -96,7 +98,11 @@ export default function TranslateWordScreen() {
         return () => {
             if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
             if (translateTimeout.current) clearTimeout(translateTimeout.current);
-            Voice.removeAllListeners();
+            try {
+                Voice.destroy().then(() => Voice.removeAllListeners());
+            } catch (e) {
+                Voice.removeAllListeners();
+            }
         };
     }, []);
 
@@ -119,27 +125,42 @@ export default function TranslateWordScreen() {
             setInputText('');
             setTranslatedText('');
 
-            // Cancel any potentially hanging recognition softly, without removing event listeners
+            // 1. Request AV permissions for Voice
+            const permission = await AudioModule.requestRecordingPermissionsAsync();
+            if (!permission.granted) {
+                Alert.alert('Microphone Permission', 'Please enable microphone access to use voice translation.');
+                return;
+            }
+
+            // Force UI update immediately
+            setIsRecording(true);
+
+            // Cancel any potentially hanging recognition softly
             try { await Voice.cancel(); } catch (e) { }
 
-            // Use correct BCP-47 tags
+            // 2. Start Native Voice Recognition
             const locale = translationDirection === 'nl-en' ? 'nl-NL' : 'en-US';
             await Voice.start(locale);
         } catch (e) {
             console.error('Failed to start recording:', e);
+            setIsRecording(false);
             Alert.alert('Microphone Error', 'Could not start speech recognition.');
         }
     };
 
     const stopRecordingAndProcess = async () => {
-        // Force UI update immediately so the button swaps
+        // Force transitions immediately
         setIsRecording(false);
+        setIsVoiceProcessing(true);
         if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
 
         try {
             await Voice.stop();
+            // Safety timeout: if results never arrive, reset processing state after 5 seconds
+            setTimeout(() => setIsVoiceProcessing(false), 5000);
         } catch (e) {
             console.error('Failed to stop recording:', e);
+            setIsVoiceProcessing(false);
             audioLevel.value = withTiming(0);
         }
     };
@@ -263,9 +284,9 @@ export default function TranslateWordScreen() {
                                 {isVoiceProcessing ? (
                                     <ActivityIndicator size="small" color={theme.primary} />
                                 ) : isRecording ? (
-                                    <Square size={20} color="#fff" fill="#fff" />
+                                    <Ionicons name="square" size={24} color="#fff" />
                                 ) : (
-                                    <Mic size={24} color={theme.primary} />
+                                    <Ionicons name="mic" size={28} color={theme.primary} />
                                 )}
                             </TouchableOpacity>
                         </View>

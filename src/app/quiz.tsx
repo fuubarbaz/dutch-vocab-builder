@@ -33,44 +33,65 @@ export default function QuizScreen() {
     const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
     const [isFinished, setIsFinished] = useState(false);
 
-    // Combine and flat map all words based on category selection
-    const allWords = useMemo(() => {
+    // 1. Full Pool for distractors (entire domain)
+    const fullDomainPool = useMemo(() => {
+        return domain === 'traffic' ? TRAFFIC_CATEGORIES.flatMap(c => c.words) : VOCABULARY_DATA.flatMap(c => c.words);
+    }, [domain]);
+
+    // 2. Filtered Pool for targets (specific category)
+    const targetWords = useMemo(() => {
+        if (category === 'All Categories') return fullDomainPool;
         const dataSource = domain === 'traffic' ? TRAFFIC_CATEGORIES : VOCABULARY_DATA;
-        if (category === 'All Categories') {
-            return dataSource.flatMap(c => c.words);
-        }
         const specificCat = dataSource.find(c => c.title === category);
         return specificCat ? specificCat.words : [];
-    }, [domain, category]);
+    }, [domain, category, fullDomainPool]);
 
     // Generate Questions on Mount
     useEffect(() => {
-        if (allWords.length < 4) {
-            console.warn("Not enough words in this category to generate a 4-option quiz.");
+        if (fullDomainPool.length < 4) {
+            console.warn("Not enough words in this domain to generate a 4-option quiz.");
             setIsFinished(true);
             return;
         }
 
-        // Shuffle and pick N target words
-        const shuffledWords = [...allWords].sort(() => 0.5 - Math.random());
-        const selectedTargets = shuffledWords.slice(0, Math.min(targetCount, shuffledWords.length));
+        // Shuffle and pick N target words from the category
+        const shuffledTargets = [...targetWords].sort(() => 0.5 - Math.random());
+        const selectedTargets = shuffledTargets.slice(0, Math.min(targetCount, shuffledTargets.length));
 
         const generatedQuestions = selectedTargets.map((target) => {
-            // Pick 3 random wrong answers
-            const wrongAnswers = shuffledWords
-                .filter(w => w.dutch !== target.dutch)
+            // Pick 3 random wrong answers from the FULL domain
+            // Criteria: 
+            // 1. Not the same ID
+            // 2. Different Dutch text (case insensitive)
+            // 3. Different English text (case insensitive)
+            const wrongAnswers = fullDomainPool
+                .filter(w =>
+                    w.id !== target.id &&
+                    w.dutch.toLowerCase().trim() !== target.dutch.toLowerCase().trim() &&
+                    w.english.toLowerCase().trim() !== target.english.toLowerCase().trim()
+                )
                 .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
+                // Ensure unique labels within the distractor set too
+                .reduce((acc, current) => {
+                    const isDuplicate = acc.some(a =>
+                        a.dutch.toLowerCase().trim() === current.dutch.toLowerCase().trim() ||
+                        a.english.toLowerCase().trim() === current.english.toLowerCase().trim()
+                    );
+                    if (!isDuplicate && acc.length < 3) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, [] as Word[]);
 
-            // Combine and shuffle the 4 options
+            // Combine and shuffle the options
             const options = [target, ...wrongAnswers].sort(() => 0.5 - Math.random());
-            const correctIndex = options.findIndex(o => o.dutch === target.dutch);
+            const correctIndex = options.findIndex(o => o.id === target.id);
 
             return { targetWord: target, options, correctIndex };
         });
 
         setQuestions(generatedQuestions);
-    }, [allWords, targetCount]);
+    }, [targetWords, fullDomainPool, targetCount]);
 
     const handleSelectOption = (index: number) => {
         if (selectedOptionIndex !== null) return; // Prevent multiple clicks

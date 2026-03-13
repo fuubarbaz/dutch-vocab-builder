@@ -60,3 +60,4 @@ coverage/
 # SSH Keys
 fuubarbaz_github
 fuubarbaz_github.pub
+*.ipa

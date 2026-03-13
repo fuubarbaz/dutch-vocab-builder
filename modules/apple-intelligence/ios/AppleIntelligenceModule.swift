@@ -23,19 +23,36 @@ public class AppleIntelligenceModule: Module {
       
       let lowerPrompt = prompt.lowercased()
       
-      if lowerPrompt.contains("subject") && lowerPrompt.contains("verb") && !lowerPrompt.contains("object") {
-          return "Good start! 'Ik eet' (I eat) is a complete Subject + Verb sentence. Now try adding an object, like 'een appel' (an apple)."
-      } else if lowerPrompt.contains("object") && !lowerPrompt.contains("time") {
-          return "Excellent! 'Ik eet een appel' follows the Subject + Verb + Object structure. Now, let's add a time expression. In Dutch, time usually comes immediately after the verb. Try adding 'vandaag' (today)."
-      } else if lowerPrompt.contains("time") && !lowerPrompt.contains("location") {
-          return "Perfect! 'Ik eet vandaag een appel' applies the rule (Subject + Verb + Time + Object). Time before Object is a key Dutch rule! Next, let's add a location, like 'thuis' (at home)."
-      } else if lowerPrompt.contains("location") {
-          return "Fantastic! 'Ik eet vandaag een appel thuis' uses the Time-Manner-Place (TMP) rule correctly. You've mastered basic Dutch sentence structure!"
-      } else if lowerPrompt.contains("question") {
-          return "To form a question, invert the subject and verb: 'Eet ik een appel?'"
+      // Extract user sentence (between quotes)
+      var userSentence = ""
+      let components = lowerPrompt.components(separatedBy: "\"")
+      if components.count > 1 {
+          userSentence = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
+      }
+      userSentence = userSentence.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "!", with: "").replacingOccurrences(of: "?", with: "")
+
+      // Extract expected keywords (between brackets)
+      var keywordsStr = ""
+      if let rangeStart = lowerPrompt.range(of: "["), let rangeEnd = lowerPrompt.range(of: "]") {
+          keywordsStr = String(lowerPrompt[rangeStart.upperBound..<rangeEnd.lowerBound])
       }
       
-      return "I'm your Apple Intelligence Dutch tutor! Give me a sentence or ask for a rule to practice (e.g., 'rule: subject+verb')."
+      let keywords = keywordsStr.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+      
+      var missingKeywords: [String] = []
+      for kw in keywords {
+          if !userSentence.contains(kw) {
+              missingKeywords.append(kw)
+          }
+      }
+
+      if missingKeywords.isEmpty && !keywords.isEmpty {
+          return "Excellent! '\(userSentence)' is correct and follows the rule perfectly!"
+      } else if !keywords.isEmpty {
+          return "Not quite. Remember to use these words: \(missingKeywords.joined(separator: ", ")). Try again!"
+      }
+      
+      return "I'm your Apple Intelligence Dutch tutor! Give me a sentence or ask for a rule to practice."
     }
   }
 }
