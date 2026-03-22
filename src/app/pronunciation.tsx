@@ -3,8 +3,11 @@ import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions, ActivityIn
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule } from 'expo-audio';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
-import stringSimilarity from 'string-similarity';
+import { 
+  ExpoSpeechRecognitionModule, 
+  useSpeechRecognitionEvent 
+} from 'expo-speech-recognition';
+import levenshtein from 'fast-levenshtein';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -82,52 +85,47 @@ export default function PronunciationScreen() {
     };
 
     // Setup Voice API
-    useEffect(() => {
-        Voice.onSpeechStart = () => {
-            setIsRecording(true);
-            resetSilenceTimeout();
-        };
-        Voice.onSpeechEnd = () => {
-            setIsRecording(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-        };
-        Voice.onSpeechError = (e: SpeechErrorEvent) => {
-            console.error("Speech Error:", e.error);
-            setIsRecording(false);
-            setIsVoiceProcessing(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-        };
-        Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
-            resetSilenceTimeout();
-            if (e.value && e.value.length > 0) {
-                const transcript = e.value[0];
-                setSpokenText(transcript);
-                evaluatePronunciation(transcript);
-            }
-        };
-        Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-            setIsVoiceProcessing(true);
-            if (e.value && e.value.length > 0) {
-                const transcript = e.value[0];
-                setSpokenText(transcript);
-                evaluatePronunciation(transcript);
-            }
-            setIsVoiceProcessing(false);
-        };
-        Voice.onSpeechVolumeChanged = (e: SpeechVolumeChangeEvent) => {
-            const normalizedLevel = Math.max(0.1, Math.min(1, (e.value || 0) / 10));
-            audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
-        };
+    useSpeechRecognitionEvent('start', () => {
+        setIsRecording(true);
+        resetSilenceTimeout();
+    });
 
+    useSpeechRecognitionEvent('end', () => {
+        setIsRecording(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('error', (e) => {
+        console.error("Speech Error:", e.error, e.message);
+        setIsRecording(false);
+        setIsVoiceProcessing(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('result', (e) => {
+        resetSilenceTimeout();
+        if (e.results && e.results.length > 0) {
+            const transcript = e.results[0].transcript;
+            setSpokenText(transcript);
+            evaluatePronunciation(transcript);
+            
+            if (e.isFinal) {
+                setIsVoiceProcessing(false);
+            }
+        }
+    });
+
+    useSpeechRecognitionEvent('volumechange', (e) => {
+        const normalizedLevel = Math.max(0.1, Math.min(1, (e.value + 2) / 12)); // Adjusted for -2 to 10 range
+        audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
+    });
+
+    useEffect(() => {
         return () => {
             if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            try {
-                Voice.destroy().then(() => Voice.removeAllListeners());
-            } catch (e) {
-                Voice.removeAllListeners();
-            }
+            ExpoSpeechRecognitionModule.abort();
         };
     }, []);
 
@@ -135,12 +133,16 @@ export default function PronunciationScreen() {
         const currentTarget = targetWordRef.current;
         if (!currentTarget) return;
 
-        // Clean up strings before compare by expanding digits to words
-        const cleanTarget = normalizeDutchText(currentTarget.dutch);
-        const cleanSpoken = normalizeDutchText(transcript);
+        // Clean up strings before compare
+        const cleanTarget = normalizeDutchText(currentTarget.dutch).toLowerCase().trim();
+        const cleanSpoken = normalizeDutchText(transcript).toLowerCase().trim();
 
-        const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
-        setAccuracy(Math.round(similarity * 100));
+        // Use Levenshtein distance for accuracy calculation
+        const distance = levenshtein.get(cleanTarget, cleanSpoken);
+        const maxLen = Math.max(cleanTarget.length, cleanSpoken.length);
+        const accuracyScore = maxLen === 0 ? 100 : Math.round((1 - distance / maxLen) * 100);
+        
+        setAccuracy(Math.max(0, accuracyScore));
     };
 
     const startRecording = async () => {
@@ -149,17 +151,18 @@ export default function PronunciationScreen() {
             setAccuracy(null);
             setIsVoiceProcessing(false);
 
-            // 1. Request AV permissions for Voice
-            const permission = await AudioModule.requestRecordingPermissionsAsync();
+            // 1. Request permissions
+            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
             if (!permission.granted) {
                 throw new Error('Microphone permission not granted');
             }
 
-            // Cancel any potentially hanging recognition softly, without removing event listeners
-            try { await Voice.cancel(); } catch (e) { }
-
             // 2. Start Native Voice Recognition (Targeting Dutch)
-            await Voice.start('nl-NL');
+            ExpoSpeechRecognitionModule.start({
+                lang: 'nl-NL',
+                interimResults: true,
+                volumeChangeEventOptions: { enabled: true }
+            });
 
             pulseScale.value = withRepeat(
                 withSequence(
@@ -182,7 +185,7 @@ export default function PronunciationScreen() {
         if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
 
         try {
-            await Voice.stop();
+            ExpoSpeechRecognitionModule.stop();
             // Safety timeout
             setTimeout(() => setIsVoiceProcessing(false), 5000);
         } catch (error) {

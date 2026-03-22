@@ -9,6 +9,11 @@ dist/
 web-build/
 expo-env.d.ts
 
+# EAS Build
+.eas/
+eas-build-pre-install.sh
+eas-build-post-install.sh
+
 # Native
 .kotlin/
 *.orig.*
@@ -17,28 +22,45 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.ipa
+*.apk
+*.aab
+
+# iOS
+ios/
+Pods/
+DerivedData/
+build_output/
+*.xcworkspace
+*.xcodeproj
+
+# Android
+android/
+.gradle/
+build/
+*.iml
 
 # Metro
 .metro-health-check*
 
-# debug
+# debug / logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # macOS
 .DS_Store
 *.pem
-
-# local env files
-.env*.local
+*.icloud
 
 # typescript
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android
 
 # Editors
 .idea/
@@ -56,8 +78,8 @@ coverage/
 
 # Misc
 .npm-cache
+.eslintcache
 
 # SSH Keys
 fuubarbaz_github
 fuubarbaz_github.pub
-*.ipa

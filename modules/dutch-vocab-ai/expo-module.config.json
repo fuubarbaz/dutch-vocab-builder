@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["DutchVocabAIModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.dutchvocabai.DutchVocabAIModule"]
+  }
+}

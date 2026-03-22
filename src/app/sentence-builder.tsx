@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { ArrowRight, CheckCircle2, XCircle, BrainCircuit } from 'lucide-react-native';
-import AppleIntelligenceModule from '../../modules/apple-intelligence/index';
+import AIModule from 'dutch-vocab-ai';
 
 type GrammarExercise = {
     englishPrompt: string;
@@ -142,19 +142,19 @@ export default function SentenceBuilderScreen() {
 
     const evaluateSentence = async () => {
         if (!userInput.trim()) return;
-        
+
         setIsEvaluating(true);
         setFeedback(null);
-        
+
         try {
             // Pass expected keywords so Swift can evaluate dynamically
             const expectedWords = currentExercise.expectedDutch.join(', ');
             const prompt = `User sentence: "${userInput}". Rule practicing: ${currentRule.keyword}. Expected keywords: [${expectedWords}]`;
-            const result = await AppleIntelligenceModule.generateTextAsync(prompt);
+            const result = await AIModule.generateTextAsync(prompt);
             setFeedback(result);
         } catch (error) {
-            console.error('Apple Intelligence Error:', error);
-            setFeedback('Sorry, Apple Intelligence is currently unavailable. Please check your connection or simulator settings.');
+            console.error('Dutch Vocab AI Error:', error);
+            setFeedback('Sorry, Dutch Vocab AI is currently unavailable. Please check your build settings.');
         } finally {
             setIsEvaluating(false);
         }
@@ -166,7 +166,7 @@ export default function SentenceBuilderScreen() {
         do {
             nextIndex = Math.floor(Math.random() * currentRule.exercises.length);
         } while (nextIndex === currentExerciseIndex && currentRule.exercises.length > 1);
-        
+
         setCurrentExerciseIndex(nextIndex);
         setUserInput('');
         setFeedback(null);
@@ -182,26 +182,26 @@ export default function SentenceBuilderScreen() {
     };
 
     return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
             <Stack.Screen options={{ title: 'Sentence Builder' }} />
-            
+
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                
+
                 {/* Rule Selector */}
                 <View style={styles.selectorContainer}>
                     <Text style={styles.selectorTitle}>Select a Level to Practice:</Text>
-                    <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false} 
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
                         style={styles.chipScroll}
                         contentContainerStyle={styles.chipScrollContent}
                     >
                         {RULES.map((rule, idx) => (
-                            <TouchableOpacity 
-                                key={rule.id} 
+                            <TouchableOpacity
+                                key={rule.id}
                                 style={[styles.chip, currentRuleIndex === idx && styles.chipActive]}
                                 onPress={() => {
                                     setCurrentRuleIndex(idx);
@@ -231,7 +231,7 @@ export default function SentenceBuilderScreen() {
                 <View style={styles.practiceCard}>
                     <Text style={styles.promptLabel}>Your Turn:</Text>
                     <Text style={styles.prompt}>{currentExercise.englishPrompt}</Text>
-                    
+
                     <TextInput
                         style={styles.input}
                         placeholder="Type your Dutch sentence here..."
@@ -242,15 +242,15 @@ export default function SentenceBuilderScreen() {
                         onSubmitEditing={evaluateSentence}
                     />
 
-                    <TouchableOpacity 
-                        style={[styles.button, (!userInput.trim() || isEvaluating) && styles.buttonDisabled]} 
+                    <TouchableOpacity
+                        style={[styles.button, (!userInput.trim() || isEvaluating) && styles.buttonDisabled]}
                         onPress={evaluateSentence}
                         disabled={!userInput.trim() || isEvaluating}
                     >
                         {isEvaluating ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text style={styles.buttonText}>Evaluate with Apple Intelligence</Text>
+                            <Text style={styles.buttonText}>Evaluate with Dutch Vocab AI</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -260,14 +260,14 @@ export default function SentenceBuilderScreen() {
                     <View style={[styles.feedbackCard, feedback.includes('Sorry') ? styles.feedbackError : styles.feedbackSuccess]}>
                         <Text style={styles.feedbackTitle}>Feedback</Text>
                         <Text style={styles.feedbackText}>{feedback}</Text>
-                        
+
                         {/* Only show next buttons if highly supervised mocked string implies success */}
                         {!feedback.includes('Sorry') && feedback.includes('!') && (
                             <View style={styles.actionsContainer}>
                                 <TouchableOpacity style={styles.secondaryButton} onPress={nextExercise}>
                                     <Text style={styles.secondaryButtonText}>Practice More</Text>
                                 </TouchableOpacity>
-                                
+
                                 {currentRuleIndex < RULES.length - 1 ? (
                                     <TouchableOpacity style={styles.nextButton} onPress={nextRule}>
                                         <Text style={styles.nextButtonText}>Next Level</Text>

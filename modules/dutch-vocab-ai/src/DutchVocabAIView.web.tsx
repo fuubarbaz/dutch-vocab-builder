@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { AppleIntelligenceViewProps } from './AppleIntelligence.types';
+import { DutchVocabAIViewProps } from './DutchVocabAI.types';
 
-export default function AppleIntelligenceView(props: AppleIntelligenceViewProps) {
+export default function DutchVocabAIView(props: DutchVocabAIViewProps) {
   return (
     <div>
       <iframe

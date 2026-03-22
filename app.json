@@ -46,13 +46,14 @@
         }
       ],
       [
-        "@react-native-voice/voice",
+        "expo-speech-recognition",
         {
           "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to record your speech for pronunciation feedback.",
           "speechRecognitionPermission": "Allow Dutch Vocab Builder to securely transcribe your speech offline to provide pronunciation accuracy scores."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "./plugins/withIosLifecycleFix"
     ],
     "experiments": {
       "typedRoutes": true

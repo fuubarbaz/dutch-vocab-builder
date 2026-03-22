@@ -3,8 +3,11 @@ import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions } from 'rea
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule } from 'expo-audio';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
-import stringSimilarity from 'string-similarity';
+import { 
+    ExpoSpeechRecognitionModule, 
+    useSpeechRecognitionEvent 
+} from 'expo-speech-recognition';
+import levenshtein from 'fast-levenshtein';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -74,53 +77,43 @@ export default function SentencePracticeScreen() {
         }, 3000);
     };
 
-    // Setup Voice API
-    useEffect(() => {
-        Voice.onSpeechStart = () => {
-            setIsRecording(true);
-            resetSilenceTimeout();
-        };
-        Voice.onSpeechEnd = () => {
-            setIsRecording(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-        };
-        Voice.onSpeechError = (e: SpeechErrorEvent) => {
-            console.error("Speech Error:", e.error);
-            setIsRecording(false);
-            setIsVoiceProcessing(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-        };
-        Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
-            resetSilenceTimeout();
-            if (e.value && e.value.length > 0) {
-                const transcript = e.value[0];
-                setSpokenText(transcript);
-                evaluatePronunciation(transcript);
-            }
-        };
-        Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-            setIsVoiceProcessing(true);
-            if (e.value && e.value.length > 0) {
-                const transcript = e.value[0];
-                setSpokenText(transcript);
-                evaluatePronunciation(transcript);
-            }
-            setIsVoiceProcessing(false);
-        };
-        Voice.onSpeechVolumeChanged = (e: SpeechVolumeChangeEvent) => {
-            const normalizedLevel = Math.max(0.1, Math.min(1, (e.value || 0) / 10));
-            audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
-        };
+    useSpeechRecognitionEvent('start', () => {
+        setIsRecording(true);
+        resetSilenceTimeout();
+    });
 
+    useSpeechRecognitionEvent('end', () => {
+        setIsRecording(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('error', (e) => {
+        console.error("Speech Error:", e);
+        setIsRecording(false);
+        setIsVoiceProcessing(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('volumechange', (e) => {
+        const normalizedLevel = Math.max(0.1, Math.min(1, (e.value + 2) / 12));
+        audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
+    });
+
+    useSpeechRecognitionEvent('result', (e) => {
+        resetSilenceTimeout();
+        if (e.results && e.results.length > 0) {
+            const transcript = e.results[0].transcript;
+            setSpokenText(transcript);
+            evaluatePronunciation(transcript);
+        }
+    });
+
+    useEffect(() => {
         return () => {
             if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            try {
-                Voice.destroy().then(() => Voice.removeAllListeners());
-            } catch (e) {
-                Voice.removeAllListeners();
-            }
+            ExpoSpeechRecognitionModule.abort();
         };
     }, []);
 
@@ -132,7 +125,9 @@ export default function SentencePracticeScreen() {
         const cleanTarget = normalizeDutchText(currentTarget.dutch);
         const cleanSpoken = normalizeDutchText(transcript);
 
-        const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
+        const distance = levenshtein.get(cleanTarget.toLowerCase(), cleanSpoken.toLowerCase());
+        const maxLength = Math.max(cleanTarget.length, cleanSpoken.length);
+        const similarity = maxLength === 0 ? 1 : Math.max(0, 1 - distance / maxLength);
         setAccuracy(Math.round(similarity * 100));
     };
 
@@ -142,17 +137,18 @@ export default function SentencePracticeScreen() {
             setAccuracy(null);
             setIsVoiceProcessing(false);
 
-            // 1. Request AV permissions for Voice
-            const permission = await AudioModule.requestRecordingPermissionsAsync();
+            // 1. Request permissions
+            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
             if (!permission.granted) {
                 throw new Error('Microphone permission not granted');
             }
 
-            // Cancel any potentially hanging recognition softly, without removing event listeners
-            try { await Voice.cancel(); } catch (e) { }
-
             // 2. Start Native Voice Recognition (Targeting Dutch)
-            await Voice.start('nl-NL');
+            ExpoSpeechRecognitionModule.start({
+                lang: 'nl-NL',
+                interimResults: true,
+                volumeChangeEventOptions: { enabled: true }
+            });
 
             pulseScale.value = withRepeat(
                 withSequence(
@@ -175,7 +171,7 @@ export default function SentencePracticeScreen() {
         if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
 
         try {
-            await Voice.stop();
+            ExpoSpeechRecognitionModule.stop();
             // Safety timeout
             setTimeout(() => setIsVoiceProcessing(false), 5000);
         } catch (error) {
