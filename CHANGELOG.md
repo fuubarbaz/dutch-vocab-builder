@@ -2,18 +2,21 @@
 
 All notable changes to this project will be documented in this file.
  
-## [1.6.0] - 2026-03-11
+## [1.6.0] - 2026-03-22
 
 ### Added
 - **AI Sentence Builder**: A new interactive learning tool integrated with a custom iOS Dutch AI Swift Local Module to evaluate user grammar constructs natively on-device.
 - **Local Admin UI**: A developer tool (`npm run admin-ui`) built with Express and `ts-morph` to easily add words to `vocabulary.ts` and `traffic_categories.ts` through a local web interface.
+- **iOS 26 Compatibility Plugin**: Added `withIosLifecycleFix` Expo config plugin to restore AppDelegate lifecycle (fixes black screen), add `@available` guards for iOS 26.0 SDK, and sync project deployment targets.
 
 ### Improved
+- **Module Rename**: Renamed the native AI module from `apple-intelligence` to `dutch-vocab-ai` for clearer branding and improved package structure.
 - **iOS 18 SDK Support**: Bumped deployment target to iOS 18.0 to leverage modern capabilities and Dutch Vocab AI integrations.
-- **Speech UI Consistency**: Synchronized the interaction model across all screens (Tap-to-Toggle instead of Hold-to-Speak). 
+- **Speech UI Consistency**: Synchronized the interaction model across all screens (Tap-to-Toggle instead of Hold-to-Speak).
 - **Transcription Feedback**: Implemented an immediate loading spinner upon stopping speech to indicate processing.
 - **Hardware Cleanup**: Added robust `Voice.destroy()` calls during screen transitions to ensure microphone hardware is released immediately.
 - **Number Normalization**: Integrated a custom Dutch number-to-words utility (`numberToDutchWords`) to ensure spoken digits (e.g., "80") correctly match target Dutch text ("tachtig").
+- **Voice Input (Translate Screen)**: Migrated translate screen voice input to `expo-speech-recognition` with real-time volume visualisation, silence detection, and graceful error handling.
 
 ### Fixed
 - **Quiz Option Coverage**: Resolved a bug where some quiz questions displayed fewer than 4 options by dynamically pulling distractors from the full domain pool and filtering out duplicate labels.

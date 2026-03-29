@@ -88,7 +88,7 @@ function withIosLifecycleFix(config) {
       const body = match[1];
       const newBody = `
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
-    
+
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
