@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions, Animated } from 'react-native';
+import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule } from 'expo-audio';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
-import stringSimilarity from 'string-similarity';
+import { 
+  ExpoSpeechRecognitionModule, 
+  useSpeechRecognitionEvent 
+} from 'expo-speech-recognition';
+import levenshtein from 'fast-levenshtein';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { Word } from '@/types';
 import { normalizeDutchText } from '@/utils/text';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
 export default function PronunciationScreen() {
     const { wordId } = useLocalSearchParams<{ wordId: string }>();
@@ -29,13 +33,18 @@ export default function PronunciationScreen() {
     // Results State
     const [spokenText, setSpokenText] = useState('');
     const [accuracy, setAccuracy] = useState<number | null>(null);
-
-    // Audio Metering State
-    const [meterLevels, setMeterLevels] = useState<number[]>(Array(30).fill(0)); // 30 bars
-    const meterUpdateInterval = useRef<NodeJS.Timeout | null>(null);
+    const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+    const audioLevel = useSharedValue(0);
+    const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Animation values
-    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const pulseScale = useSharedValue(1);
+
+    const animatedRecordButtonStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: pulseScale.value }]
+        };
+    });
 
     // Load Word
     useEffect(() => {
@@ -65,100 +74,104 @@ export default function PronunciationScreen() {
         targetWordRef.current = targetWord;
     }, [targetWord]);
 
-    // Setup Voice API
-    useEffect(() => {
-        Voice.onSpeechStart = onSpeechStart;
-        Voice.onSpeechEnd = onSpeechEnd;
-        Voice.onSpeechError = onSpeechError;
-        Voice.onSpeechPartialResults = onSpeechPartialResults;
-        Voice.onSpeechResults = onSpeechResults;
-        Voice.onSpeechVolumeChanged = onSpeechVolumeChanged;
+    const resetSilenceTimeout = () => {
+        if (silenceTimeout.current) {
+            clearTimeout(silenceTimeout.current);
+        }
+        silenceTimeout.current = setTimeout(() => {
+            console.log('Silence detected, stopping recording automatically.');
+            stopRecording();
+        }, 3000);
+    };
 
-        return () => {
-            // cleanup
-            try { Voice.cancel() } catch (e) { }
-            Voice.removeAllListeners();
-            if (meterUpdateInterval.current) {
-                clearInterval(meterUpdateInterval.current);
+    // Setup Voice API
+    useSpeechRecognitionEvent('start', () => {
+        setIsRecording(true);
+        resetSilenceTimeout();
+    });
+
+    useSpeechRecognitionEvent('end', () => {
+        setIsRecording(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('error', (e) => {
+        console.error("Speech Error:", e.error, e.message);
+        setIsRecording(false);
+        setIsVoiceProcessing(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
+
+    useSpeechRecognitionEvent('result', (e) => {
+        resetSilenceTimeout();
+        if (e.results && e.results.length > 0) {
+            const transcript = e.results[0].transcript;
+            setSpokenText(transcript);
+            evaluatePronunciation(transcript);
+            
+            if (e.isFinal) {
+                setIsVoiceProcessing(false);
             }
+        }
+    });
+
+    useSpeechRecognitionEvent('volumechange', (e) => {
+        const normalizedLevel = Math.max(0.1, Math.min(1, (e.value + 2) / 12)); // Adjusted for -2 to 10 range
+        audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
+    });
+
+    useEffect(() => {
+        return () => {
+            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+            ExpoSpeechRecognitionModule.abort();
         };
     }, []);
-
-    const onSpeechStart = (e: any) => {
-        // Speech started
-    };
-
-    const onSpeechEnd = (e: any) => {
-        setIsRecording(false);
-    };
-
-    const onSpeechError = (e: SpeechErrorEvent) => {
-        console.error("Speech Error:", e.error);
-        setIsRecording(false);
-        stopPulseAnimation();
-    };
-
-    const onSpeechPartialResults = (e: SpeechResultsEvent) => {
-        if (e.value && e.value.length > 0) {
-            const transcript = e.value[0];
-            setSpokenText(transcript);
-            evaluatePronunciation(transcript);
-        }
-    };
-
-    const onSpeechResults = (e: SpeechResultsEvent) => {
-        if (e.value && e.value.length > 0) {
-            const transcript = e.value[0];
-            setSpokenText(transcript);
-            evaluatePronunciation(transcript);
-        }
-    };
-
-    const onSpeechVolumeChanged = (e: SpeechVolumeChangeEvent) => {
-        if (e.value !== undefined) {
-            // SpeechVolumeChangeEvent value is platform dependent.
-            // On iOS it's generally 0-10, on Android it might be different. Let's map it roughly to 0-1.
-            let normalized = Math.max(0, Math.min(1, e.value / 10));
-            setMeterLevels(prev => {
-                const next = [...prev];
-                next.shift();
-                next.push(normalized);
-                return next;
-            });
-        }
-    };
 
     const evaluatePronunciation = (transcript: string) => {
         const currentTarget = targetWordRef.current;
         if (!currentTarget) return;
 
-        // Clean up strings before compare by expanding digits to words
-        const cleanTarget = normalizeDutchText(currentTarget.dutch);
-        const cleanSpoken = normalizeDutchText(transcript);
+        // Clean up strings before compare
+        const cleanTarget = normalizeDutchText(currentTarget.dutch).toLowerCase().trim();
+        const cleanSpoken = normalizeDutchText(transcript).toLowerCase().trim();
 
-        const similarity = stringSimilarity.compareTwoStrings(cleanTarget, cleanSpoken);
-        setAccuracy(Math.round(similarity * 100));
+        // Use Levenshtein distance for accuracy calculation
+        const distance = levenshtein.get(cleanTarget, cleanSpoken);
+        const maxLen = Math.max(cleanTarget.length, cleanSpoken.length);
+        const accuracyScore = maxLen === 0 ? 100 : Math.round((1 - distance / maxLen) * 100);
+        
+        setAccuracy(Math.max(0, accuracyScore));
     };
 
     const startRecording = async () => {
         try {
             setSpokenText('');
             setAccuracy(null);
+            setIsVoiceProcessing(false);
 
-            // 1. Request AV permissions for Voice
-            const permission = await AudioModule.requestRecordingPermissionsAsync();
+            // 1. Request permissions
+            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
             if (!permission.granted) {
                 throw new Error('Microphone permission not granted');
             }
 
-            // Cancel any potentially hanging recognition softly, without removing event listeners
-            try { await Voice.cancel(); } catch (e) { }
-
             // 2. Start Native Voice Recognition (Targeting Dutch)
-            await Voice.start('nl-NL');
+            ExpoSpeechRecognitionModule.start({
+                lang: 'nl-NL',
+                interimResults: true,
+                volumeChangeEventOptions: { enabled: true }
+            });
 
-            setIsRecording(true);
-            startPulseAnimation();
+            pulseScale.value = withRepeat(
+                withSequence(
+                    withTiming(1.1, { duration: 500 }),
+                    withTiming(1, { duration: 500 })
+                ),
+                -1,
+                true
+            );
 
         } catch (err) {
             console.error('Failed to start recording', err);
@@ -167,17 +180,17 @@ export default function PronunciationScreen() {
 
     const stopRecording = async () => {
         setIsRecording(false);
-        stopPulseAnimation();
+        setIsVoiceProcessing(true);
+        pulseScale.value = withTiming(1);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
 
         try {
-            // Stop voice plugin
-            await Voice.stop();
-
-            // Reset meter bars to zero
-            setMeterLevels(Array(30).fill(0));
-
+            ExpoSpeechRecognitionModule.stop();
+            // Safety timeout
+            setTimeout(() => setIsVoiceProcessing(false), 5000);
         } catch (error) {
             console.error('Failed to stop recording', error);
+            setIsVoiceProcessing(false);
         }
     };
 
@@ -198,7 +211,6 @@ export default function PronunciationScreen() {
 
         setSpokenText('');
         setAccuracy(null);
-        setMeterLevels(Array(30).fill(0));
     };
 
     const handleBack = () => {
@@ -209,31 +221,9 @@ export default function PronunciationScreen() {
 
             setSpokenText('');
             setAccuracy(null);
-            setMeterLevels(Array(30).fill(0));
         }
     };
 
-    const startPulseAnimation = () => {
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, {
-                    toValue: 1.2,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(pulseAnim, {
-                    toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true,
-                })
-            ])
-        ).start();
-    };
-
-    const stopPulseAnimation = () => {
-        pulseAnim.stopAnimation();
-        pulseAnim.setValue(1);
-    };
 
     if (!targetWord) {
         return (
@@ -252,7 +242,7 @@ export default function PronunciationScreen() {
 
     // Determine feedback coloring
     let feedbackColor = theme.text;
-    let feedbackMessage = 'Hold to speak';
+    let feedbackMessage = 'Tap to speak';
     if (accuracy !== null) {
         if (accuracy > 80) {
             feedbackColor = '#28a745';
@@ -309,22 +299,9 @@ export default function PronunciationScreen() {
 
                 {/* Visualizer */}
                 <View style={styles.visualizerContainer}>
-                    {meterLevels.map((level, i) => {
-                        // Scale height based on level, minimum 4px
-                        const barHeight = Math.max(4, level * 80);
-                        return (
-                            <Animated.View
-                                key={i}
-                                style={[
-                                    styles.meterBar,
-                                    {
-                                        backgroundColor: isRecording ? theme.tint : theme.text + '20',
-                                        height: barHeight,
-                                    }
-                                ]}
-                            />
-                        );
-                    })}
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                        <WaveformBar key={i} index={i} audioLevel={audioLevel} theme={theme} isRecording={isRecording} />
+                    ))}
                 </View>
 
                 {/* Controls Area */}
@@ -334,20 +311,26 @@ export default function PronunciationScreen() {
                     </Pressable>
 
                     <Pressable
-                        onPressIn={startRecording}
-                        onPressOut={stopRecording}
+                        onPress={isRecording ? stopRecording : startRecording}
+                        disabled={isVoiceProcessing}
                     >
                         <Animated.View
                             style={[
                                 styles.recordButton,
                                 {
                                     backgroundColor: isRecording ? '#dc3545' : theme.tint,
-                                    transform: [{ scale: pulseAnim }],
                                     shadowColor: isRecording ? '#dc3545' : theme.tint,
-                                }
+                                },
+                                animatedRecordButtonStyle
                             ]}
                         >
-                            <Ionicons name="mic" size={48} color="#fff" />
+                            {isVoiceProcessing ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : isRecording ? (
+                                <Ionicons name="square" size={32} color="#fff" />
+                            ) : (
+                                <Ionicons name="mic" size={48} color="#fff" />
+                            )}
                         </Animated.View>
                     </Pressable>
 
@@ -457,3 +440,15 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
 });
+
+const WaveformBar = ({ index, audioLevel, theme, isRecording }: { index: number, audioLevel: any, theme: any, isRecording: boolean }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+        const offset = 0.6 + ((index % 3) * 0.2);
+        const heightScale = 1 + (audioLevel.value * 3 * offset);
+        return {
+            transform: [{ scaleY: withTiming(heightScale, { duration: 100 }) }],
+            opacity: withTiming(isRecording ? 0.3 + (audioLevel.value * 0.7) : 0.1, { duration: 100 })
+        };
+    });
+    return <Animated.View style={[styles.meterBar, { backgroundColor: theme.tint, height: 20 }, animatedStyle]} />;
+};

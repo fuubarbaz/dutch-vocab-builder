@@ -5,9 +5,13 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Mic, ArrowLeftRight, X, ChevronDown, Square } from 'lucide-react-native';
-import { translateText as performTranslation, isModelDownloaded, downloadModel, LANG_TAGS_TYPE } from 'react-native-mlkit-translate-text';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
+import { ArrowLeftRight, X, ChevronDown } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { AudioModule } from 'expo-audio';
+import { 
+  ExpoSpeechRecognitionModule, 
+  useSpeechRecognitionEvent 
+} from 'expo-speech-recognition';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
 export default function TranslateWordScreen() {
@@ -42,45 +46,42 @@ export default function TranslateWordScreen() {
         }, 3000);
     };
 
-    React.useEffect(() => {
-        Voice.onSpeechStart = () => {
-            setIsRecording(true);
-            resetSilenceTimeout();
-        };
-        Voice.onSpeechEnd = () => {
-            setIsRecording(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-        };
-        Voice.onSpeechError = (e: SpeechErrorEvent) => {
-            console.error('Speech recognition error:', e);
-            setIsRecording(false);
-            setIsVoiceProcessing(false);
-            if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-            audioLevel.value = withTiming(0);
-            if (e.error?.message !== '7/No match') {
-                Alert.alert('Voice Error', e.error?.message || 'Failed to process speech.');
-            }
-        };
-        Voice.onSpeechVolumeChanged = (e: SpeechVolumeChangeEvent) => {
-            // Animate waveform bars based on microphone pitch (0-10)
-            const normalizedLevel = Math.max(0.1, Math.min(1, (e.value || 0) / 10));
-            audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
-        };
-        Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
-            // User is actively speaking, reset the timeout
-            resetSilenceTimeout();
-            if (e.value && e.value.length > 0) {
-                setInputText(e.value[0]);
-            }
-        };
-        Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-            setIsVoiceProcessing(true);
+    useSpeechRecognitionEvent('start', () => {
+        setIsRecording(true);
+        resetSilenceTimeout();
+    });
 
-            if (e.value && e.value.length > 0) {
-                const text = e.value[0];
-                setInputText(text);
+    useSpeechRecognitionEvent('end', () => {
+        setIsRecording(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+    });
 
+    useSpeechRecognitionEvent('error', (e) => {
+        console.error('Speech recognition error:', e);
+        setIsRecording(false);
+        setIsVoiceProcessing(false);
+        if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+        audioLevel.value = withTiming(0);
+        if (e.error !== 'no-speech' && e.error !== 'aborted') {
+            Alert.alert('Voice Error', e.message || 'Failed to process speech.');
+        }
+    });
+
+    useSpeechRecognitionEvent('volumechange', (e) => {
+        // -2 to 10 range adjusted for normalization
+        const normalizedLevel = Math.max(0.1, Math.min(1, (e.value + 2) / 12));
+        audioLevel.value = withTiming(normalizedLevel, { duration: 100 });
+    });
+
+    useSpeechRecognitionEvent('result', (e) => {
+        resetSilenceTimeout();
+        if (e.results && e.results.length > 0) {
+            const text = e.results[0].transcript;
+            setInputText(text);
+
+            if (e.isFinal) {
+                setIsVoiceProcessing(true);
                 // Debounce translation so it only fires when intermediate results settle
                 if (translateTimeout.current) clearTimeout(translateTimeout.current);
                 translateTimeout.current = setTimeout(() => {
@@ -88,15 +89,15 @@ export default function TranslateWordScreen() {
                     translateTextManually(text, direction);
                     setIsVoiceProcessing(false);
                 }, 800);
-            } else {
-                setIsVoiceProcessing(false);
             }
-        };
+        }
+    });
 
+    React.useEffect(() => {
         return () => {
             if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
             if (translateTimeout.current) clearTimeout(translateTimeout.current);
-            Voice.removeAllListeners();
+            ExpoSpeechRecognitionModule.abort();
         };
     }, []);
 
@@ -119,27 +120,43 @@ export default function TranslateWordScreen() {
             setInputText('');
             setTranslatedText('');
 
-            // Cancel any potentially hanging recognition softly, without removing event listeners
-            try { await Voice.cancel(); } catch (e) { }
+            // 1. Request permissions
+            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+            if (!permission.granted) {
+                Alert.alert('Microphone Permission', 'Please enable microphone access to use voice translation.');
+                return;
+            }
 
-            // Use correct BCP-47 tags
+            // Force UI update immediately
+            setIsRecording(true);
+
+            // 2. Start Native Voice Recognition
             const locale = translationDirection === 'nl-en' ? 'nl-NL' : 'en-US';
-            await Voice.start(locale);
+            ExpoSpeechRecognitionModule.start({
+                lang: locale,
+                interimResults: true,
+                volumeChangeEventOptions: { enabled: true }
+            });
         } catch (e) {
             console.error('Failed to start recording:', e);
+            setIsRecording(false);
             Alert.alert('Microphone Error', 'Could not start speech recognition.');
         }
     };
 
     const stopRecordingAndProcess = async () => {
-        // Force UI update immediately so the button swaps
+        // Force transitions immediately
         setIsRecording(false);
+        setIsVoiceProcessing(true);
         if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
 
         try {
-            await Voice.stop();
+            ExpoSpeechRecognitionModule.stop();
+            // Safety timeout: if results never arrive, reset processing state after 5 seconds
+            setTimeout(() => setIsVoiceProcessing(false), 5000);
         } catch (e) {
             console.error('Failed to stop recording:', e);
+            setIsVoiceProcessing(false);
             audioLevel.value = withTiming(0);
         }
     };
@@ -158,16 +175,18 @@ export default function TranslateWordScreen() {
     const translateTextManually = async (text: string, langpair: string) => {
         setIsTranslating(true);
         try {
-            const sourceLang = langpair.split('|')[0] === 'en' ? 'ENGLISH' : 'DUTCH';
-            const targetLang = langpair.split('|')[1] === 'en' ? 'ENGLISH' : 'DUTCH';
-
-            // Start ML Kit translation (native module will download missing models automatically now)
-            const translated = await performTranslation(text, sourceLang as any, targetLang as any) as string;
-
-            setTranslatedText(translated);
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.responseData?.translatedText) {
+                setTranslatedText(data.responseData.translatedText);
+            } else {
+                Alert.alert('Translation Error', 'Could not translate the text.');
+            }
         } catch (error) {
-            console.error('Manual ML Kit translation error:', error);
-            Alert.alert('Translation Error', 'Could not translate the text locally.');
+            console.error('Manual translation error:', error);
+            Alert.alert('Translation Error', 'Could not translate the text.');
         } finally {
             setIsTranslating(false);
         }
@@ -178,15 +197,19 @@ export default function TranslateWordScreen() {
 
         setIsTranslating(true);
         try {
-            const sourceLang = translationDirection === 'en-nl' ? 'ENGLISH' : 'DUTCH';
-            const targetLang = translationDirection === 'en-nl' ? 'DUTCH' : 'ENGLISH';
-
-            const translated = await performTranslation(inputText, sourceLang as any, targetLang as any) as string;
-
-            setTranslatedText(translated);
+            const langpair = translationDirection === 'en-nl' ? 'en|nl' : 'nl|en';
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=${langpair}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.responseData?.translatedText) {
+                setTranslatedText(data.responseData.translatedText);
+            } else {
+                Alert.alert('Translation Error', 'Failed to translate using the online API.');
+            }
         } catch (error) {
-            console.error('ML Kit Translation error:', error);
-            Alert.alert('Translation Error', 'Failed to translate using the offline model.');
+            console.error('Translation error:', error);
+            Alert.alert('Translation Error', 'Failed to translate using the online API.');
         } finally {
             setIsTranslating(false);
         }
@@ -263,9 +286,9 @@ export default function TranslateWordScreen() {
                                 {isVoiceProcessing ? (
                                     <ActivityIndicator size="small" color={theme.primary} />
                                 ) : isRecording ? (
-                                    <Square size={20} color="#fff" fill="#fff" />
+                                    <Ionicons name="square" size={24} color="#fff" />
                                 ) : (
-                                    <Mic size={24} color={theme.primary} />
+                                    <Ionicons name="mic" size={28} color={theme.primary} />
                                 )}
                             </TouchableOpacity>
                         </View>

@@ -6,7 +6,7 @@ import { Link, useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -188,6 +188,22 @@ export default function CategoriesScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* AI Sentence Builder Banner */}
+      {!searchQuery && (
+        <TouchableOpacity 
+          style={[styles.aiBanner, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '30' }]} 
+          onPress={() => router.push('/sentence-builder' as any)}
+        >
+          <View style={[styles.aiIconContainer, { backgroundColor: theme.primary }]}>
+            <BrainCircuit size={20} color="#fff" />
+          </View>
+          <View style={styles.aiTextContainer}>
+            <Text style={[styles.aiTitle, { color: theme.text }]}>AI Sentence Builder</Text>
+            <Text style={[styles.aiDescription, { color: theme.text + '99' }]}>Learn grammar & practice creating sentences</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {searchQuery ? (
         <FlatList
           data={filteredWords}
@@ -311,5 +327,33 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  aiBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  aiIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  aiTextContainer: {
+    flex: 1,
+  },
+  aiTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  aiDescription: {
+    fontSize: 14,
   }
 });

@@ -2,7 +2,7 @@
   "expo": {
     "name": "dutch-vocab-builder",
     "slug": "dutch-vocab-builder",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "scheme": "dutchvocabbuilder",
@@ -41,18 +41,19 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0"
+            "deploymentTarget": "26.0"
           }
         }
       ],
       [
-        "@react-native-voice/voice",
+        "expo-speech-recognition",
         {
           "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to record your speech for pronunciation feedback.",
           "speechRecognitionPermission": "Allow Dutch Vocab Builder to securely transcribe your speech offline to provide pronunciation accuracy scores."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "./plugins/withIosLifecycleFix"
     ],
     "experiments": {
       "typedRoutes": true
