@@ -151,6 +151,15 @@ export default function PracticeScreen() {
                         <Text style={[styles.startText, { color: theme.tint, fontSize: 16 }]}>Sentences</Text>
                     </Pressable>
                 </View>
+
+                <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>AI Grammar Tools:</Text>
+                <Pressable
+                    style={[styles.startButton, { backgroundColor: '#8b5cf6', marginTop: 8 }]}
+                    onPress={() => router.push('/grammar-check' as any)}
+                >
+                    <Ionicons name="checkmark-done-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    <Text style={styles.startText}>Grammar Check</Text>
+                </Pressable>
             </View>
         </ScrollView>
     );
