@@ -1,6 +1,7 @@
 import ExpoModulesCore
 import WebKit
 import FoundationModels
+import Vision
 import UIKit
 
 public class DutchVocabAIModule: Module {
@@ -26,42 +27,71 @@ public class DutchVocabAIModule: Module {
     }
   }
 
-  // MARK: - Image Description with Apple Intelligence
+  // MARK: - Image Description with Vision + Apple Intelligence
 
   private func describeImageWithAI(base64Image: String) async -> String {
     guard let imageData = Data(base64Encoded: base64Image),
-          let uiImage = UIImage(data: imageData) else {
+          let uiImage = UIImage(data: imageData),
+          let cgImage = uiImage.cgImage else {
       return "ERROR: Could not process the image. Please try taking another photo."
     }
 
-    guard let cgImage = uiImage.cgImage else {
-      return "ERROR: Could not process the image format. Please try again."
+    // Step 1: Use Vision framework to classify objects on-device
+    let labels = await classifyImageWithVision(cgImage: cgImage)
+
+    if labels.isEmpty {
+      return describeImageFallback()
     }
 
+    // Step 2: Use FoundationModels to generate Dutch vocabulary from Vision labels
+    return await generateDutchVocabFromLabels(labels: labels)
+  }
+
+  private func classifyImageWithVision(cgImage: CGImage) async -> [String] {
+    return await withCheckedContinuation { continuation in
+      let request = VNClassifyImageRequest { request, error in
+        guard error == nil,
+              let observations = request.results as? [VNClassificationObservation] else {
+          continuation.resume(returning: [])
+          return
+        }
+
+        let labels = observations
+          .filter { $0.confidence > 0.3 }
+          .prefix(6)
+          .map { $0.identifier.replacingOccurrences(of: "_", with: " ") }
+
+        continuation.resume(returning: Array(labels))
+      }
+
+      let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+      try? handler.perform([request])
+    }
+  }
+
+  private func generateDutchVocabFromLabels(labels: [String]) async -> String {
     do {
       let session = LanguageModelSession()
+      let labelsList = labels.joined(separator: ", ")
 
       let prompt = """
-      You are a Dutch language learning assistant. Look at this image and:
-      1. Identify the main objects, people, or scenes visible
-      2. For each item, provide the Dutch word with its article (de/het) and the English translation
-      3. Write a short Dutch sentence describing the image
-      4. Provide the English translation of that sentence
+      You are a Dutch language learning assistant. The following objects or concepts were detected in a photo: \(labelsList).
+
+      For each item, provide the Dutch word with its article (de/het) and the English word.
+      Then write one short Dutch sentence describing a scene with these objects and its English translation.
 
       Format your response exactly like this:
       OBJECTS:
-      - het/de [Dutch word] ([English word])
-      - het/de [Dutch word] ([English word])
+      - de/het [Dutch word] ([English word])
 
       SENTENCE:
-      [Dutch sentence describing the image]
+      [Dutch sentence]
 
       TRANSLATION:
-      [English translation of the sentence]
+      [English translation]
       """
 
-      let image = ImageContent.jpeg(cgImage)
-      let response = try await session.respond(to: [image, prompt])
+      let response = try await session.respond(to: prompt)
       return response.content
     } catch {
       return describeImageFallback()
