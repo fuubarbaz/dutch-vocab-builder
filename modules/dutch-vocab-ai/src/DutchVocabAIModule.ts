@@ -4,6 +4,7 @@ import { DutchVocabAIModuleEvents } from './DutchVocabAI.types';
 
 declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   generateTextAsync(prompt: string): Promise<string>;
+  describeImageAsync(base64Image: string): Promise<string>;
 }
 
 /**
@@ -75,6 +76,10 @@ function grammarCheckFallback(prompt: string): string {
   return `CORRECT\n\nYour sentence "${userSentence}" appears to be structurally valid. For a more detailed grammar analysis, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device).`;
 }
 
+async function describeImageAsyncFallback(_base64Image: string): Promise<string> {
+  return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions with object detection, build and run on a supported iOS 26+ device with Apple Intelligence.";
+}
+
 let moduleToExport: DutchVocabAIModule;
 
 try {
@@ -89,6 +94,7 @@ try {
   // Provide a functional JS fallback so the feature works even without the native module
   moduleToExport = {
     generateTextAsync: generateTextAsyncFallback,
+    describeImageAsync: describeImageAsyncFallback,
     addListener: () => ({ remove: () => {} }),
     removeAllListeners: () => {},
   } as unknown as DutchVocabAIModule;

@@ -152,14 +152,24 @@ export default function PracticeScreen() {
                     </Pressable>
                 </View>
 
-                <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>AI Grammar Tools:</Text>
-                <Pressable
-                    style={[styles.startButton, { backgroundColor: '#8b5cf6', marginTop: 8 }]}
-                    onPress={() => router.push('/grammar-check' as any)}
-                >
-                    <Ionicons name="checkmark-done-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                    <Text style={styles.startText}>Grammar Check</Text>
-                </Pressable>
+                <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>AI-Powered Tools:</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <Pressable
+                        style={[styles.startButton, { flex: 1, backgroundColor: '#8b5cf6', marginTop: 8 }]}
+                        onPress={() => router.push('/grammar-check' as any)}
+                    >
+                        <Ionicons name="checkmark-done-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={[styles.startText, { fontSize: 16 }]}>Grammar</Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={[styles.startButton, { flex: 1, backgroundColor: '#f59e0b', marginTop: 8 }]}
+                        onPress={() => router.push('/visual-vocab' as any)}
+                    >
+                        <Ionicons name="camera-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={[styles.startText, { fontSize: 16 }]}>Visual Vocab</Text>
+                    </Pressable>
+                </View>
             </View>
         </ScrollView>
     );

@@ -1,19 +1,21 @@
 import ExpoModulesCore
 import WebKit
 import FoundationModels
+import UIKit
 
 public class DutchVocabAIModule: Module {
   public func definition() -> ModuleDefinition {
     Name("DutchVocabAI")
 
     AsyncFunction("generateTextAsync") { (prompt: String) -> String in
-      // Use Apple Intelligence on-device foundation model for grammar checking
       if prompt.lowercased().contains("[grammar-check]") {
         return await self.checkGrammarWithAI(prompt: prompt)
       }
-
-      // Existing sentence builder logic (keyword matching)
       return self.evaluateSentenceBuilder(prompt: prompt)
+    }
+
+    AsyncFunction("describeImageAsync") { (base64Image: String) -> String in
+      return await self.describeImageWithAI(base64Image: base64Image)
     }
 
     View(DutchVocabAIView.self) {
@@ -23,6 +25,54 @@ public class DutchVocabAIModule: Module {
       Events("onLoad")
     }
   }
+
+  // MARK: - Image Description with Apple Intelligence
+
+  private func describeImageWithAI(base64Image: String) async -> String {
+    guard let imageData = Data(base64Encoded: base64Image),
+          let uiImage = UIImage(data: imageData) else {
+      return "ERROR: Could not process the image. Please try taking another photo."
+    }
+
+    guard let cgImage = uiImage.cgImage else {
+      return "ERROR: Could not process the image format. Please try again."
+    }
+
+    do {
+      let session = LanguageModelSession()
+
+      let prompt = """
+      You are a Dutch language learning assistant. Look at this image and:
+      1. Identify the main objects, people, or scenes visible
+      2. For each item, provide the Dutch word with its article (de/het) and the English translation
+      3. Write a short Dutch sentence describing the image
+      4. Provide the English translation of that sentence
+
+      Format your response exactly like this:
+      OBJECTS:
+      - het/de [Dutch word] ([English word])
+      - het/de [Dutch word] ([English word])
+
+      SENTENCE:
+      [Dutch sentence describing the image]
+
+      TRANSLATION:
+      [English translation of the sentence]
+      """
+
+      let image = ImageContent.jpeg(cgImage)
+      let response = try await session.respond(to: [image, prompt])
+      return response.content
+    } catch {
+      return describeImageFallback()
+    }
+  }
+
+  private func describeImageFallback() -> String {
+    return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device)."
+  }
+
+  // MARK: - Grammar Check with Apple Intelligence
 
   private func checkGrammarWithAI(prompt: String) async -> String {
     do {
@@ -41,7 +91,6 @@ public class DutchVocabAIModule: Module {
       Keep your explanation concise (2-4 sentences). Always respond in English.
       """
 
-      // Extract the user sentence from the prompt
       let components = prompt.components(separatedBy: "\"")
       let userSentence = components.count > 1
         ? components[1].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -51,7 +100,6 @@ public class DutchVocabAIModule: Module {
       let response = try await session.respond(to: fullPrompt)
       return response.content
     } catch {
-      // Fall back to basic keyword analysis if on-device model is unavailable
       return self.basicGrammarFallback(prompt: prompt)
     }
   }
@@ -74,6 +122,8 @@ public class DutchVocabAIModule: Module {
 
     return "CORRECT\n\nYour sentence appears to be structurally valid. For a more detailed analysis, please ensure Apple Intelligence is available on your device (requires iOS 26+ with a supported device)."
   }
+
+  // MARK: - Sentence Builder Evaluation
 
   private func evaluateSentenceBuilder(prompt: String) -> String {
     let lowerPrompt = prompt.lowercased()
