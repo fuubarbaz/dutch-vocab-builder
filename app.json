@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "dutch-vocab-builder",
-    "slug": "dutch-vocab-builder",
+    "name": "Dutchify",
+    "slug": "dutchify",
     "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
-    "scheme": "dutchvocabbuilder",
+    "scheme": "dutchify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dutchvocabbuilder.app",
+      "bundleIdentifier": "com.dutchify.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Allow Dutch Vocab Builder to access your photos so you can attach custom images to your flashcards."
+        "NSPhotoLibraryUsageDescription": "Allow Dutchify to access your photos so you can attach custom images to your flashcards."
       }
     },
     "android": {
@@ -28,7 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.dutchvocabbuilder.app"
+      "package": "com.dutchify.app"
     },
     "web": {
       "bundler": "metro",
@@ -48,8 +48,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to record your speech for pronunciation feedback.",
-          "speechRecognitionPermission": "Allow Dutch Vocab Builder to securely transcribe your speech offline to provide pronunciation accuracy scores."
+          "microphonePermission": "Allow Dutchify to access your microphone to record your speech for pronunciation feedback.",
+          "speechRecognitionPermission": "Allow Dutchify to securely transcribe your speech offline to provide pronunciation accuracy scores."
         }
       ],
       "expo-audio",

@@ -1,6 +1,6 @@
 # App Support
 
-Thank you for using Dutch Vocab Builder!
+Thank you for using Dutchify!
 
 ## Frequently Asked Questions
 

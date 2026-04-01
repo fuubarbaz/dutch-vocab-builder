@@ -1,10 +1,10 @@
-# Privacy Policy for Dutch Vocab Builder
+# Privacy Policy for Dutchify
 
 **Last updated:** October 26, 2023
 
 ## Introduction
 
-This Privacy Policy describes how "Dutch Vocab Builder" ("we", "us", or "our") handles your data. We are committed to protecting your privacy.
+This Privacy Policy describes how "Dutchify" ("we", "us", or "our") handles your data. We are committed to protecting your privacy.
 
 ## Data Collection and Use
 

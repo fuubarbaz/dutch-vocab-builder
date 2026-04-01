@@ -13,7 +13,7 @@ export const useVersionCheck = () => {
                 if (updateNeeded && updateNeeded.isNeeded) {
                     Alert.alert(
                         'Update Available',
-                        'A new version of Dutch Vocab Builder is available! Update now to get the latest features.',
+                        'A new version of Dutchify is available! Update now to get the latest features.',
                         [
                             {
                                 text: 'Update Now',
