@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, Text, View, Alert, Pressable, Platform } from 'react-native';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import Colors from '@/constants/Colors';
+import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Trash2, CheckCircle2, Circle } from 'lucide-react-native';
+import { Trash2, CheckCircle2, Circle, Heart, X } from 'lucide-react-native';
 
 export default function FavoritesScreen() {
   const { favorites, toggleFavorite, clearFavorites, removeFavorites } = useFavorites();
@@ -13,7 +13,6 @@ export default function FavoritesScreen() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  // Flatten words and filter by favorites
   const favoriteWords = VOCABULARY_DATA
     .flatMap((cat) => cat.words)
     .filter((word) => favorites.includes(word.id));
@@ -40,22 +39,22 @@ export default function FavoritesScreen() {
   const exitSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedIds([]);
-  }
+  };
 
   const handleDeleteSelected = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm(`Remove ${selectedIds.length} items from favorites?`)) {
+      if (window.confirm(`Remove ${selectedIds.length} items from saved?`)) {
         removeFavorites(selectedIds);
         exitSelectionMode();
       }
     } else {
       Alert.alert(
-        'Delete Selected',
-        `Remove ${selectedIds.length} items from favorites?`,
+        'Remove Selected',
+        `Remove ${selectedIds.length} items from saved?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
-            text: 'Delete', style: 'destructive', onPress: async () => {
+            text: 'Remove', style: 'destructive', onPress: async () => {
               await removeFavorites(selectedIds);
               exitSelectionMode();
             }
@@ -63,119 +62,125 @@ export default function FavoritesScreen() {
         ]
       );
     }
-  }
+  };
 
   const handleClearAll = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm('Are you sure you want to remove all favorites?')) {
+      if (window.confirm('Remove all saved words?')) {
         clearFavorites();
       }
     } else {
       Alert.alert(
-        'Delete All Favorites',
-        'Are you sure you want to remove all favorites?',
+        'Remove All',
+        'Remove all saved words?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: clearFavorites },
+          { text: 'Remove All', style: 'destructive', onPress: clearFavorites },
         ]
       );
     }
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {favoriteWords.length === 0 ? (
+  if (favoriteWords.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.text }]}>No favorites yet.</Text>
-          <Text style={[styles.emptySubText, { color: theme.text + '99' }]}>
-            Swipe right on flashcards to add them here.
+          <View style={[styles.emptyIcon, { backgroundColor: theme.accentLight }]}>
+            <Heart size={32} color={theme.accent} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>No saved words yet</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
+            Double-tap flashcards to save them here for quick review.
           </Text>
         </View>
-      ) : (
-        <>
-          <View style={styles.headerActions}>
-            {isSelectionMode ? (
-              <View style={styles.selectionHeader}>
-                <TouchableOpacity onPress={exitSelectionMode} style={styles.cancelButton}>
-                  <Text style={{ color: theme.text }}>Cancel</Text>
-                </TouchableOpacity>
+      </View>
+    );
+  }
 
-                <Text style={{ color: theme.text, fontWeight: 'bold' }}>{selectedIds.length} Selected</Text>
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header bar */}
+      <View style={[styles.headerBar, { borderBottomColor: theme.divider }]}>
+        {isSelectionMode ? (
+          <>
+            <TouchableOpacity onPress={exitSelectionMode} style={styles.headerAction}>
+              <X size={20} color={theme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.headerCount, { color: theme.text }]}>
+              {selectedIds.length} selected
+            </Text>
+            <TouchableOpacity
+              onPress={handleDeleteSelected}
+              disabled={selectedIds.length === 0}
+              style={{ opacity: selectedIds.length === 0 ? 0.3 : 1 }}
+            >
+              <Text style={[styles.headerActionText, { color: theme.danger }]}>Remove</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.headerInfo, { color: theme.textSecondary }]}>
+              {favoriteWords.length} {favoriteWords.length === 1 ? 'word' : 'words'}
+            </Text>
+            <TouchableOpacity onPress={handleClearAll}>
+              <Text style={[styles.headerActionText, { color: theme.danger }]}>Clear All</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
 
-                <TouchableOpacity
-                  onPress={handleDeleteSelected}
-                  disabled={selectedIds.length === 0}
-                  style={[styles.actionButton, { backgroundColor: theme.danger, opacity: selectedIds.length === 0 ? 0.5 : 1 }]}
-                >
-                  <Text style={styles.buttonText}>Delete Selected</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.defaultHeader}>
-                <Text style={{ color: theme.text + '80', fontStyle: 'italic', fontSize: 12 }}>Long press to select items</Text>
-                <TouchableOpacity
-                  onPress={handleClearAll}
-                  style={[styles.actionButton, { backgroundColor: theme.danger }]}
-                >
-                  <Text style={styles.buttonText}>Delete All</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+      <FlatList
+        data={favoriteWords}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => {
+          const isSelected = selectedIds.includes(item.id);
+          return (
+            <Pressable
+              onLongPress={() => handleLongPress(item.id)}
+              onPress={() => handlePress(item.id)}
+              delayLongPress={300}
+              style={[
+                styles.card,
+                { backgroundColor: theme.cardBackground },
+                isSelected && { backgroundColor: theme.primary + '08' },
+              ]}
+            >
+              {isSelectionMode && (
+                <View style={styles.checkbox}>
+                  {isSelected ? (
+                    <CheckCircle2 size={22} color={theme.primary} />
+                  ) : (
+                    <Circle size={22} color={theme.border} />
+                  )}
+                </View>
+              )}
 
-          <FlatList
-            data={favoriteWords}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => {
-              const isSelected = selectedIds.includes(item.id);
-              return (
-                <Pressable
-                  onLongPress={() => handleLongPress(item.id)}
-                  onPress={() => handlePress(item.id)}
-                  delayLongPress={300}
-                  style={[
-                    styles.card,
-                    {
-                      backgroundColor: theme.cardBackground,
-                      shadowColor: theme.text,
-                      borderColor: isSelected ? theme.primary : 'transparent',
-                      borderWidth: 2
-                    }
-                  ]}
-                >
-                  <View style={styles.cardContent}>
-                    {isSelectionMode && (
-                      <View style={styles.checkboxContainer}>
-                        {isSelected ?
-                          <CheckCircle2 size={24} color={theme.primary} /> :
-                          <Circle size={24} color={theme.text + '40'} />
-                        }
-                      </View>
-                    )}
-
-                    <View style={{ flex: 1 }}>
-                      <View style={styles.cardHeader}>
-                        <Text style={[styles.dutch, { color: theme.primary }]}>{item.dutch}</Text>
-                        {!isSelectionMode && (
-                          <TouchableOpacity onPress={() => toggleFavorite(item.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                            <Trash2 size={20} color={theme.danger} />
-                          </TouchableOpacity>
-                        )}
-                      </View>
-
-                      <Text style={[styles.english, { color: theme.text }]}>{item.english}</Text>
-                      <View style={styles.divider} />
-                      <Text style={[styles.example, { color: theme.text + '99' }]}>{item.exampleDutch}</Text>
-                      <Text style={[styles.exampleTranslation, { color: theme.text + '60' }]}>{item.exampleEnglish}</Text>
-                    </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.dutch, { color: theme.primary }]}>{item.dutch}</Text>
+                  {!isSelectionMode && (
+                    <TouchableOpacity
+                      onPress={() => toggleFavorite(item.id)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Trash2 size={18} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text style={[styles.english, { color: theme.text }]}>{item.english}</Text>
+                {item.exampleDutch ? (
+                  <View style={[styles.exampleBlock, { backgroundColor: theme.surfaceSecondary }]}>
+                    <Text style={[styles.example, { color: theme.text }]}>{item.exampleDutch}</Text>
+                    <Text style={[styles.exampleTranslation, { color: theme.textSecondary }]}>{item.exampleEnglish}</Text>
                   </View>
-                </Pressable>
-              )
-            }}
-          />
-        </>
-      )}
+                ) : null}
+              </View>
+            </Pressable>
+          );
+        }}
+      />
     </View>
   );
 }
@@ -184,42 +189,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  list: {
-    padding: 16,
-    gap: 12,
-  },
+  // Empty state
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: Spacing.xxxl,
   },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: BorderRadius.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
   },
-  emptySubText: {
-    fontSize: 16,
+  emptyTitle: {
+    fontSize: FontSize.title3,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.sm,
+  },
+  emptySubtitle: {
+    fontSize: FontSize.subhead,
     textAlign: 'center',
+    lineHeight: 22,
+  },
+  // Header bar
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerAction: {
+    padding: Spacing.xs,
+  },
+  headerCount: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
+  },
+  headerInfo: {
+    fontSize: FontSize.footnote,
+  },
+  headerActionText: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.medium,
+  },
+  // List
+  list: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   card: {
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  cardContent: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
     flexDirection: 'row',
-    padding: 16,
-    alignItems: 'flex-start',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: { elevation: 1 },
+    }),
   },
-  checkboxContainer: {
-    marginRight: 12,
-    justifyContent: 'center',
-    marginTop: 4,
+  checkbox: {
+    marginRight: Spacing.md,
+    marginTop: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -228,55 +267,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dutch: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   english: {
-    fontSize: 16,
-    marginBottom: 12,
+    fontSize: FontSize.subhead,
+    marginBottom: Spacing.md,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#ccc',
-    opacity: 0.2,
-    marginBottom: 12,
+  exampleBlock: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
   },
   example: {
-    fontSize: 14,
+    fontSize: FontSize.footnote,
     fontStyle: 'italic',
     marginBottom: 2,
   },
   exampleTranslation: {
-    fontSize: 14,
+    fontSize: FontSize.footnote,
   },
-  headerActions: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  defaultHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: 8,
-    borderRadius: 8,
-  },
-  actionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  cancelButton: {
-    padding: 8,
-  }
 });
