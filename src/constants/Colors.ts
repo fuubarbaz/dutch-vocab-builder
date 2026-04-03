@@ -1,5 +1,5 @@
 /**
- * Premium Design System
+ * Dutchify Design System
  * Inspired by: Duolingo (gamification), Headspace (calm clarity), Apple HIG (native feel)
  * Palette: Dutch Royal Blue + Warm Amber on soft neutral backgrounds
  */

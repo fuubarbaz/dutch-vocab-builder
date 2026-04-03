@@ -1,6 +1,6 @@
 # Google Play Store Publishing Guide
 
-This guide walks you through publishing **Dutch Vocab Builder** to the Google Play Store.
+This guide walks you through publishing **Dutchify** to the Google Play Store.
 
 ## 1. Prerequisites
 - **Google Play Developer Account**: You need an account ($25 one-time fee). [Sign up here](https://play.google.com/console/signup).
@@ -20,7 +20,7 @@ We will use EAS Build to create the production binary.
 1.  Go to [Google Play Console](https://play.google.com/console).
 2.  Click **Create app**.
 3.  **App Details**:
-    - **App Name**: Dutch Vocab Builder
+    - **App Name**: Dutchify
     - **Default Language**: English (or Dutch)
     - **App or Game**: App
     - **Free or Paid**: Free
@@ -30,7 +30,7 @@ We will use EAS Build to create the production binary.
 You will see a "Dashboard" with steps to get your app ready.
 
 ### A. Main Store Listing
-- **App Name**: Dutch Vocab Builder
+- **App Name**: Dutchify
 - **Short Description**: Learn Dutch vocabulary with flashcards and audio.
 - **Full Description**: (Describe your features: Search, Audio Speed, Import CSV, etc.)
 - **Graphics**:

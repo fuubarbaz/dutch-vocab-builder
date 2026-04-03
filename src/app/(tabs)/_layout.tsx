@@ -62,7 +62,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Learn',
-          headerTitle: 'Dutch Vocab Builder',
+          headerTitle: 'Dutchify',
           headerTitleStyle: {
             fontSize: 20,
             fontWeight: '700',
