@@ -66,7 +66,7 @@ export default function TabLayout() {
           headerTitleStyle: {
             fontSize: 20,
             fontWeight: '700',
-            color: theme.text,
+            color: theme.primary,
           },
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'book' : 'book-outline'} color={color} />
