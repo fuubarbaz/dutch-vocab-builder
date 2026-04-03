@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "dutch-vocab-builder",
+    "name": "Dutchify",
     "slug": "dutch-vocab-builder",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
-    "scheme": "dutchvocabbuilder",
+    "scheme": "dutchify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -18,7 +18,8 @@
       "bundleIdentifier": "com.dutchvocabbuilder.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Allow Dutch Vocab Builder to access your photos so you can attach custom images to your flashcards."
+        "NSPhotoLibraryUsageDescription": "Allow Dutchify to access your photos to identify objects and learn their Dutch names.",
+        "NSCameraUsageDescription": "Allow Dutchify to use your camera to take photos of objects and learn their Dutch names."
       }
     },
     "android": {
@@ -48,11 +49,18 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow Dutch Vocab Builder to access your microphone to record your speech for pronunciation feedback.",
-          "speechRecognitionPermission": "Allow Dutch Vocab Builder to securely transcribe your speech offline to provide pronunciation accuracy scores."
+          "microphonePermission": "Allow Dutchify to access your microphone to record your speech for pronunciation feedback.",
+          "speechRecognitionPermission": "Allow Dutchify to securely transcribe your speech offline to provide pronunciation accuracy scores."
         }
       ],
       "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Dutchify to use your camera to take photos of objects and learn their Dutch names.",
+          "photosPermission": "Allow Dutchify to access your photos to identify objects and learn their Dutch names."
+        }
+      ],
       "./plugins/withIosLifecycleFix"
     ],
     "experiments": {

@@ -1,13 +1,14 @@
 import React from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, Text, View, TextInput } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, Text, View, TextInput, Platform } from 'react-native';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useSettings } from '@/context/SettingsContext';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import Colors from '@/constants/Colors';
+import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit, ChevronRight, Sparkles } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
+import Svg, { Circle as SvgCircle } from 'react-native-svg';
 
 const iconMap: Record<string, LucideIcon> = {
   'Hand': Hand,
@@ -27,6 +28,47 @@ const iconMap: Record<string, LucideIcon> = {
   'Octagon': Octagon,
 };
 
+// Compact progress ring component
+function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progress: number; size?: number; strokeWidth?: number; color: string }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
+        <SvgCircle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color + '20'}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+        />
+        <SvgCircle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={`${circumference}`}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+        />
+      </Svg>
+      <Text style={{
+        position: 'absolute',
+        fontSize: 10,
+        fontWeight: FontWeight.semibold,
+        color: color,
+      }}>
+        {progress}%
+      </Text>
+    </View>
+  );
+}
+
 export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -39,7 +81,6 @@ export default function CategoriesScreen() {
     await speak(text, speechRate);
   };
 
-  // 1. Merge Data (Categories + Custom)
   const mergedData = React.useMemo(() => {
     const data = VOCABULARY_DATA.map(category => {
       const categoryCustomWords = customWords.filter(cw => cw.categoryId === category.id);
@@ -54,9 +95,9 @@ export default function CategoriesScreen() {
       data.push({
         id: 'imported',
         title: 'Imported Words',
-        titleDutch: 'Geïmporteerde Woorden',
+        titleDutch: 'Geimporteerde Woorden',
         description: 'Words added from CSV',
-        iconName: 'Upload', // Matches Lucide icon
+        iconName: 'Upload',
         words: importedWords
       });
     }
@@ -64,7 +105,6 @@ export default function CategoriesScreen() {
     return data;
   }, [customWords]);
 
-  // Helper to recursively get all words from a category and its subcategories
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
     if (category.subCategories) {
@@ -75,7 +115,6 @@ export default function CategoriesScreen() {
     return words;
   }, []);
 
-  // 2. Flatten for Search
   const [allWords, setAllWords] = React.useState<any[]>([]);
   React.useEffect(() => {
     const flattened: any[] = [];
@@ -88,7 +127,6 @@ export default function CategoriesScreen() {
     setAllWords(flattened);
   }, [mergedData, getAllWords]);
 
-  // 3. Filter Logic
   const filteredWords = React.useMemo(() => {
     if (!searchQuery) return [];
     const lower = searchQuery.toLowerCase();
@@ -98,111 +136,111 @@ export default function CategoriesScreen() {
     );
   }, [searchQuery, allWords]);
 
-  // Render Category Item
   const renderCategoryItem = ({ item }: { item: typeof VOCABULARY_DATA[0] }) => {
     const Icon = iconMap[item.iconName] || Book;
+    const allCatWords = getAllWords(item);
+    const learnedCount = allCatWords.filter(word => learnedIds.includes(word.id)).length;
+    const totalCount = allCatWords.length;
+    const percentage = totalCount > 0 ? Math.round((learnedCount / totalCount) * 100) : 0;
+    const remainingCount = totalCount - learnedCount;
 
     return (
       <TouchableOpacity
-        style={[
-          styles.card,
-          {
-            backgroundColor: colorScheme === 'light' ? '#f3f4f6' : theme.cardBackground,
-          },
-        ]}
+        style={[styles.card, { backgroundColor: theme.cardBackground }]}
         onPress={() => router.push(`/category/${item.id}`)}
+        activeOpacity={0.7}
       >
-        <View style={[styles.iconContainer, { backgroundColor: theme.primary + '20' }]}>
-          <Icon size={24} color={theme.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: theme.primary + '10' }]}>
+          <Icon size={22} color={theme.primary} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: theme.text }]}>{item.title} / {item.titleDutch}</Text>
-          <Text style={[styles.description, { color: theme.text + '99' }]}>{item.description}</Text>
+          <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
+            {item.titleDutch} · {remainingCount} left
+          </Text>
         </View>
-        <View style={styles.countContainer}>
-          {(() => {
-            const allCatWords = getAllWords(item);
-            const learnedCount = allCatWords.filter(word => learnedIds.includes(word.id)).length;
-            const totalCount = allCatWords.length;
-            const remainingCount = totalCount - learnedCount;
-            const percentage = totalCount > 0 ? Math.round((learnedCount / totalCount) * 100) : 0;
-
-            return (
-              <>
-                <Text style={[styles.count, { color: theme.text + '60' }]}>
-                  {remainingCount} {remainingCount === 1 ? 'flash card' : 'flash cards'}
-                </Text>
-                {learnedCount > 0 && (
-                  <Text style={[styles.learnedCount, { color: theme.primary }]}>
-                    {percentage}% complete
-                  </Text>
-                )}
-              </>
-            );
-          })()}
-        </View>
+        {percentage > 0 ? (
+          <ProgressRing progress={percentage} color={theme.success} />
+        ) : (
+          <ChevronRight size={18} color={theme.textSecondary} />
+        )}
       </TouchableOpacity>
     );
   };
 
-  // Render Search Result Item
   const renderSearchItem = ({ item }: { item: any }) => (
-    <View style={[styles.searchResultCard, { backgroundColor: theme.cardBackground }]}>
+    <TouchableOpacity
+      style={[styles.searchResultCard, { backgroundColor: theme.cardBackground }]}
+      onPress={() => playAudio(item.dutch)}
+      activeOpacity={0.7}
+    >
       <View style={{ flex: 1 }}>
         <Text style={[styles.searchResultDutch, { color: theme.text }]}>{item.dutch}</Text>
-        <Text style={[styles.searchResultEnglish, { color: theme.text + '80' }]}>{item.english}</Text>
+        <Text style={[styles.searchResultEnglish, { color: theme.textSecondary }]}>{item.english}</Text>
         <Text style={[styles.searchResultCategory, { color: theme.primary }]}>{item.categoryTitle}</Text>
       </View>
-      <TouchableOpacity onPress={() => playAudio(item.dutch)} style={{ padding: 8 }}>
-        <Volume2 size={24} color={theme.primary} />
+      <Volume2 size={20} color={theme.primary} />
+    </TouchableOpacity>
+  );
+
+  const ListHeader = () => (
+    <>
+      {/* AI Sentence Builder Banner */}
+      <TouchableOpacity
+        style={[styles.aiBanner, { backgroundColor: theme.primary }]}
+        onPress={() => router.push('/sentence-builder' as any)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.aiBannerContent}>
+          <View style={styles.aiBannerIcon}>
+            <Sparkles size={20} color="#FFFFFF" />
+          </View>
+          <View style={styles.aiBannerText}>
+            <Text style={styles.aiBannerTitle}>AI Sentence Builder</Text>
+            <Text style={styles.aiBannerSubtitle}>Practice grammar with intelligent feedback</Text>
+          </View>
+        </View>
+        <ChevronRight size={18} color="rgba(255,255,255,0.6)" />
       </TouchableOpacity>
-    </View>
+
+      {/* Import button - subtle */}
+      <TouchableOpacity
+        style={[styles.importRow, { borderColor: theme.border }]}
+        onPress={() => router.push('/import')}
+        activeOpacity={0.7}
+      >
+        <Upload size={16} color={theme.textSecondary} />
+        <Text style={[styles.importText, { color: theme.textSecondary }]}>Import words from CSV</Text>
+        <ChevronRight size={16} color={theme.textSecondary} />
+      </TouchableOpacity>
+
+      {/* Section header */}
+      <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>CATEGORIES</Text>
+    </>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        {/* Search Bar */}
-        <View style={[styles.searchBar, { backgroundColor: theme.cardBackground }]}>
-          <View style={{ marginRight: 10 }}>
-            {/* Placeholder Icon */}
-            <Search size={20} color={theme.text + '60'} />
-          </View>
+      {/* Search Bar */}
+      <View style={[styles.searchBarContainer, { backgroundColor: theme.background }]}>
+        <View style={[styles.searchBar, { backgroundColor: theme.surfaceSecondary }]}>
+          <Search size={18} color={theme.textSecondary} />
           <TextInput
             placeholder="Search words..."
-            placeholderTextColor={theme.text + '60'}
+            placeholderTextColor={theme.textSecondary}
             style={[styles.searchInput, { color: theme.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={20} color={theme.text + '60'} />
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
+              <X size={18} color={theme.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
-
-        <TouchableOpacity style={[styles.importButton, { backgroundColor: theme.primary }]} onPress={() => router.push('/import')}>
-          <Upload size={16} color="#fff" />
-          <Text style={styles.importButtonText}>Import CSV</Text>
-        </TouchableOpacity>
       </View>
-
-      {/* AI Sentence Builder Banner */}
-      {!searchQuery && (
-        <TouchableOpacity 
-          style={[styles.aiBanner, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '30' }]} 
-          onPress={() => router.push('/sentence-builder' as any)}
-        >
-          <View style={[styles.aiIconContainer, { backgroundColor: theme.primary }]}>
-            <BrainCircuit size={20} color="#fff" />
-          </View>
-          <View style={styles.aiTextContainer}>
-            <Text style={[styles.aiTitle, { color: theme.text }]}>AI Sentence Builder</Text>
-            <Text style={[styles.aiDescription, { color: theme.text + '99' }]}>Learn grammar & practice creating sentences</Text>
-          </View>
-        </TouchableOpacity>
-      )}
 
       {searchQuery ? (
         <FlatList
@@ -211,7 +249,11 @@ export default function CategoriesScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 20, color: theme.text + '60' }}>No words found.</Text>
+            <View style={styles.emptySearch}>
+              <Text style={[styles.emptySearchText, { color: theme.textSecondary }]}>
+                No words found for "{searchQuery}"
+              </Text>
+            </View>
           }
         />
       ) : (
@@ -220,6 +262,8 @@ export default function CategoriesScreen() {
           renderItem={renderCategoryItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={ListHeader}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -230,130 +274,148 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  list: {
-    padding: 16,
-    gap: 16,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-  },
-  countContainer: {
-    alignItems: 'flex-end',
-  },
-  count: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  learnedCount: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  header: {
-    padding: 16,
-    paddingBottom: 0,
-    gap: 12,
+  searchBarContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 50, // Fixed height for better touch target
-    borderRadius: 12,
-    width: '100%',
+    paddingHorizontal: Spacing.md,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    height: '100%', // Fill the container height
+    fontSize: FontSize.body,
+    height: '100%',
   },
-  searchResultCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+  list: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
   },
-  searchResultDutch: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  searchResultEnglish: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  searchResultCategory: {
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-    alignSelf: 'flex-end', // Align button to the right
-  },
-  importButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  // AI Banner
   aiBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
   },
-  aiIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  aiBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aiBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: Spacing.md,
   },
-  aiTextContainer: {
+  aiBannerText: {
     flex: 1,
   },
-  aiTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  aiBannerTitle: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
-  aiDescription: {
-    fontSize: 14,
-  }
+  aiBannerSubtitle: {
+    fontSize: FontSize.caption,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  // Import row
+  importRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  importText: {
+    flex: 1,
+    fontSize: FontSize.footnote,
+  },
+  // Section header
+  sectionHeader: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.5,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  // Category Cards
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+  },
+  textContainer: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  cardTitle: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: FontSize.footnote,
+  },
+  // Search Results
+  searchResultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  searchResultDutch: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
+  },
+  searchResultEnglish: {
+    fontSize: FontSize.footnote,
+    marginTop: 2,
+  },
+  searchResultCategory: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginTop: 4,
+  },
+  emptySearch: {
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptySearchText: {
+    fontSize: FontSize.subhead,
+  },
 });

@@ -28,6 +28,7 @@ eas-build-post-install.sh
 
 # iOS
 ios/
+!modules/**/ios/
 Pods/
 DerivedData/
 build_output/
