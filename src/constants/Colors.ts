@@ -1,82 +1,82 @@
 /**
  * Dutchify Design System
  * Inspired by: Duolingo (gamification), Headspace (calm clarity), Apple HIG (native feel)
- * Palette: Dutch Royal Blue + Warm Amber on soft neutral backgrounds
+ * Palette: Warm Dutch Orange + Soft Neutrals
  */
 
 export const Colors = {
   light: {
     // Core
-    text: '#1C1C1E',
-    textSecondary: '#8E8E93',
-    background: '#F8F7F4',
-    tint: '#1E3A5F',
+    text: '#1a1a2e',
+    textSecondary: '#64748b',
+    background: '#faf8f5',
+    tint: '#e86912',
 
     // Brand
-    primary: '#1E3A5F',       // Dutch Royal Blue
+    primary: '#e86912',       // Dutch Orange
     primaryLight: '#2A4F7F',
-    accent: '#F5A623',        // Warm Amber
-    accentLight: '#FFF3DC',
+    accent: '#e86912',        // Orange accent
+    accentLight: '#fff3e8',
 
     // Surfaces
-    cardBackground: '#FFFFFF',
-    surfaceSecondary: '#F2F1EE',
-    surfaceTertiary: '#E8E6E1',
+    cardBackground: '#ffffff',
+    surfaceSecondary: '#f3f0ec',
+    surfaceTertiary: '#e8e5e0',
 
     // Semantic
-    success: '#34C759',
-    successLight: '#E8FAE8',
-    danger: '#FF3B30',
-    dangerLight: '#FFE5E3',
-    warning: '#FF9500',
+    success: '#059669',
+    successLight: '#d1fae5',
+    danger: '#dc2626',
+    dangerLight: '#fee2e2',
+    warning: '#d97706',
 
     // Tab Bar
-    tabBarBackground: '#FFFFFF',
-    tabIconDefault: '#C7C7CC',
-    tabIconSelected: '#1E3A5F',
+    tabBarBackground: '#ffffff',
+    tabIconDefault: '#b0aeb8',
+    tabIconSelected: '#e86912',
 
     // Borders & Dividers
-    border: '#E5E5EA',
-    divider: '#F2F2F7',
-    separator: '#C6C6C8',
+    border: '#e8e5e0',
+    divider: '#f3f0ec',
+    separator: '#d1cdc7',
 
     // Shadows
     shadowColor: '#000000',
   },
   dark: {
     // Core
-    text: '#F5F5F7',
-    textSecondary: '#98989D',
-    background: '#000000',
-    tint: '#5B9BD5',
+    text: '#f5f3f0',
+    textSecondary: '#94a3b8',
+    background: '#121218',
+    tint: '#f59e0b',
 
     // Brand
-    primary: '#5B9BD5',       // Lighter blue for dark mode
-    primaryLight: '#1E3A5F',
-    accent: '#FFD060',        // Brighter amber for dark mode
-    accentLight: '#2C2510',
+    primary: '#f59e0b',       // Amber for dark mode
+    primaryLight: '#2a2015',
+    accent: '#f59e0b',
+    accentLight: '#2a2015',
 
     // Surfaces
-    cardBackground: '#1C1C1E',
-    surfaceSecondary: '#2C2C2E',
-    surfaceTertiary: '#3A3A3C',
+    cardBackground: '#1e1e28',
+    surfaceSecondary: '#1a1a24',
+    surfaceTertiary: '#252530',
 
     // Semantic
-    success: '#30D158',
-    successLight: '#0D2E12',
-    danger: '#FF453A',
-    dangerLight: '#3A1510',
-    warning: '#FF9F0A',
+    success: '#34d399',
+    successLight: '#064e3b',
+    danger: '#f87171',
+    dangerLight: '#7f1d1d',
+    warning: '#fbbf24',
 
     // Tab Bar
-    tabBarBackground: '#1C1C1E',
-    tabIconDefault: '#636366',
-    tabIconSelected: '#5B9BD5',
+    tabBarBackground: '#1e1e28',
+    tabIconDefault: '#5e5d66',
+    tabIconSelected: '#f59e0b',
 
     // Borders & Dividers
-    border: '#38383A',
-    divider: '#2C2C2E',
-    separator: '#48484A',
+    border: '#2e2e3a',
+    divider: '#1a1a24',
+    separator: '#3a3a48',
 
     // Shadows
     shadowColor: '#000000',
