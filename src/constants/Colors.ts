@@ -1,28 +1,38 @@
-const tintColorLight = '#f97316'; // Orange 500
-const tintColorDark = '#fff';
+// ============================================================================
+// Dutchify Design System — Warm Orange Dutch Theme
+// Refined, modern palette with softer tones and better contrast.
+// ============================================================================
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    tint: tintColorLight,
-    tabIconDefault: '#cccccc',
-    tabIconSelected: tintColorLight,
-    primary: '#f97316', // Orange 500
-    cardBackground: '#f9fafb', // Gray 50
-    success: '#10b981', // Emerald 500
-    danger: '#ef4444', // Red 500
+    text: '#1a1a2e',
+    textSecondary: '#64748b',
+    background: '#faf8f5',
+    tint: '#e86912',
+    tabIconDefault: '#b0aeb8',
+    tabIconSelected: '#e86912',
+    primary: '#e86912',
+    primaryLight: '#fff3e8',
+    cardBackground: '#ffffff',
+    success: '#059669',
+    danger: '#dc2626',
+    border: '#e8e5e0',
+    surfaceSecondary: '#f3f0ec',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    tint: '#f97316',
-    tabIconDefault: '#cccccc',
-    tabIconSelected: tintColorDark,
-    primary: '#fb923c', // Orange 400
-    cardBackground: '#1f2937', // Gray 800
-    success: '#34d399', // Emerald 400
-    danger: '#f87171', // Red 400
+    text: '#f5f3f0',
+    textSecondary: '#94a3b8',
+    background: '#121218',
+    tint: '#f59e0b',
+    tabIconDefault: '#5e5d66',
+    tabIconSelected: '#f59e0b',
+    primary: '#f59e0b',
+    primaryLight: '#2a2015',
+    cardBackground: '#1e1e28',
+    success: '#34d399',
+    danger: '#f87171',
+    border: '#2e2e3a',
+    surfaceSecondary: '#1a1a24',
   },
 };
 

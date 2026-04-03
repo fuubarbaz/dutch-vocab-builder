@@ -133,6 +133,15 @@ export default function PracticeScreen() {
                     <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
                 </Pressable>
 
+                <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>Grammar:</Text>
+                <Pressable
+                    style={[styles.startButton, { backgroundColor: '#10b981', marginTop: 8 }]}
+                    onPress={() => router.push('/grammar' as any)}
+                >
+                    <Ionicons name="book-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    <Text style={styles.startText}>Grammar Topics</Text>
+                </Pressable>
+
                 <Text style={[styles.label, { color: theme.text, marginTop: 32 }]}>Pronunciation Practice:</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                     <Pressable
