@@ -78,7 +78,7 @@ export default function VisualVocabScreen() {
             }
 
             // Translate all labels at once using Apple's native Translation framework
-            const translations = await AIModule.translateTextsAsync(labels, 'nl');
+            const translations = await AIModule.translateTextsAsync(labels, 'en', 'nl');
 
             const objects: VocabItem[] = labels.map((label, i) => ({
                 dutch: translations[i],

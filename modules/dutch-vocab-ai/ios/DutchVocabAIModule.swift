@@ -29,8 +29,8 @@ public class DutchVocabAIModule: Module {
       return await self.classifyImageWithVision(cgImage: cgImage)
     }
 
-    AsyncFunction("translateTextsAsync") { (texts: [String], targetLang: String) -> [String] in
-      return await self.translateWithApple(texts: texts, targetLang: targetLang)
+    AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
+      return await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
     }
 
     View(DutchVocabAIView.self) {
@@ -120,11 +120,11 @@ public class DutchVocabAIModule: Module {
 
   // MARK: - Apple Translation Framework
 
-  private func translateWithApple(texts: [String], targetLang: String) async -> [String] {
+  private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async -> [String] {
     guard !texts.isEmpty else { return [] }
     do {
       let config = TranslationSession.Configuration(
-        source: Locale.Language(identifier: "en"),
+        source: Locale.Language(identifier: sourceLang),
         target: Locale.Language(identifier: targetLang)
       )
       let session = TranslationSession(configuration: config)
