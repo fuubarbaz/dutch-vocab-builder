@@ -13,6 +13,7 @@ import {
   useSpeechRecognitionEvent 
 } from 'expo-speech-recognition';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
+import AIModule from 'dutch-vocab-ai';
 
 export default function TranslateWordScreen() {
     const router = useRouter();
@@ -175,16 +176,10 @@ export default function TranslateWordScreen() {
     const translateTextManually = async (text: string, langpair: string) => {
         setIsTranslating(true);
         try {
-            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.responseData?.translatedText) {
-                try {
-                    setTranslatedText(decodeURIComponent(data.responseData.translatedText));
-                } catch {
-                    setTranslatedText(data.responseData.translatedText);
-                }
+            const [src, tgt] = langpair.split('|');
+            const results = await AIModule.translateTextsAsync([text], src, tgt);
+            if (results[0]) {
+                setTranslatedText(results[0]);
             } else {
                 Alert.alert('Translation Error', 'Could not translate the text.');
             }
@@ -201,23 +196,16 @@ export default function TranslateWordScreen() {
 
         setIsTranslating(true);
         try {
-            const langpair = translationDirection === 'en-nl' ? 'en|nl' : 'nl|en';
-            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=${langpair}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.responseData?.translatedText) {
-                try {
-                    setTranslatedText(decodeURIComponent(data.responseData.translatedText));
-                } catch {
-                    setTranslatedText(data.responseData.translatedText);
-                }
+            const [src, tgt] = translationDirection === 'en-nl' ? ['en', 'nl'] : ['nl', 'en'];
+            const results = await AIModule.translateTextsAsync([inputText], src, tgt);
+            if (results[0]) {
+                setTranslatedText(results[0]);
             } else {
-                Alert.alert('Translation Error', 'Failed to translate using the online API.');
+                Alert.alert('Translation Error', 'Could not translate the text.');
             }
         } catch (error) {
             console.error('Translation error:', error);
-            Alert.alert('Translation Error', 'Failed to translate using the online API.');
+            Alert.alert('Translation Error', 'Could not translate the text.');
         } finally {
             setIsTranslating(false);
         }

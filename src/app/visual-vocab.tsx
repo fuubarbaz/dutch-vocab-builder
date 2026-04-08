@@ -18,54 +18,6 @@ type ImageResult = {
     raw: string;
 };
 
-function parseImageResult(raw: string): ImageResult {
-    const objects: VocabItem[] = [];
-    let sentence = '';
-    let translation = '';
-
-    const lines = raw.split('\n');
-    let section = '';
-
-    for (const line of lines) {
-        const trimmed = line.trim();
-
-        if (trimmed.toUpperCase().startsWith('OBJECTS:')) {
-            section = 'objects';
-            continue;
-        } else if (trimmed.toUpperCase().startsWith('SENTENCE:')) {
-            section = 'sentence';
-            continue;
-        } else if (trimmed.toUpperCase().startsWith('TRANSLATION:')) {
-            section = 'translation';
-            continue;
-        } else if (trimmed.toUpperCase().startsWith('NOTE:')) {
-            section = 'note';
-            continue;
-        }
-
-        if (!trimmed || trimmed === '-') continue;
-
-        if (section === 'objects' && trimmed.startsWith('-')) {
-            const content = trimmed.replace(/^-\s*/, '');
-            const match = content.match(/^(?:het|de|een)\s+(.+?)\s*\((.+?)\)$/i);
-            if (match) {
-                const articleAndWord = content.substring(0, content.indexOf('(')).trim();
-                objects.push({ dutch: articleAndWord, english: match[2].trim() });
-            } else {
-                const parenMatch = content.match(/^(.+?)\s*\((.+?)\)$/);
-                if (parenMatch) {
-                    objects.push({ dutch: parenMatch[1].trim(), english: parenMatch[2].trim() });
-                }
-            }
-        } else if (section === 'sentence') {
-            sentence += (sentence ? ' ' : '') + trimmed;
-        } else if (section === 'translation') {
-            translation += (translation ? ' ' : '') + trimmed;
-        }
-    }
-
-    return { objects, sentence, translation, raw };
-}
 
 export default function VisualVocabScreen() {
     const [imageUri, setImageUri] = useState<string | null>(null);
@@ -118,9 +70,28 @@ export default function VisualVocabScreen() {
     const analyzeImage = async (base64: string) => {
         setIsAnalyzing(true);
         try {
-            const raw = await AIModule.describeImageAsync(base64);
-            const parsed = parseImageResult(raw);
-            setResult(parsed);
+            const labels = await AIModule.classifyImageAsync(base64);
+
+            if (!labels || labels.length === 0) {
+                Alert.alert('No objects detected', 'Could not detect objects in this image. Try a clearer photo.');
+                return;
+            }
+
+            // Translate all labels at once using Apple's native Translation framework
+            const translations = await AIModule.translateTextsAsync(labels, 'en', 'nl');
+
+            const objects: VocabItem[] = labels.map((label, i) => ({
+                dutch: translations[i],
+                english: label,
+            }));
+
+            // Simple Dutch sentence using the first detected object
+            const firstDutch = objects[0]?.dutch ?? 'iets';
+            const firstEnglish = objects[0]?.english ?? 'something';
+            const sentence = `Ik zie ${firstDutch} op de foto.`;
+            const translation = `I see ${firstEnglish} in the photo.`;
+
+            setResult({ objects, sentence, translation, raw: labels.join(', ') });
         } catch (error) {
             console.error('Image analysis error:', error);
             Alert.alert('Error', 'Failed to analyze image. Please try again.');
