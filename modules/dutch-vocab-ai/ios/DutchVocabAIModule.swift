@@ -94,9 +94,15 @@ public class DutchVocabAIModule: Module {
       let response = try await session.respond(to: prompt)
       return response.content
     } catch {
-      return describeImageFallback()
+      return generateFallbackFromLabels(labels: labels)
     }
   }
+
+  private func generateFallbackFromLabels(labels: [String]) -> String {
+    let objectLines = labels.map { "- \($0)" }.joined(separator: "\n")
+    return "OBJECTS:\n\(objectLines)\n\nSENTENCE:\nIk zie deze dingen op de foto.\n\nTRANSLATION:\nI see these things in the photo.\n\nNote: Apple Intelligence is unavailable. Showing detected objects only (iOS 26+ with Apple Intelligence required for Dutch translations)."
+  }
+
 
   private func describeImageFallback() -> String {
     return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device)."
