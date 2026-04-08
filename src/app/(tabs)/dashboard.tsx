@@ -67,6 +67,18 @@ export default function DashboardScreen() {
     return words;
   }, []);
 
+  const learnedSet = React.useMemo(() => new Set(learnedIds), [learnedIds]);
+
+  const categoryStats = React.useMemo(() =>
+    VOCABULARY_DATA.map(cat => {
+      const words = getAllWords(cat);
+      const total = words.length;
+      const learned = words.filter(w => learnedSet.has(w.id)).length;
+      return { id: cat.id, title: cat.title, total, learned };
+    }).filter(c => c.total > 0),
+    [getAllWords, learnedSet]
+  );
+
   const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + getAllWords(category).length, 0) + customWords.length;
   const learnedCount = learnedIds.length;
   const todoCount = Math.max(0, totalWords - learnedCount);
@@ -159,6 +171,41 @@ export default function DashboardScreen() {
               <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
                 {stat.label}
               </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Category Breakdown */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>BY CATEGORY</Text>
+      <View style={[styles.categoryCard, { backgroundColor: theme.cardBackground }]}>
+        {categoryStats.map((cat, index) => {
+          const pct = cat.total > 0 ? cat.learned / cat.total : 0;
+          const isLast = index === categoryStats.length - 1;
+          return (
+            <View
+              key={cat.id}
+              style={[styles.categoryRow, !isLast && { borderBottomColor: theme.divider, borderBottomWidth: StyleSheet.hairlineWidth }]}
+            >
+              <View style={styles.categoryHeader}>
+                <Text style={[styles.categoryTitle, { color: theme.text }]} numberOfLines={1}>
+                  {cat.title}
+                </Text>
+                <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>
+                  {cat.learned}/{cat.total}
+                </Text>
+              </View>
+              <View style={[styles.barTrack, { backgroundColor: theme.surfaceSecondary }]}>
+                <View
+                  style={[
+                    styles.barFill,
+                    {
+                      backgroundColor: pct === 1 ? theme.success : theme.primary,
+                      width: `${Math.round(pct * 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
             </View>
           );
         })}
@@ -266,5 +313,48 @@ const styles = StyleSheet.create({
   resetText: {
     fontSize: FontSize.subhead,
     fontWeight: FontWeight.medium,
+  },
+  categoryCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: { elevation: 1 },
+    }),
+  },
+  categoryRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  categoryTitle: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  categoryCount: {
+    fontSize: FontSize.footnote,
+  },
+  barTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: 6,
+    borderRadius: 3,
+    minWidth: 4,
   },
 });
