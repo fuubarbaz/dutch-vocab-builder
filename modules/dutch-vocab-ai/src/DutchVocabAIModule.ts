@@ -5,6 +5,7 @@ import { DutchVocabAIModuleEvents } from './DutchVocabAI.types';
 declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   generateTextAsync(prompt: string): Promise<string>;
   describeImageAsync(base64Image: string): Promise<string>;
+  classifyImageAsync(base64Image: string): Promise<string[]>;
 }
 
 /**
@@ -80,6 +81,10 @@ async function describeImageAsyncFallback(_base64Image: string): Promise<string>
   return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions with object detection, build and run on a supported iOS 26+ device with Apple Intelligence.";
 }
 
+async function classifyImageAsyncFallback(_base64Image: string): Promise<string[]> {
+  return [];
+}
+
 let moduleToExport: DutchVocabAIModule;
 
 try {
@@ -95,6 +100,7 @@ try {
   moduleToExport = {
     generateTextAsync: generateTextAsyncFallback,
     describeImageAsync: describeImageAsyncFallback,
+    classifyImageAsync: classifyImageAsyncFallback,
     addListener: () => ({ remove: () => {} }),
     removeAllListeners: () => {},
   } as unknown as DutchVocabAIModule;

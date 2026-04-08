@@ -19,6 +19,15 @@ public class DutchVocabAIModule: Module {
       return await self.describeImageWithAI(base64Image: base64Image)
     }
 
+    AsyncFunction("classifyImageAsync") { (base64Image: String) -> [String] in
+      guard let imageData = Data(base64Encoded: base64Image),
+            let uiImage = UIImage(data: imageData),
+            let cgImage = uiImage.cgImage else {
+        return []
+      }
+      return await self.classifyImageWithVision(cgImage: cgImage)
+    }
+
     View(DutchVocabAIView.self) {
       Prop("url") { (view: DutchVocabAIView, url: URL) in
         view.webView.load(URLRequest(url: url))
