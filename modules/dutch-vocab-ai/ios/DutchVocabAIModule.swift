@@ -123,15 +123,14 @@ public class DutchVocabAIModule: Module {
   private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async -> [String] {
     guard !texts.isEmpty else { return [] }
     do {
-      let config = TranslationSession.Configuration(
-        source: Locale.Language(identifier: sourceLang),
+      let session = TranslationSession(
+        installedSource: Locale.Language(identifier: sourceLang),
         target: Locale.Language(identifier: targetLang)
       )
-      let session = TranslationSession(configuration: config)
       try await session.prepareTranslation()
 
       let requests = texts.enumerated().map { (i, text) in
-        TranslationSession.Request(sourceString: text, clientIdentifier: String(i))
+        TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
       }
 
       var results = texts // fallback: original text
