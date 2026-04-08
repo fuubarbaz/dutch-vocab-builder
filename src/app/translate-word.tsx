@@ -180,7 +180,11 @@ export default function TranslateWordScreen() {
             const data = await response.json();
             
             if (data.responseData?.translatedText) {
-                setTranslatedText(data.responseData.translatedText);
+                try {
+                    setTranslatedText(decodeURIComponent(data.responseData.translatedText));
+                } catch {
+                    setTranslatedText(data.responseData.translatedText);
+                }
             } else {
                 Alert.alert('Translation Error', 'Could not translate the text.');
             }
@@ -203,7 +207,11 @@ export default function TranslateWordScreen() {
             const data = await response.json();
             
             if (data.responseData?.translatedText) {
-                setTranslatedText(data.responseData.translatedText);
+                try {
+                    setTranslatedText(decodeURIComponent(data.responseData.translatedText));
+                } catch {
+                    setTranslatedText(data.responseData.translatedText);
+                }
             } else {
                 Alert.alert('Translation Error', 'Failed to translate using the online API.');
             }
