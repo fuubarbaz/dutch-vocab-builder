@@ -67,24 +67,6 @@ export default function VisualVocabScreen() {
         }
     };
 
-    const translateLabel = async (label: string): Promise<string> => {
-        try {
-            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(label)}&langpair=en|nl`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data.responseData?.translatedText) {
-                try {
-                    return decodeURIComponent(data.responseData.translatedText);
-                } catch {
-                    return data.responseData.translatedText;
-                }
-            }
-        } catch {
-            // fall through to return label as-is
-        }
-        return label;
-    };
-
     const analyzeImage = async (base64: string) => {
         setIsAnalyzing(true);
         try {
@@ -95,8 +77,8 @@ export default function VisualVocabScreen() {
                 return;
             }
 
-            // Translate all labels in parallel via MyMemory
-            const translations = await Promise.all(labels.map(translateLabel));
+            // Translate all labels at once using Apple's native Translation framework
+            const translations = await AIModule.translateTextsAsync(labels, 'nl');
 
             const objects: VocabItem[] = labels.map((label, i) => ({
                 dutch: translations[i],

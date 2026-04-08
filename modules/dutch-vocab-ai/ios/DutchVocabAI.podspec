@@ -6,9 +6,10 @@ Pod::Spec.new do |s|
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
-    :ios => '15.1',
-    :tvos => '15.1'
+    :ios => '17.4',
+    :tvos => '17.4'
   }
+  s.frameworks = 'Translation'
   s.source         = { git: '' }
   s.static_framework = true
 

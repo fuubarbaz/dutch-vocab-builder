@@ -6,6 +6,7 @@ declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> 
   generateTextAsync(prompt: string): Promise<string>;
   describeImageAsync(base64Image: string): Promise<string>;
   classifyImageAsync(base64Image: string): Promise<string[]>;
+  translateTextsAsync(texts: string[], targetLang: string): Promise<string[]>;
 }
 
 /**
@@ -85,6 +86,10 @@ async function classifyImageAsyncFallback(_base64Image: string): Promise<string[
   return [];
 }
 
+async function translateTextsAsyncFallback(texts: string[], _targetLang: string): Promise<string[]> {
+  return texts;
+}
+
 let moduleToExport: DutchVocabAIModule;
 
 try {
@@ -101,6 +106,7 @@ try {
     generateTextAsync: generateTextAsyncFallback,
     describeImageAsync: describeImageAsyncFallback,
     classifyImageAsync: classifyImageAsyncFallback,
+    translateTextsAsync: translateTextsAsyncFallback,
     addListener: () => ({ remove: () => {} }),
     removeAllListeners: () => {},
   } as unknown as DutchVocabAIModule;

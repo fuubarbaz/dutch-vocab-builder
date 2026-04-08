@@ -3,6 +3,7 @@ import WebKit
 import FoundationModels
 import Vision
 import UIKit
+import Translation
 
 public class DutchVocabAIModule: Module {
   public func definition() -> ModuleDefinition {
@@ -26,6 +27,10 @@ public class DutchVocabAIModule: Module {
         return []
       }
       return await self.classifyImageWithVision(cgImage: cgImage)
+    }
+
+    AsyncFunction("translateTextsAsync") { (texts: [String], targetLang: String) -> [String] in
+      return await self.translateWithApple(texts: texts, targetLang: targetLang)
     }
 
     View(DutchVocabAIView.self) {
@@ -112,6 +117,34 @@ public class DutchVocabAIModule: Module {
     return "OBJECTS:\n\(objectLines)\n\nSENTENCE:\nIk zie deze dingen op de foto.\n\nTRANSLATION:\nI see these things in the photo.\n\nNote: Apple Intelligence is unavailable. Showing detected objects only (iOS 26+ with Apple Intelligence required for Dutch translations)."
   }
 
+
+  // MARK: - Apple Translation Framework
+
+  private func translateWithApple(texts: [String], targetLang: String) async -> [String] {
+    guard !texts.isEmpty else { return [] }
+    do {
+      let config = TranslationSession.Configuration(
+        source: Locale.Language(identifier: "en"),
+        target: Locale.Language(identifier: targetLang)
+      )
+      let session = TranslationSession(configuration: config)
+      try await session.prepareTranslation()
+
+      let requests = texts.enumerated().map { (i, text) in
+        TranslationSession.Request(sourceString: text, clientIdentifier: String(i))
+      }
+
+      var results = texts // fallback: original text
+      for try await response in session.translate(batch: requests) {
+        if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
+          results[idx] = response.targetText
+        }
+      }
+      return results
+    } catch {
+      return texts // fallback: return original labels untranslated
+    }
+  }
 
   private func describeImageFallback() -> String {
     return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device)."
