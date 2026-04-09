@@ -77,11 +77,17 @@ export default function VisualVocabScreen() {
                 return;
             }
 
-            // Translate all labels at once using Apple's native Translation framework
-            const translations = await AIModule.translateTextsAsync(labels, 'en', 'nl');
+            // Translate all labels using Apple's native Translation framework
+            // Falls back to English labels if Dutch pack is not downloaded
+            let translations: string[] = labels;
+            try {
+                translations = await AIModule.translateTextsAsync(labels, 'en', 'nl');
+            } catch {
+                // Translation unavailable — show English labels as fallback
+            }
 
             const objects: VocabItem[] = labels.map((label, i) => ({
-                dutch: translations[i],
+                dutch: translations[i] ?? label,
                 english: label,
             }));
 
