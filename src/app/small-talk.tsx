@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
+import { speakWithCallback, stopTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -84,7 +84,7 @@ export default function SmallTalkScreen() {
   const playAll = async () => {
     if (isPlaying) {
       stopRef.current = true;
-      Speech.stop();
+      stopTTS();
       setIsPlaying(false);
       setActiveTurnIdx(null);
       return;
@@ -106,18 +106,16 @@ export default function SmallTalkScreen() {
 
   const speakTurn = (turn: Turn): Promise<void> =>
     new Promise(resolve => {
-      Speech.speak(turn.dutch, {
-        language: 'nl-NL',
-        rate: 0.85,
-        onDone: () => resolve(),
-        onError: () => resolve(),
-        onStopped: () => resolve(),
+      speakWithCallback(turn.dutch, 0.85, {
+        onDone: resolve,
+        onError: resolve,
+        onStopped: resolve,
       });
     });
 
   const speakOne = (turn: Turn) => {
-    Speech.stop();
-    Speech.speak(turn.dutch, { language: 'nl-NL', rate: 0.85 });
+    stopTTS();
+    speakWithCallback(turn.dutch, 0.85);
   };
 
   const toggleTranslation = (idx: number) => {
