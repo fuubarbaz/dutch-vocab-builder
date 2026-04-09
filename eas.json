@@ -15,6 +15,13 @@
       "autoIncrement": true,
       "ios": {
         "image": "latest"
+      },
+      "cache": {
+        "disabled": true
+      },
+      "env": {
+        "FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT": "120",
+        "FASTLANE_XCODE_LIST_TIMEOUT": "120"
       }
     }
   },

@@ -1,0 +1,2 @@
+derived_data_path("./build/DerivedData")
+clean(true)

@@ -30,6 +30,10 @@ public class DutchVocabAIModule: Module {
       return await self.classifyImageWithVision(cgImage: cgImage)
     }
 
+    AsyncFunction("generateSmallTalkAsync") { (topic: String, turnCount: Int) -> String in
+      return await self.generateSmallTalk(topic: topic, turnCount: turnCount)
+    }
+
     AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
       // TranslationSession.prepareTranslation() may present a download sheet — must run on main actor
       return try await Task { @MainActor in
@@ -121,6 +125,37 @@ public class DutchVocabAIModule: Module {
     return "OBJECTS:\n\(objectLines)\n\nSENTENCE:\nIk zie deze dingen op de foto.\n\nTRANSLATION:\nI see these things in the photo.\n\nNote: Apple Intelligence is unavailable. Showing detected objects only (iOS 26+ with Apple Intelligence required for Dutch translations)."
   }
 
+
+  // MARK: - Small Talk Generation
+
+  private func generateSmallTalk(topic: String, turnCount: Int) async -> String {
+    do {
+      let session = LanguageModelSession()
+      let turns = max(4, min(turnCount, 10))
+
+      let prompt = """
+      Generate a natural small talk conversation in Dutch between two people (Person A and Person B) about the topic: "\(topic)".
+
+      Rules:
+      - Exactly \(turns) turns total (alternating A and B, starting with A)
+      - Each turn must be a short, natural sentence (1-2 sentences max)
+      - Use everyday Dutch vocabulary suitable for A1-B1 learners
+      - Include a mix of questions and responses to keep it flowing
+
+      Output ONLY a JSON array with no extra text, in this exact format:
+      [{"speaker":"A","dutch":"Dutch sentence here","english":"English translation here"},{"speaker":"B","dutch":"Dutch sentence here","english":"English translation here"}]
+      """
+
+      let response = try await session.respond(to: prompt)
+      return response.content
+    } catch {
+      return generateSmallTalkFallback(topic: topic)
+    }
+  }
+
+  private func generateSmallTalkFallback(topic: String) -> String {
+    return "[{\"speaker\":\"A\",\"dutch\":\"Hoi! Hoe gaat het met jou?\",\"english\":\"Hi! How are you?\"},{\"speaker\":\"B\",\"dutch\":\"Goed, dank je! En met jou?\",\"english\":\"Good, thanks! And you?\"},{\"speaker\":\"A\",\"dutch\":\"Ook goed. Wat vind jij van \(topic)?\",\"english\":\"Also good. What do you think about \(topic)?\"},{\"speaker\":\"B\",\"dutch\":\"Dat vind ik heel interessant!\",\"english\":\"I find that very interesting!\"}]"
+  }
 
   // MARK: - Apple Translation Framework
 

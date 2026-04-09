@@ -7,6 +7,7 @@ declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> 
   describeImageAsync(base64Image: string): Promise<string>;
   classifyImageAsync(base64Image: string): Promise<string[]>;
   translateTextsAsync(texts: string[], sourceLang: string, targetLang: string): Promise<string[]>;
+  generateSmallTalkAsync(topic: string, turnCount: number): Promise<string>;
 }
 
 /**
@@ -86,6 +87,15 @@ async function classifyImageAsyncFallback(_base64Image: string): Promise<string[
   return [];
 }
 
+async function generateSmallTalkAsyncFallback(topic: string, _turnCount: number): Promise<string> {
+  return JSON.stringify([
+    { speaker: 'A', dutch: 'Hoi! Hoe gaat het met jou?', english: 'Hi! How are you?' },
+    { speaker: 'B', dutch: 'Goed, dank je! En met jou?', english: 'Good, thanks! And you?' },
+    { speaker: 'A', dutch: `Wat vind jij van ${topic}?`, english: `What do you think about ${topic}?` },
+    { speaker: 'B', dutch: 'Dat vind ik heel interessant!', english: 'I find that very interesting!' },
+  ]);
+}
+
 async function translateTextsAsyncFallback(texts: string[], _sourceLang: string, _targetLang: string): Promise<string[]> {
   return texts;
 }
@@ -107,6 +117,7 @@ try {
     describeImageAsync: describeImageAsyncFallback,
     classifyImageAsync: classifyImageAsyncFallback,
     translateTextsAsync: translateTextsAsyncFallback,
+    generateSmallTalkAsync: generateSmallTalkAsyncFallback,
     addListener: () => ({ remove: () => {} }),
     removeAllListeners: () => {},
   } as unknown as DutchVocabAIModule;
