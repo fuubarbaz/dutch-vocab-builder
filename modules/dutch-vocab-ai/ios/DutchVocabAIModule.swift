@@ -21,7 +21,8 @@ public class DutchVocabAIModule: Module {
     }
 
     AsyncFunction("classifyImageAsync") { (base64Image: String) -> [String] in
-      guard let imageData = Data(base64Encoded: base64Image),
+      // Use .ignoreUnknownCharacters because expo-image-picker base64 may contain newlines
+      guard let imageData = Data(base64Encoded: base64Image, options: .ignoreUnknownCharacters),
             let uiImage = UIImage(data: imageData),
             let cgImage = uiImage.cgImage else {
         return []
@@ -30,7 +31,10 @@ public class DutchVocabAIModule: Module {
     }
 
     AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
-      return await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
+      // TranslationSession.prepareTranslation() may present a download sheet — must run on main actor
+      return try await Task { @MainActor in
+        try await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
+      }.value
     }
 
     View(DutchVocabAIView.self) {
@@ -44,7 +48,7 @@ public class DutchVocabAIModule: Module {
   // MARK: - Image Description with Vision + Apple Intelligence
 
   private func describeImageWithAI(base64Image: String) async -> String {
-    guard let imageData = Data(base64Encoded: base64Image),
+    guard let imageData = Data(base64Encoded: base64Image, options: .ignoreUnknownCharacters),
           let uiImage = UIImage(data: imageData),
           let cgImage = uiImage.cgImage else {
       return "ERROR: Could not process the image. Please try taking another photo."
@@ -71,8 +75,8 @@ public class DutchVocabAIModule: Module {
         }
 
         let labels = observations
-          .filter { $0.confidence > 0.3 }
-          .prefix(6)
+          .filter { $0.confidence > 0.1 }
+          .prefix(8)
           .map { $0.identifier.replacingOccurrences(of: "_", with: " ") }
 
         continuation.resume(returning: Array(labels))
@@ -120,29 +124,28 @@ public class DutchVocabAIModule: Module {
 
   // MARK: - Apple Translation Framework
 
-  private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async -> [String] {
+  @MainActor
+  private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async throws -> [String] {
     guard !texts.isEmpty else { return [] }
-    do {
-      let session = TranslationSession(
-        installedSource: Locale.Language(identifier: sourceLang),
-        target: Locale.Language(identifier: targetLang)
-      )
-      try await session.prepareTranslation()
 
-      let requests = texts.enumerated().map { (i, text) in
-        TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
-      }
+    let session = TranslationSession(
+      installedSource: Locale.Language(identifier: sourceLang),
+      target: Locale.Language(identifier: targetLang)
+    )
+    // prepareTranslation() may show a system sheet to download the language pack
+    try await session.prepareTranslation()
 
-      var results = texts // fallback: original text
-      for try await response in session.translate(batch: requests) {
-        if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
-          results[idx] = response.targetText
-        }
-      }
-      return results
-    } catch {
-      return texts // fallback: return original labels untranslated
+    let requests = texts.enumerated().map { (i, text) in
+      TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
     }
+
+    var results = texts
+    for try await response in session.translate(batch: requests) {
+      if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
+        results[idx] = response.targetText
+      }
+    }
+    return results
   }
 
   private func describeImageFallback() -> String {

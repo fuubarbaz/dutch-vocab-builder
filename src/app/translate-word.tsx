@@ -185,7 +185,7 @@ export default function TranslateWordScreen() {
             }
         } catch (error) {
             console.error('Manual translation error:', error);
-            Alert.alert('Translation Error', 'Could not translate the text.');
+            Alert.alert('Translation Unavailable', 'Could not translate. Make sure the Dutch language pack is downloaded in Settings → General → Language & Region.');
         } finally {
             setIsTranslating(false);
         }
@@ -205,7 +205,7 @@ export default function TranslateWordScreen() {
             }
         } catch (error) {
             console.error('Translation error:', error);
-            Alert.alert('Translation Error', 'Could not translate the text.');
+            Alert.alert('Translation Unavailable', 'Could not translate. Make sure the Dutch language pack is downloaded in Settings → General → Language & Region.');
         } finally {
             setIsTranslating(false);
         }
