@@ -6,7 +6,7 @@ import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import { BookOpen, CheckCircle, Heart, Target } from 'lucide-react-native';
+import { BookOpen, CheckCircle, Heart, Target, RotateCcw } from 'lucide-react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -55,7 +55,7 @@ function LargeProgressRing({ progress, size = 180, strokeWidth = 12, color, bgCo
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { learnedIds, favorites, customWords, resetProgress } = useFavorites();
+  const { learnedIds, favorites, customWords, resetProgress, resetCategoryProgress } = useFavorites();
 
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
@@ -67,10 +67,35 @@ export default function DashboardScreen() {
     return words;
   }, []);
 
+  const learnedSet = React.useMemo(() => new Set(learnedIds), [learnedIds]);
+
+  const categoryStats = React.useMemo(() =>
+    VOCABULARY_DATA.map(cat => {
+      const words = getAllWords(cat);
+      const total = words.length;
+      const learned = words.filter(w => learnedSet.has(w.id)).length;
+      const wordIds = words.map(w => w.id);
+      return { id: cat.id, title: cat.title, total, learned, wordIds };
+    }).filter(c => c.total > 0),
+    [getAllWords, learnedSet]
+  );
+
   const totalWords = VOCABULARY_DATA.reduce((acc, category) => acc + getAllWords(category).length, 0) + customWords.length;
   const learnedCount = learnedIds.length;
   const todoCount = Math.max(0, totalWords - learnedCount);
   const progress = totalWords > 0 ? Math.round((learnedCount / totalWords) * 100) : 0;
+
+  const handleResetCategory = (cat: typeof categoryStats[0]) => {
+    if (cat.learned === 0) return;
+    Alert.alert(
+      'Reset Category',
+      `Reset progress for "${cat.title}"? This will unmark all ${cat.learned} learned word${cat.learned !== 1 ? 's' : ''}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: () => resetCategoryProgress(cat.wordIds) },
+      ]
+    );
+  };
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
@@ -159,6 +184,52 @@ export default function DashboardScreen() {
               <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
                 {stat.label}
               </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Category Breakdown */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>BY CATEGORY</Text>
+      <View style={[styles.categoryCard, { backgroundColor: theme.cardBackground }]}>
+        {categoryStats.map((cat, index) => {
+          const pct = cat.total > 0 ? cat.learned / cat.total : 0;
+          const isLast = index === categoryStats.length - 1;
+          return (
+            <View
+              key={cat.id}
+              style={[styles.categoryRow, !isLast && { borderBottomColor: theme.divider, borderBottomWidth: StyleSheet.hairlineWidth }]}
+            >
+              <View style={styles.categoryHeader}>
+                <Text style={[styles.categoryTitle, { color: theme.text }]} numberOfLines={1}>
+                  {cat.title}
+                </Text>
+                <View style={styles.categoryMeta}>
+                  <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>
+                    {cat.learned}/{cat.total}
+                  </Text>
+                  {cat.learned > 0 && (
+                    <TouchableOpacity
+                      onPress={() => handleResetCategory(cat)}
+                      hitSlop={8}
+                      style={styles.categoryResetBtn}
+                    >
+                      <RotateCcw size={13} color={theme.danger} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+              <View style={[styles.barTrack, { backgroundColor: theme.surfaceSecondary }]}>
+                <View
+                  style={[
+                    styles.barFill,
+                    {
+                      backgroundColor: pct === 1 ? theme.success : theme.primary,
+                      width: `${Math.round(pct * 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
             </View>
           );
         })}
@@ -266,5 +337,56 @@ const styles = StyleSheet.create({
   resetText: {
     fontSize: FontSize.subhead,
     fontWeight: FontWeight.medium,
+  },
+  categoryCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: { elevation: 1 },
+    }),
+  },
+  categoryRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  categoryTitle: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  categoryMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  categoryCount: {
+    fontSize: FontSize.footnote,
+  },
+  categoryResetBtn: {
+    padding: 2,
+  },
+  barTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: 6,
+    borderRadius: 3,
+    minWidth: 4,
   },
 });

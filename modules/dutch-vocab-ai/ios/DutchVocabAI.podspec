@@ -6,8 +6,8 @@ Pod::Spec.new do |s|
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
-    :ios => '15.1',
-    :tvos => '15.1'
+    :ios => '17.4',
+    :tvos => '17.4'
   }
   s.source         = { git: '' }
   s.static_framework = true
@@ -15,8 +15,10 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
 
   # Swift/Objective-C compatibility
+  # Translation and other system frameworks are auto-linked via Swift `import`
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
+    'OTHER_SWIFT_FLAGS' => '$(inherited)',
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"

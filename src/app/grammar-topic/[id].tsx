@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { speak as speakTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
 import { GRAMMAR_TOPICS, GrammarQuizQuestion } from '@/data/grammar_topics';
 
@@ -124,7 +124,7 @@ export default function GrammarTopicScreen() {
     };
 
     const speakDutch = useCallback((text: string) => {
-        Speech.speak(text, { language: 'nl-NL', rate: 0.8 });
+        speakTTS(text, 0.8);
     }, []);
 
     // -------------------------------------------------------------------

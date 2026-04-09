@@ -1,8 +1,7 @@
 import ExpoModulesCore
 import WebKit
 import FoundationModels
-import Vision
-import UIKit
+import Translation
 
 public class DutchVocabAIModule: Module {
   public func definition() -> ModuleDefinition {
@@ -15,8 +14,15 @@ public class DutchVocabAIModule: Module {
       return self.evaluateSentenceBuilder(prompt: prompt)
     }
 
-    AsyncFunction("describeImageAsync") { (base64Image: String) -> String in
-      return await self.describeImageWithAI(base64Image: base64Image)
+    AsyncFunction("generateSmallTalkAsync") { (topic: String, turnCount: Int) -> String in
+      return await self.generateSmallTalk(topic: topic, turnCount: turnCount)
+    }
+
+    AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
+      // TranslationSession.prepareTranslation() may present a download sheet — must run on main actor
+      return try await Task { @MainActor in
+        try await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
+      }.value
     }
 
     View(DutchVocabAIView.self) {
@@ -27,84 +33,61 @@ public class DutchVocabAIModule: Module {
     }
   }
 
-  // MARK: - Image Description with Vision + Apple Intelligence
+  // MARK: - Small Talk Generation
 
-  private func describeImageWithAI(base64Image: String) async -> String {
-    guard let imageData = Data(base64Encoded: base64Image),
-          let uiImage = UIImage(data: imageData),
-          let cgImage = uiImage.cgImage else {
-      return "ERROR: Could not process the image. Please try taking another photo."
-    }
-
-    // Step 1: Use Vision framework to classify objects on-device
-    let labels = await classifyImageWithVision(cgImage: cgImage)
-
-    if labels.isEmpty {
-      return describeImageFallback()
-    }
-
-    // Step 2: Use FoundationModels to generate Dutch vocabulary from Vision labels
-    return await generateDutchVocabFromLabels(labels: labels)
-  }
-
-  private func classifyImageWithVision(cgImage: CGImage) async -> [String] {
-    return await withCheckedContinuation { continuation in
-      let request = VNClassifyImageRequest { request, error in
-        guard error == nil,
-              let observations = request.results as? [VNClassificationObservation] else {
-          continuation.resume(returning: [])
-          return
-        }
-
-        let labels = observations
-          .filter { $0.confidence > 0.3 }
-          .prefix(6)
-          .map { $0.identifier.replacingOccurrences(of: "_", with: " ") }
-
-        continuation.resume(returning: Array(labels))
-      }
-
-      let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-      try? handler.perform([request])
-    }
-  }
-
-  private func generateDutchVocabFromLabels(labels: [String]) async -> String {
+  private func generateSmallTalk(topic: String, turnCount: Int) async -> String {
     do {
       let session = LanguageModelSession()
-      let labelsList = labels.joined(separator: ", ")
+      let turns = max(4, min(turnCount, 10))
 
       let prompt = """
-      You are a Dutch language learning assistant. The following objects or concepts were detected in a photo: \(labelsList).
+      Generate a natural small talk conversation in Dutch between two people (Person A and Person B) about the topic: "\(topic)".
 
-      For each item, provide the Dutch word with its article (de/het) and the English word.
-      Then write one short Dutch sentence describing a scene with these objects and its English translation.
+      Rules:
+      - Exactly \(turns) turns total (alternating A and B, starting with A)
+      - Each turn must be a short, natural sentence (1-2 sentences max)
+      - Use everyday Dutch vocabulary suitable for A1-B1 learners
+      - Include a mix of questions and responses to keep it flowing
 
-      Format your response exactly like this:
-      OBJECTS:
-      - de/het [Dutch word] ([English word])
-
-      SENTENCE:
-      [Dutch sentence]
-
-      TRANSLATION:
-      [English translation]
+      Output ONLY a JSON array with no extra text, in this exact format:
+      [{"speaker":"A","dutch":"Dutch sentence here","english":"English translation here"},{"speaker":"B","dutch":"Dutch sentence here","english":"English translation here"}]
       """
 
       let response = try await session.respond(to: prompt)
       return response.content
     } catch {
-      return generateFallbackFromLabels(labels: labels)
+      return generateSmallTalkFallback(topic: topic)
     }
   }
 
-  private func generateFallbackFromLabels(labels: [String]) -> String {
-    let objectLines = labels.map { "- \($0)" }.joined(separator: "\n")
-    return "OBJECTS:\n\(objectLines)\n\nSENTENCE:\nIk zie deze dingen op de foto.\n\nTRANSLATION:\nI see these things in the photo.\n\nNote: Apple Intelligence is unavailable. Showing detected objects only (iOS 26+ with Apple Intelligence required for Dutch translations)."
+  private func generateSmallTalkFallback(topic: String) -> String {
+    return "[{\"speaker\":\"A\",\"dutch\":\"Hoi! Hoe gaat het met jou?\",\"english\":\"Hi! How are you?\"},{\"speaker\":\"B\",\"dutch\":\"Goed, dank je! En met jou?\",\"english\":\"Good, thanks! And you?\"},{\"speaker\":\"A\",\"dutch\":\"Ook goed. Wat vind jij van \(topic)?\",\"english\":\"Also good. What do you think about \(topic)?\"},{\"speaker\":\"B\",\"dutch\":\"Dat vind ik heel interessant!\",\"english\":\"I find that very interesting!\"}]"
   }
 
-  private func describeImageFallback() -> String {
-    return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device)."
+  // MARK: - Apple Translation Framework
+
+  @MainActor
+  private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async throws -> [String] {
+    guard !texts.isEmpty else { return [] }
+
+    let session = TranslationSession(
+      installedSource: Locale.Language(identifier: sourceLang),
+      target: Locale.Language(identifier: targetLang)
+    )
+    // prepareTranslation() may show a system sheet to download the language pack
+    try await session.prepareTranslation()
+
+    let requests = texts.enumerated().map { (i, text) in
+      TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
+    }
+
+    var results = texts
+    for try await response in session.translate(batch: requests) {
+      if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
+        results[idx] = response.targetText
+      }
+    }
+    return results
   }
 
   // MARK: - Grammar Check with Apple Intelligence
