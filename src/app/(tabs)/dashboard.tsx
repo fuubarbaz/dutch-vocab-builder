@@ -6,7 +6,7 @@ import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import { BookOpen, CheckCircle, Heart, Target } from 'lucide-react-native';
+import { BookOpen, CheckCircle, Heart, Target, RotateCcw } from 'lucide-react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -55,7 +55,7 @@ function LargeProgressRing({ progress, size = 180, strokeWidth = 12, color, bgCo
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { learnedIds, favorites, customWords, resetProgress } = useFavorites();
+  const { learnedIds, favorites, customWords, resetProgress, resetCategoryProgress } = useFavorites();
 
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
@@ -74,7 +74,8 @@ export default function DashboardScreen() {
       const words = getAllWords(cat);
       const total = words.length;
       const learned = words.filter(w => learnedSet.has(w.id)).length;
-      return { id: cat.id, title: cat.title, total, learned };
+      const wordIds = words.map(w => w.id);
+      return { id: cat.id, title: cat.title, total, learned, wordIds };
     }).filter(c => c.total > 0),
     [getAllWords, learnedSet]
   );
@@ -83,6 +84,18 @@ export default function DashboardScreen() {
   const learnedCount = learnedIds.length;
   const todoCount = Math.max(0, totalWords - learnedCount);
   const progress = totalWords > 0 ? Math.round((learnedCount / totalWords) * 100) : 0;
+
+  const handleResetCategory = (cat: typeof categoryStats[0]) => {
+    if (cat.learned === 0) return;
+    Alert.alert(
+      'Reset Category',
+      `Reset progress for "${cat.title}"? This will unmark all ${cat.learned} learned word${cat.learned !== 1 ? 's' : ''}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: () => resetCategoryProgress(cat.wordIds) },
+      ]
+    );
+  };
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
@@ -191,9 +204,20 @@ export default function DashboardScreen() {
                 <Text style={[styles.categoryTitle, { color: theme.text }]} numberOfLines={1}>
                   {cat.title}
                 </Text>
-                <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>
-                  {cat.learned}/{cat.total}
-                </Text>
+                <View style={styles.categoryMeta}>
+                  <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>
+                    {cat.learned}/{cat.total}
+                  </Text>
+                  {cat.learned > 0 && (
+                    <TouchableOpacity
+                      onPress={() => handleResetCategory(cat)}
+                      hitSlop={8}
+                      style={styles.categoryResetBtn}
+                    >
+                      <RotateCcw size={13} color={theme.danger} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <View style={[styles.barTrack, { backgroundColor: theme.surfaceSecondary }]}>
                 <View
@@ -344,8 +368,16 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: Spacing.md,
   },
+  categoryMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   categoryCount: {
     fontSize: FontSize.footnote,
+  },
+  categoryResetBtn: {
+    padding: 2,
   },
   barTrack: {
     height: 6,
