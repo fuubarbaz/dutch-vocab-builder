@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, ActivityIn
 import { Stack } from 'expo-router';
 import { Camera, ImageIcon, Eye, Volume2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Speech from 'expo-speech';
+import { speak as speakTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
 
 type VocabItem = {
@@ -107,7 +107,7 @@ export default function VisualVocabScreen() {
     };
 
     const speakDutch = (text: string) => {
-        Speech.speak(text, { language: 'nl-NL', rate: 0.8 });
+        speakTTS(text, 0.8);
     };
 
     const reset = () => {

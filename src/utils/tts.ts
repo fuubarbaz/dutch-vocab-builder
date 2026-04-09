@@ -68,6 +68,25 @@ export const stopTTS = () => {
     isSpeaking = false;
 };
 
+/** Speak with an onDone callback — uses the same preferred voice as speak(). */
+export const speakWithCallback = async (
+    text: string,
+    rate: number = 1.0,
+    callbacks: { onDone?: () => void; onStopped?: () => void; onError?: () => void } = {}
+) => {
+    if (!preferredVoiceIdentifier) {
+        await initTTS();
+    }
+    Speech.speak(text, {
+        language: 'nl-NL',
+        voice: preferredVoiceIdentifier,
+        rate,
+        onDone: callbacks.onDone,
+        onStopped: callbacks.onStopped,
+        onError: callbacks.onError,
+    });
+};
+
 export const cleanupTTS = () => {
     Speech.stop();
     isSpeaking = false;
