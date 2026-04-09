@@ -17,6 +17,7 @@ interface FavoritesContextType {
     deleteCustomWord: (id: string) => Promise<void>;
     clearImportedWords: () => Promise<void>;
     resetProgress: () => Promise<void>;
+    resetCategoryProgress: (wordIds: string[]) => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
@@ -130,6 +131,17 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
     };
 
+    const resetCategoryProgress = async (wordIds: string[]) => {
+        try {
+            const idSet = new Set(wordIds);
+            const newLearned = learnedIds.filter(id => !idSet.has(id));
+            setLearnedIds(newLearned);
+            await AsyncStorage.setItem('learned_words', JSON.stringify(newLearned));
+        } catch (e) {
+            console.error('Failed to reset category progress', e);
+        }
+    };
+
     const importWords = async (words: CustomWord[]) => {
         try {
             const newWords = [...customWords, ...words];
@@ -165,7 +177,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const isLearned = (id: string) => learnedIds.includes(id);
 
     return (
-        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, importWords, deleteCustomWord, clearImportedWords, resetProgress }}>
+        <FavoritesContext.Provider value={{ favorites, learnedIds, customWords, toggleFavorite, isFavorite, clearFavorites, removeFavorites, markAsLearned, isLearned, addCustomWord, importWords, deleteCustomWord, clearImportedWords, resetProgress, resetCategoryProgress }}>
             {children}
         </FavoritesContext.Provider>
     );

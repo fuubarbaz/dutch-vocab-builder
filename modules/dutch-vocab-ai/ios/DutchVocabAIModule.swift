@@ -1,8 +1,6 @@
 import ExpoModulesCore
 import WebKit
 import FoundationModels
-import Vision
-import UIKit
 import Translation
 
 public class DutchVocabAIModule: Module {
@@ -14,20 +12,6 @@ public class DutchVocabAIModule: Module {
         return await self.checkGrammarWithAI(prompt: prompt)
       }
       return self.evaluateSentenceBuilder(prompt: prompt)
-    }
-
-    AsyncFunction("describeImageAsync") { (base64Image: String) -> String in
-      return await self.describeImageWithAI(base64Image: base64Image)
-    }
-
-    AsyncFunction("classifyImageAsync") { (base64Image: String) -> [String] in
-      // Use .ignoreUnknownCharacters because expo-image-picker base64 may contain newlines
-      guard let imageData = Data(base64Encoded: base64Image, options: .ignoreUnknownCharacters),
-            let uiImage = UIImage(data: imageData),
-            let cgImage = uiImage.cgImage else {
-        return []
-      }
-      return await self.classifyImageWithVision(cgImage: cgImage)
     }
 
     AsyncFunction("generateSmallTalkAsync") { (topic: String, turnCount: Int) -> String in
@@ -48,83 +32,6 @@ public class DutchVocabAIModule: Module {
       Events("onLoad")
     }
   }
-
-  // MARK: - Image Description with Vision + Apple Intelligence
-
-  private func describeImageWithAI(base64Image: String) async -> String {
-    guard let imageData = Data(base64Encoded: base64Image, options: .ignoreUnknownCharacters),
-          let uiImage = UIImage(data: imageData),
-          let cgImage = uiImage.cgImage else {
-      return "ERROR: Could not process the image. Please try taking another photo."
-    }
-
-    // Step 1: Use Vision framework to classify objects on-device
-    let labels = await classifyImageWithVision(cgImage: cgImage)
-
-    if labels.isEmpty {
-      return describeImageFallback()
-    }
-
-    // Step 2: Use FoundationModels to generate Dutch vocabulary from Vision labels
-    return await generateDutchVocabFromLabels(labels: labels)
-  }
-
-  private func classifyImageWithVision(cgImage: CGImage) async -> [String] {
-    return await withCheckedContinuation { continuation in
-      let request = VNClassifyImageRequest { request, error in
-        guard error == nil,
-              let observations = request.results as? [VNClassificationObservation] else {
-          continuation.resume(returning: [])
-          return
-        }
-
-        let labels = observations
-          .filter { $0.confidence > 0.1 }
-          .prefix(8)
-          .map { $0.identifier.replacingOccurrences(of: "_", with: " ") }
-
-        continuation.resume(returning: Array(labels))
-      }
-
-      let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-      try? handler.perform([request])
-    }
-  }
-
-  private func generateDutchVocabFromLabels(labels: [String]) async -> String {
-    do {
-      let session = LanguageModelSession()
-      let labelsList = labels.joined(separator: ", ")
-
-      let prompt = """
-      You are a Dutch language learning assistant. The following objects or concepts were detected in a photo: \(labelsList).
-
-      For each item, provide the Dutch word with its article (de/het) and the English word.
-      Then write one short Dutch sentence describing a scene with these objects and its English translation.
-
-      Format your response exactly like this:
-      OBJECTS:
-      - de/het [Dutch word] ([English word])
-
-      SENTENCE:
-      [Dutch sentence]
-
-      TRANSLATION:
-      [English translation]
-      """
-
-      let response = try await session.respond(to: prompt)
-      return response.content
-    } catch {
-      return generateFallbackFromLabels(labels: labels)
-    }
-  }
-
-  private func generateFallbackFromLabels(labels: [String]) -> String {
-    let objectLines = labels.map { "- \($0)" }.joined(separator: "\n")
-    return "OBJECTS:\n\(objectLines)\n\nSENTENCE:\nIk zie deze dingen op de foto.\n\nTRANSLATION:\nI see these things in the photo.\n\nNote: Apple Intelligence is unavailable. Showing detected objects only (iOS 26+ with Apple Intelligence required for Dutch translations)."
-  }
-
 
   // MARK: - Small Talk Generation
 
@@ -181,10 +88,6 @@ public class DutchVocabAIModule: Module {
       }
     }
     return results
-  }
-
-  private func describeImageFallback() -> String {
-    return "OBJECTS:\n- het voorwerp (object)\n\nSENTENCE:\nIk zie een voorwerp op de foto.\n\nTRANSLATION:\nI see an object in the photo.\n\nNote: For detailed image descriptions, ensure Apple Intelligence is available on your device (iOS 26+ with a supported device)."
   }
 
   // MARK: - Grammar Check with Apple Intelligence
