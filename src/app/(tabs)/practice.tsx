@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Mic, MessageSquare, BookOpen, Camera, PenTool, ChevronRight } from 'lucide-react-native';
+import { Mic, MessageSquare, BookOpen, PenTool, ChevronRight } from 'lucide-react-native';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -183,20 +183,6 @@ export default function PracticeScreen() {
           <View style={styles.listText}>
             <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Check</Text>
             <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>AI-powered feedback</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
-
-        <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
-          onPress={() => router.push('/visual-vocab' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: theme.accent + '15' }]}>
-            <Camera size={18} color={theme.accent} />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Visual Vocab</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Learn from photos</Text>
           </View>
           <ChevronRight size={18} color={theme.textSecondary} />
         </Pressable>

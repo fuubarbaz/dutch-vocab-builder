@@ -17,9 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dutchvocabbuilder.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Allow Dutchify to access your photos to identify objects and learn their Dutch names.",
-        "NSCameraUsageDescription": "Allow Dutchify to use your camera to take photos of objects and learn their Dutch names."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -54,13 +52,6 @@
         }
       ],
       "expo-audio",
-      [
-        "expo-image-picker",
-        {
-          "cameraPermission": "Allow Dutchify to use your camera to take photos of objects and learn their Dutch names.",
-          "photosPermission": "Allow Dutchify to access your photos to identify objects and learn their Dutch names."
-        }
-      ],
       "./plugins/withIosLifecycleFix"
     ],
     "experiments": {
