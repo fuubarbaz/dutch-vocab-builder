@@ -77,8 +77,10 @@ function withIosLifecycleFix(config) {
         if (buildConfigs[key].buildSettings.IPHONEOS_DEPLOYMENT_TARGET) {
           buildConfigs[key].buildSettings.IPHONEOS_DEPLOYMENT_TARGET = '26.0';
         }
-        // Exclude arm64 for simulator SDK so MLKit device-only arm64 frameworks don't cause linker errors
-        buildConfigs[key].buildSettings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64';
+        // Note: EXCLUDED_ARCHS for simulator is handled via the Podfile post_install hook only.
+        // Setting 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' here would inject bracket-conditional
+        // syntax into project.pbxproj, which the xcode npm parser cannot re-parse, causing
+        // subsequent config plugins (e.g. withIosEntitlementsBaseMod) to fail during prebuild.
       }
     }
 
