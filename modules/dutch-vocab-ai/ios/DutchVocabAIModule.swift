@@ -76,12 +76,9 @@ public class DutchVocabAIModule: Module {
     let sourceLanguage = Locale.Language(identifier: sourceLang)
     let targetLanguage = Locale.Language(identifier: targetLang)
 
-    // Use source: (not installedSource:) so the framework can trigger a
-    // system download sheet when needed and works even when the pack was
-    // installed via the Translate app rather than via our own session.
     let session = TranslationSession(
-      from: sourceLanguage,
-      to: targetLanguage
+      installedSource: sourceLanguage,
+      target: targetLanguage
     )
 
     // prepareTranslation may show a system sheet or throw if unsupported
