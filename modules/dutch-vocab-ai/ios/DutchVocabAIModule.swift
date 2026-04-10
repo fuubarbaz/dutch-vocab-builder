@@ -80,8 +80,8 @@ public class DutchVocabAIModule: Module {
     // system download sheet when needed and works even when the pack was
     // installed via the Translate app rather than via our own session.
     let session = TranslationSession(
-      source: sourceLanguage,
-      target: targetLanguage
+      from: sourceLanguage,
+      to: targetLanguage
     )
 
     // prepareTranslation may show a system sheet or throw if unsupported
