@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Pressable, SafeAreaView, Dimensions, ActivityIn
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AudioModule } from 'expo-audio';
+import { speak as ttsspeak, stopTTS } from '@/utils/tts';
 import { 
   ExpoSpeechRecognitionModule, 
   useSpeechRecognitionEvent 
@@ -25,6 +26,7 @@ export default function PronunciationScreen() {
     // Data State
     const [targetWord, setTargetWord] = useState<Word | null>(null);
     const [isRecording, setIsRecording] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     // History State
     const [history, setHistory] = useState<Word[]>([]);
@@ -194,6 +196,18 @@ export default function PronunciationScreen() {
         }
     };
 
+    const speakWord = async () => {
+        if (!targetWord) return;
+        if (isSpeaking) {
+            stopTTS();
+            setIsSpeaking(false);
+            return;
+        }
+        setIsSpeaking(true);
+        await ttsspeak(targetWord.dutch, 0.85);
+        setIsSpeaking(false);
+    };
+
     const handleNext = () => {
         if (historyIndex < history.length - 1) {
             const nextIndex = historyIndex + 1;
@@ -272,7 +286,19 @@ export default function PronunciationScreen() {
                 {/* Target Word Display */}
                 <View style={styles.wordCard}>
                     <Text style={[styles.label, { color: theme.text, opacity: 0.6 }]}>Say this in Dutch:</Text>
-                    <Text style={[styles.targetDutch, { color: theme.text }]}>{targetWord.dutch}</Text>
+                    <View style={styles.dutchRow}>
+                        <Text style={[styles.targetDutch, { color: theme.text }]}>{targetWord.dutch}</Text>
+                        <Pressable
+                            onPress={speakWord}
+                            style={[styles.listenButton, { backgroundColor: isSpeaking ? theme.tint : 'transparent', borderColor: theme.tint }]}
+                        >
+                            <Ionicons
+                                name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
+                                size={24}
+                                color={isSpeaking ? '#fff' : theme.tint}
+                            />
+                        </Pressable>
+                    </View>
                     <Text style={[styles.targetEnglish, { color: theme.tint }]}>{targetWord.english}</Text>
                 </View>
 
@@ -369,6 +395,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 40,
     },
+    dutchRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
+    },
+    listenButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     label: {
         fontSize: 16,
         marginBottom: 8,
@@ -376,7 +416,6 @@ const styles = StyleSheet.create({
     targetDutch: {
         fontSize: 42,
         fontWeight: 'bold',
-        marginBottom: 8,
         textAlign: 'center',
     },
     targetEnglish: {

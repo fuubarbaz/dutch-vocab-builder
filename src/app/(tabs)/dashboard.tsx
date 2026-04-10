@@ -1,12 +1,14 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, Platform, Pressable } from 'react-native';
 import { Dimensions } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import { BookOpen, CheckCircle, Heart, Target, RotateCcw } from 'lucide-react-native';
+import { BookOpen, CheckCircle, Heart, Target, RotateCcw, Flame, Clock, TrendingUp, Brain } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useSRS } from '@/context/SRSContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -55,7 +57,9 @@ function LargeProgressRing({ progress, size = 180, strokeWidth = 12, color, bgCo
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
   const { learnedIds, favorites, customWords, resetProgress, resetCategoryProgress } = useFavorites();
+  const { stats: srsStats } = useSRS();
 
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
@@ -163,6 +167,48 @@ export default function DashboardScreen() {
         <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
           {learnedCount} of {totalWords} words mastered
         </Text>
+      </View>
+
+      {/* SRS Stats — Vocab Review */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>VOCAB REVIEW</Text>
+      <View style={[styles.srsCard, { backgroundColor: theme.cardBackground }]}>
+        {/* Due Today — tappable */}
+        <Pressable
+          style={[styles.srsDueRow, { backgroundColor: srsStats.dueToday > 0 ? theme.primary + '12' : theme.surfaceSecondary }]}
+          onPress={() => router.push('/vocab-practice' as any)}
+        >
+          <View style={[styles.srsIconBox, { backgroundColor: srsStats.dueToday > 0 ? theme.primary + '20' : theme.surfaceSecondary }]}>
+            <Clock size={20} color={srsStats.dueToday > 0 ? theme.primary : theme.textSecondary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.srsDueCount, { color: srsStats.dueToday > 0 ? theme.primary : theme.textSecondary }]}>
+              {srsStats.dueToday} word{srsStats.dueToday !== 1 ? 's' : ''} due today
+            </Text>
+            <Text style={[styles.srsDueSub, { color: theme.textSecondary }]}>Tap to review now</Text>
+          </View>
+          <BookOpen size={16} color={srsStats.dueToday > 0 ? theme.primary : theme.textSecondary} />
+        </Pressable>
+
+        {/* 3 mini stats */}
+        <View style={styles.srsStatsRow}>
+          <View style={styles.srsStat}>
+            <Flame size={16} color="#f59e0b" />
+            <Text style={[styles.srsStatNum, { color: theme.text }]}>{srsStats.streak}</Text>
+            <Text style={[styles.srsStatLabel, { color: theme.textSecondary }]}>day streak</Text>
+          </View>
+          <View style={[styles.srsStatDivider, { backgroundColor: theme.divider }]} />
+          <View style={styles.srsStat}>
+            <TrendingUp size={16} color={theme.success} />
+            <Text style={[styles.srsStatNum, { color: theme.text }]}>{srsStats.weeklyAccuracy}%</Text>
+            <Text style={[styles.srsStatLabel, { color: theme.textSecondary }]}>7-day accuracy</Text>
+          </View>
+          <View style={[styles.srsStatDivider, { backgroundColor: theme.divider }]} />
+          <View style={styles.srsStat}>
+            <Brain size={16} color={theme.primary} />
+            <Text style={[styles.srsStatNum, { color: theme.text }]}>{srsStats.totalReviewed}</Text>
+            <Text style={[styles.srsStatLabel, { color: theme.textSecondary }]}>reviewed</Text>
+          </View>
+        </View>
       </View>
 
       {/* Stats Grid */}
@@ -325,6 +371,60 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: FontSize.footnote,
+  },
+  // SRS Vocab Review card
+  srsCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  srsDueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  srsIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  srsDueCount: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  srsDueSub: {
+    fontSize: FontSize.caption,
+  },
+  srsStatsRow: {
+    flexDirection: 'row',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#e0e0e0',
+  },
+  srsStat: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    gap: Spacing.xs,
+  },
+  srsStatDivider: {
+    width: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.md,
+  },
+  srsStatNum: {
+    fontSize: FontSize.title3,
+    fontWeight: FontWeight.bold,
+  },
+  srsStatLabel: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
   },
   resetButton: {
     alignSelf: 'center',

@@ -14,6 +14,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { PRACTICE_SENTENCES, Sentence } from '@/data/sentences';
 import { normalizeDutchText } from '@/utils/text';
 import { ActivityIndicator } from 'react-native';
+import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
 export default function SentencePracticeScreen() {
@@ -25,6 +26,7 @@ export default function SentencePracticeScreen() {
     // Data State
     const [targetSentence, setTargetSentence] = useState<Sentence | null>(null);
     const [isRecording, setIsRecording] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     // History State
     const [history, setHistory] = useState<Sentence[]>([]);
@@ -180,6 +182,18 @@ export default function SentencePracticeScreen() {
         }
     };
 
+    const speakSentence = async () => {
+        if (!targetSentence) return;
+        if (isSpeaking) {
+            stopTTS();
+            setIsSpeaking(false);
+            return;
+        }
+        setIsSpeaking(true);
+        await ttsSpeak(targetSentence.dutch, 0.85);
+        setIsSpeaking(false);
+    };
+
     const handleNext = () => {
         if (historyIndex < history.length - 1) {
             const nextIndex = historyIndex + 1;
@@ -256,7 +270,19 @@ export default function SentencePracticeScreen() {
                 {/* Target Sentence Display */}
                 <View style={styles.wordCard}>
                     <Text style={[styles.label, { color: theme.text, opacity: 0.6 }]}>Say this sentence:</Text>
-                    <Text style={[styles.targetDutch, { color: theme.text, fontSize: 24, paddingHorizontal: 20 }]}>{targetSentence.dutch}</Text>
+                    <View style={styles.dutchRow}>
+                        <Text style={[styles.targetDutch, { color: theme.text, fontSize: 24, paddingHorizontal: 20 }]}>{targetSentence.dutch}</Text>
+                        <Pressable
+                            onPress={speakSentence}
+                            style={[styles.listenButton, { backgroundColor: isSpeaking ? theme.tint : 'transparent', borderColor: theme.tint }]}
+                        >
+                            <Ionicons
+                                name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
+                                size={24}
+                                color={isSpeaking ? '#fff' : theme.tint}
+                            />
+                        </Pressable>
+                    </View>
                     <Text style={[styles.targetEnglish, { color: theme.tint, paddingHorizontal: 20, marginTop: 10 }]}>{targetSentence.english}</Text>
                 </View>
 
@@ -364,6 +390,22 @@ const styles = StyleSheet.create({
     wordCard: {
         alignItems: 'center',
         marginTop: 40,
+    },
+    dutchRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
+        paddingHorizontal: 20,
+    },
+    listenButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexShrink: 0,
     },
     label: {
         fontSize: 16,

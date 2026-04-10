@@ -1,132 +1,92 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Mic, MessageSquare, BookOpen, PenTool, ChevronRight } from 'lucide-react-native';
+import { Mic, MessageSquare, BookOpen, PenTool, ChevronRight, BrainCircuit, Languages, TrafficCone } from 'lucide-react-native';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { VOCABULARY_DATA } from '@/data/vocabulary';
-import { TRAFFIC_CATEGORIES } from '@/data/traffic_categories';
 
 export default function PracticeScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
 
-  const [selectedDomain, setSelectedDomain] = useState<'vocabulary' | 'traffic'>('vocabulary');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [questionCount, setQuestionCount] = useState(10);
-
-  const currentCategories = selectedDomain === 'vocabulary' ? VOCABULARY_DATA : TRAFFIC_CATEGORIES;
-  const allCategories = [{ title: 'All Categories' }, ...currentCategories];
-  const counts = [5, 10, 15, 20];
-
-  const startQuiz = () => {
-    router.push({
-      pathname: '/quiz',
-      params: {
-        domain: selectedDomain,
-        category: selectedCategory,
-        count: questionCount.toString(),
-      },
-    });
-  };
-
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Quiz Section */}
-      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>QUIZ</Text>
-      <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-        {/* Domain Toggle */}
-        <View style={[styles.segmentedControl, { backgroundColor: theme.surfaceSecondary }]}>
-          {(['vocabulary', 'traffic'] as const).map((domain) => (
-            <Pressable
-              key={domain}
-              style={[
-                styles.segment,
-                selectedDomain === domain && [styles.segmentActive, { backgroundColor: theme.cardBackground }],
-              ]}
-              onPress={() => {
-                setSelectedDomain(domain);
-                setSelectedCategory('All Categories');
-              }}
-            >
-              <Text style={[
-                styles.segmentText,
-                { color: theme.textSecondary },
-                selectedDomain === domain && { color: theme.text, fontWeight: FontWeight.semibold },
-              ]}>
-                {domain === 'vocabulary' ? 'Vocabulary' : 'Traffic Signs'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Category chips */}
-        <Text style={[styles.fieldLabel, { color: theme.text }]}>Category</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-          {allCategories.map((cat, index) => {
-            const isSelected = selectedCategory === cat.title;
-            return (
-              <Pressable
-                key={index}
-                style={[
-                  styles.chip,
-                  { borderColor: theme.border },
-                  isSelected && { backgroundColor: theme.primary, borderColor: theme.primary },
-                ]}
-                onPress={() => setSelectedCategory(cat.title)}
-              >
-                <Text style={[
-                  styles.chipText,
-                  { color: theme.text },
-                  isSelected && { color: '#FFFFFF' },
-                ]}>
-                  {cat.title}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Question count */}
-        <Text style={[styles.fieldLabel, { color: theme.text, marginTop: Spacing.xl }]}>Questions</Text>
-        <View style={styles.countRow}>
-          {counts.map((count) => {
-            const isSelected = questionCount === count;
-            return (
-              <Pressable
-                key={count}
-                style={[
-                  styles.countChip,
-                  { borderColor: theme.border },
-                  isSelected && { backgroundColor: theme.primary, borderColor: theme.primary },
-                ]}
-                onPress={() => setQuestionCount(count)}
-              >
-                <Text style={[
-                  styles.countText,
-                  { color: theme.text },
-                  isSelected && { color: '#FFFFFF' },
-                ]}>
-                  {count}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Start button */}
+      {/* Unified Practice Section */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>PRACTICE</Text>
+      <View style={[styles.listCard, { backgroundColor: theme.cardBackground }]}>
         <Pressable
-          style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-          onPress={startQuiz}
+          style={[styles.listRow, { borderBottomColor: theme.divider }]}
+          onPress={() => router.push('/vocab-practice' as any)}
         >
-          <Text style={styles.primaryButtonText}>Start Quiz</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          <View style={[styles.listIcon, { backgroundColor: theme.primary + '15' }]}>
+            <BrainCircuit size={18} color={theme.primary} />
+          </View>
+          <View style={styles.listText}>
+            <Text style={[styles.listTitle, { color: theme.text }]}>Vocab</Text>
+            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Spaced repetition flashcards</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
+        </Pressable>
+
+        <Pressable
+          style={[styles.listRow, { borderBottomColor: theme.divider }]}
+          onPress={() => router.push({ pathname: '/quiz', params: { domain: 'traffic', category: 'All Categories', count: '10' } } as any)}
+        >
+          <View style={[styles.listIcon, { backgroundColor: '#f59e0b15' }]}>
+            <TrafficCone size={18} color="#f59e0b" />
+          </View>
+          <View style={styles.listText}>
+            <Text style={[styles.listTitle, { color: theme.text }]}>Traffic Signs</Text>
+            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Dutch road sign quiz</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
+        </Pressable>
+
+        <Pressable
+          style={[styles.listRow, { borderBottomColor: theme.divider }]}
+          onPress={() => router.push('/sentence-builder' as any)}
+        >
+          <View style={[styles.listIcon, { backgroundColor: theme.accent + '15' }]}>
+            <Languages size={18} color={theme.accent} />
+          </View>
+          <View style={styles.listText}>
+            <Text style={[styles.listTitle, { color: theme.text }]}>Sentence Builder</Text>
+            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
+        </Pressable>
+
+        <Pressable
+          style={[styles.listRow, { borderBottomColor: theme.divider }]}
+          onPress={() => router.push('/grammar' as any)}
+        >
+          <View style={[styles.listIcon, { backgroundColor: theme.success + '15' }]}>
+            <BookOpen size={18} color={theme.success} />
+          </View>
+          <View style={styles.listText}>
+            <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Topics</Text>
+            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
+        </Pressable>
+
+        <Pressable
+          style={styles.listRow}
+          onPress={() => router.push('/grammar-check' as any)}
+        >
+          <View style={[styles.listIcon, { backgroundColor: '#8B5CF6' + '15' }]}>
+            <PenTool size={18} color="#8B5CF6" />
+          </View>
+          <View style={styles.listText}>
+            <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Check</Text>
+            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>AI-powered feedback</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
         </Pressable>
       </View>
 
@@ -146,7 +106,7 @@ export default function PracticeScreen() {
 
         <Pressable
           style={[styles.actionCard, { backgroundColor: theme.cardBackground }]}
-          onPress={() => router.push('/sentence-practice')}
+          onPress={() => router.push('/sentence-practice' as any)}
         >
           <View style={[styles.actionIcon, { backgroundColor: theme.primary + '15' }]}>
             <MessageSquare size={22} color={theme.primary} />
@@ -156,37 +116,9 @@ export default function PracticeScreen() {
         </Pressable>
       </View>
 
-      {/* More Tools */}
-      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>MORE TOOLS</Text>
+      {/* More Section */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>MORE</Text>
       <View style={[styles.listCard, { backgroundColor: theme.cardBackground }]}>
-        <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
-          onPress={() => router.push('/grammar' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: theme.success + '15' }]}>
-            <BookOpen size={18} color={theme.success} />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Topics</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
-
-        <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
-          onPress={() => router.push('/grammar-check' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: '#8B5CF6' + '15' }]}>
-            <PenTool size={18} color="#8B5CF6" />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Check</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>AI-powered feedback</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
-
         <Pressable
           style={styles.listRow}
           onPress={() => router.push('/small-talk' as any)}
@@ -219,99 +151,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxl,
     marginBottom: Spacing.md,
   },
-  card: {
-    marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
-      android: { elevation: 1 },
-    }),
-  },
-  // Segmented control
-  segmentedControl: {
-    flexDirection: 'row',
-    borderRadius: BorderRadius.sm,
-    padding: 3,
-    marginBottom: Spacing.xl,
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  segmentActive: {
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: { elevation: 2 },
-    }),
-  },
-  segmentText: {
-    fontSize: FontSize.footnote,
-    fontWeight: FontWeight.medium,
-  },
-  // Fields
-  fieldLabel: {
-    fontSize: FontSize.footnote,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.sm,
-  },
-  chipScroll: {
-    flexGrow: 0,
-  },
-  chip: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    marginRight: Spacing.sm,
-  },
-  chipText: {
-    fontSize: FontSize.footnote,
-    fontWeight: FontWeight.medium,
-  },
-  countRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  countChip: {
-    width: 52,
-    height: 40,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countText: {
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.xxl,
-    gap: Spacing.sm,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-  },
-  // Action cards (pronunciation)
+
   actionRow: {
     flexDirection: 'row',
     marginHorizontal: Spacing.lg,

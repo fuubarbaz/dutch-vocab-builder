@@ -28,6 +28,10 @@ function withIosLifecycleFix(config) {
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '26.0'
+        # Exclude arm64 for simulator builds so MLKit device-only frameworks don't cause linker errors
+        if config.build_settings['SDKROOT'] == 'iphonesimulator' || config.name.downcase.include?('simulator')
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+        end
       end
     end`;
 
@@ -73,6 +77,8 @@ function withIosLifecycleFix(config) {
         if (buildConfigs[key].buildSettings.IPHONEOS_DEPLOYMENT_TARGET) {
           buildConfigs[key].buildSettings.IPHONEOS_DEPLOYMENT_TARGET = '26.0';
         }
+        // Exclude arm64 for simulator SDK so MLKit device-only arm64 frameworks don't cause linker errors
+        buildConfigs[key].buildSettings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64';
       }
     }
 
