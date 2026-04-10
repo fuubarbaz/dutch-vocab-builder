@@ -47,6 +47,7 @@ export default function RootLayout() {
 
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { SettingsProvider } from '@/context/SettingsContext';
+import { SRSProvider } from '@/context/SRSContext';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
 
 function RootLayoutNav() {
@@ -58,17 +59,21 @@ function RootLayoutNav() {
   return (
     <SettingsProvider>
       <FavoritesProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="add-word" options={{ presentation: 'modal', headerShown: false }} />
-            <Stack.Screen name="import" options={{ presentation: 'modal', headerTitle: 'Import Words' }} />
-            <Stack.Screen name="quiz" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="pronunciation" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="sentence-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
-          </Stack>
-        </ThemeProvider>
+        <SRSProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-word" options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="import" options={{ presentation: 'modal', headerTitle: 'Import Words' }} />
+              <Stack.Screen name="quiz" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="vocab-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="vocab-session" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="pronunciation" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="sentence-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+            </Stack>
+          </ThemeProvider>
+        </SRSProvider>
       </FavoritesProvider>
     </SettingsProvider>
   );

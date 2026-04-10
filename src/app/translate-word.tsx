@@ -1,19 +1,18 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { ArrowLeftRight, X, ChevronDown } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AudioModule } from 'expo-audio';
-import { 
-  ExpoSpeechRecognitionModule, 
-  useSpeechRecognitionEvent 
-} from 'expo-speech-recognition';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 import AIModule from 'dutch-vocab-ai';
+import { useRouter } from 'expo-router';
+import {
+    ExpoSpeechRecognitionModule,
+    useSpeechRecognitionEvent
+} from 'expo-speech-recognition';
+import { ArrowLeftRight, ChevronDown, X } from 'lucide-react-native';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export default function TranslateWordScreen() {
     const router = useRouter();
@@ -24,6 +23,8 @@ export default function TranslateWordScreen() {
     const [translatedText, setTranslatedText] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
     const [translationDirection, setTranslationDirection] = useState<'en-nl' | 'nl-en'>('en-nl');
+    const [showSetupInfo, setShowSetupInfo] = useState(true);
+    const [translationError, setTranslationError] = useState<string | null>(null);
 
     // Voice State
     const [isRecording, setIsRecording] = useState(false);
@@ -114,6 +115,7 @@ export default function TranslateWordScreen() {
         setTranslationDirection(prev => prev === 'en-nl' ? 'nl-en' : 'en-nl');
         setInputText(translatedText);
         setTranslatedText(inputText);
+        setTranslationError(null);
     };
 
     const startRecording = async () => {
@@ -175,17 +177,18 @@ export default function TranslateWordScreen() {
 
     const translateTextManually = async (text: string, langpair: string) => {
         setIsTranslating(true);
+        setTranslationError(null);
         try {
             const [src, tgt] = langpair.split('|');
             const results = await AIModule.translateTextsAsync([text], src, tgt);
             if (results[0]) {
                 setTranslatedText(results[0]);
             } else {
-                Alert.alert('Translation Error', 'Could not translate the text.');
+                setTranslationError('Translation returned an empty result.');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Manual translation error:', error);
-            Alert.alert('Translation Unavailable', 'Could not translate. Make sure the Dutch language pack is downloaded in Settings → General → Language & Region.');
+            setTranslationError(error?.message ?? 'Translation failed. Check that Apple Intelligence is enabled and the Dutch language pack is installed.');
         } finally {
             setIsTranslating(false);
         }
@@ -193,19 +196,19 @@ export default function TranslateWordScreen() {
 
     const handleTranslate = async () => {
         if (!inputText.trim()) return;
-
         setIsTranslating(true);
+        setTranslationError(null);
         try {
             const [src, tgt] = translationDirection === 'en-nl' ? ['en', 'nl'] : ['nl', 'en'];
             const results = await AIModule.translateTextsAsync([inputText], src, tgt);
             if (results[0]) {
                 setTranslatedText(results[0]);
             } else {
-                Alert.alert('Translation Error', 'Could not translate the text.');
+                setTranslationError('Translation returned an empty result.');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Translation error:', error);
-            Alert.alert('Translation Unavailable', 'Could not translate. Make sure the Dutch language pack is downloaded in Settings → General → Language & Region.');
+            setTranslationError(error?.message ?? 'Translation failed. Check that Apple Intelligence is enabled and the Dutch language pack is installed.');
         } finally {
             setIsTranslating(false);
         }
@@ -245,6 +248,29 @@ export default function TranslateWordScreen() {
                 </View>
 
                 <View style={styles.form}>
+                    {/* Apple Intelligence Setup Banner */}
+                    {showSetupInfo && (
+                        <TouchableOpacity
+                            style={[styles.infoBanner, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '40' }]}
+                            onPress={() => setShowSetupInfo(false)}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="information-circle" size={20} color={theme.primary} style={{ marginTop: 1 }} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.infoBannerTitle, { color: theme.primary }]}>
+                                    Requires Apple Intelligence
+                                </Text>
+                                <Text style={[styles.infoBannerBody, { color: theme.text }]}>
+                                    Needs iPhone 15 Pro / iPhone 16+ with iOS 18. To download Dutch:{' '}
+                                    <Text style={{ fontWeight: '700' }}>Settings → Apps → Translate → Downloaded Languages</Text>
+                                    , then tap the download icon next to Dutch. Also enable Apple Intelligence in{' '}
+                                    <Text style={{ fontWeight: '700' }}>Settings → Apple Intelligence & Siri</Text>.
+                                </Text>
+                            </View>
+                            <Ionicons name="close" size={16} color={theme.textSecondary} />
+                        </TouchableOpacity>
+                    )}
+
                     <View style={styles.directionControl}>
                         <Text style={[styles.langText, { color: theme.text }]}>
                             {translationDirection === 'en-nl' ? 'English' : 'Dutch'}
@@ -316,6 +342,13 @@ export default function TranslateWordScreen() {
                             <Text style={styles.buttonText}>Translate</Text>
                         )}
                     </TouchableOpacity>
+
+                    {translationError ? (
+                        <View style={[styles.errorBar, { backgroundColor: '#fff3cd', borderColor: '#ffc107' }]}>
+                            <Ionicons name="warning-outline" size={16} color="#856404" />
+                            <Text style={styles.errorBarText}>{translationError}</Text>
+                        </View>
+                    ) : null}
 
                     {translatedText ? (
                         <View style={[styles.resultContainer, { backgroundColor: theme.cardBackground, borderColor: theme.primary + '50' }]}>
@@ -456,6 +489,21 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    errorBar: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 8,
+        padding: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        marginTop: 4,
+    },
+    errorBarText: {
+        flex: 1,
+        fontSize: 12,
+        color: '#856404',
+        lineHeight: 17,
+    },
     translateButton: {
         padding: 16,
         borderRadius: 12,
@@ -534,6 +582,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         height: 40,
         gap: 4,
+    },
+    infoBanner: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 10,
+        padding: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        marginBottom: 4,
+    },
+    infoBannerTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        marginBottom: 3,
+    },
+    infoBannerBody: {
+        fontSize: 12,
+        lineHeight: 17,
+        opacity: 0.85,
     },
     waveformBar: {
         width: 6,

@@ -19,9 +19,12 @@ public class DutchVocabAIModule: Module {
     }
 
     AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
-      // TranslationSession.prepareTranslation() may present a download sheet — must run on main actor
       return try await Task { @MainActor in
-        try await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
+        do {
+          return try await self.translateWithApple(texts: texts, sourceLang: sourceLang, targetLang: targetLang)
+        } catch {
+          throw Exception(name: "TranslationError", description: error.localizedDescription)
+        }
       }.value
     }
 
@@ -70,22 +73,45 @@ public class DutchVocabAIModule: Module {
   private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async throws -> [String] {
     guard !texts.isEmpty else { return [] }
 
+    let sourceLanguage = Locale.Language(identifier: sourceLang)
+    let targetLanguage = Locale.Language(identifier: targetLang)
+
+    // Use source: (not installedSource:) so the framework can trigger a
+    // system download sheet when needed and works even when the pack was
+    // installed via the Translate app rather than via our own session.
     let session = TranslationSession(
-      installedSource: Locale.Language(identifier: sourceLang),
-      target: Locale.Language(identifier: targetLang)
+      source: sourceLanguage,
+      target: targetLanguage
     )
-    // prepareTranslation() may show a system sheet to download the language pack
-    try await session.prepareTranslation()
+
+    // prepareTranslation may show a system sheet or throw if unsupported
+    do {
+      try await session.prepareTranslation()
+    } catch {
+      throw NSError(
+        domain: "DutchVocabAI",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Could not prepare translation: \(error.localizedDescription). Make sure Apple Intelligence is enabled in Settings → Apple Intelligence & Siri."]
+      )
+    }
 
     let requests = texts.enumerated().map { (i, text) in
       TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
     }
 
     var results = texts
-    for try await response in session.translate(batch: requests) {
-      if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
-        results[idx] = response.targetText
+    do {
+      for try await response in session.translate(batch: requests) {
+        if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
+          results[idx] = response.targetText
+        }
       }
+    } catch {
+      throw NSError(
+        domain: "DutchVocabAI",
+        code: 2,
+        userInfo: [NSLocalizedDescriptionKey: "Translation failed: \(error.localizedDescription)"]
+      )
     }
     return results
   }

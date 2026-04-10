@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit, ChevronRight, Sparkles } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit, ChevronRight } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 
@@ -187,24 +187,6 @@ export default function CategoriesScreen() {
 
   const ListHeader = () => (
     <>
-      {/* AI Sentence Builder Banner */}
-      <TouchableOpacity
-        style={[styles.aiBanner, { backgroundColor: theme.primary }]}
-        onPress={() => router.push('/sentence-builder' as any)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.aiBannerContent}>
-          <View style={styles.aiBannerIcon}>
-            <Sparkles size={20} color="#FFFFFF" />
-          </View>
-          <View style={styles.aiBannerText}>
-            <Text style={styles.aiBannerTitle}>AI Sentence Builder</Text>
-            <Text style={styles.aiBannerSubtitle}>Practice grammar with intelligent feedback</Text>
-          </View>
-        </View>
-        <ChevronRight size={18} color="rgba(255,255,255,0.6)" />
-      </TouchableOpacity>
-
       {/* Import button - subtle */}
       <TouchableOpacity
         style={[styles.importRow, { borderColor: theme.border }]}
@@ -295,41 +277,6 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-  },
-  // AI Banner
-  aiBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-  },
-  aiBannerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  aiBannerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  aiBannerText: {
-    flex: 1,
-  },
-  aiBannerTitle: {
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  aiBannerSubtitle: {
-    fontSize: FontSize.caption,
-    color: 'rgba(255,255,255,0.7)',
   },
   // Import row
   importRow: {
