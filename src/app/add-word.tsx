@@ -5,7 +5,7 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { ChevronDown, X } from 'lucide-react-native';
+import { ChevronDown, Upload, X } from 'lucide-react-native';
 
 export default function AddWordScreen() {
     const router = useRouter();
@@ -141,6 +141,15 @@ export default function AddWordScreen() {
                     >
                         <Text style={styles.saveButtonText}>Save Card</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.importButton, { borderColor: theme.text + '25', backgroundColor: theme.cardBackground }]}
+                        onPress={() => router.push('/import' as any)}
+                        activeOpacity={0.7}
+                    >
+                        <Upload size={16} color={theme.text + 'aa'} />
+                        <Text style={[styles.importButtonText, { color: theme.text + 'aa' }]}>Import words from CSV</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -217,5 +226,19 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    importButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 14,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginTop: 4,
+    },
+    importButtonText: {
+        fontSize: 15,
+        fontWeight: '500',
     },
 });

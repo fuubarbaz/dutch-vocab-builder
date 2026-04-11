@@ -71,6 +71,7 @@ function RootLayoutNav() {
               <Stack.Screen name="vocab-session" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
               <Stack.Screen name="pronunciation" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
               <Stack.Screen name="sentence-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="pronunciation-guide" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
             </Stack>
           </ThemeProvider>
         </SRSProvider>

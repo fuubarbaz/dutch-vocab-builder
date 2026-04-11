@@ -6,14 +6,16 @@ import { useSettings } from '@/context/SettingsContext';
 import { useSRS } from '@/context/SRSContext';
 import { useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
+import { TRAFFIC_CATEGORIES } from '@/data/traffic_categories';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, ChevronRight, Flame, BookOpen, Target, Clock, Lightbulb } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Search, X, Volume2, Octagon, ChevronRight, ChevronDown, Flame, BookOpen, Target, Clock, Lightbulb, AudioLines, TrafficCone, Layers, GraduationCap, PenLine } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 
 const LAST_CATEGORY_KEY = 'last_category_v1';
 type SearchFilter = 'all' | 'saved' | 'learned' | 'unlearned';
+type ActiveTab = 'vocab' | 'traffic';
 
 const iconMap: Record<string, LucideIcon> = {
   'Hand': Hand,
@@ -29,11 +31,11 @@ const iconMap: Record<string, LucideIcon> = {
   'Languages': Languages,
   'MessageCircle': MessageCircle,
   'Smile': Smile,
-  'Upload': Upload,
   'Octagon': Octagon,
 };
 
-// Compact progress ring component
+// ─── Progress Ring ────────────────────────────────────────────────────────────
+
 function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progress: number; size?: number; strokeWidth?: number; color: string }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -42,37 +44,23 @@ function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progres
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
+        <SvgCircle cx={size / 2} cy={size / 2} r={radius} stroke={color + '20'} strokeWidth={strokeWidth} fill="transparent" />
         <SvgCircle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color + '20'}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        <SvgCircle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="transparent"
+          cx={size / 2} cy={size / 2} r={radius}
+          stroke={color} strokeWidth={strokeWidth} fill="transparent"
           strokeDasharray={`${circumference}`}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
         />
       </Svg>
-      <Text style={{
-        position: 'absolute',
-        fontSize: 10,
-        fontWeight: FontWeight.semibold,
-        color: color,
-      }}>
+      <Text style={{ position: 'absolute', fontSize: 10, fontWeight: FontWeight.semibold, color }}>
         {progress}%
       </Text>
     </View>
   );
 }
+
+// ─── Daily Summary Card ───────────────────────────────────────────────────────
 
 function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPress: () => void }) {
   const { stats } = useSRS();
@@ -88,9 +76,7 @@ function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPr
           <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.streak}</Text>
           <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>day streak</Text>
         </View>
-
         <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
-
         <View style={summaryStyles.stat}>
           <View style={[summaryStyles.statIcon, { backgroundColor: hasDue ? theme.accentLight : theme.successLight }]}>
             <BookOpen size={16} color={hasDue ? theme.primary : theme.success} />
@@ -98,9 +84,7 @@ function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPr
           <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.dueToday}</Text>
           <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>due today</Text>
         </View>
-
         <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
-
         <View style={summaryStyles.stat}>
           <View style={[summaryStyles.statIcon, { backgroundColor: theme.successLight }]}>
             <Target size={16} color={theme.success} />
@@ -109,12 +93,7 @@ function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPr
           <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>accuracy</Text>
         </View>
       </View>
-
-      <TouchableOpacity
-        style={[summaryStyles.ctaButton, { backgroundColor: theme.primary }]}
-        onPress={onPress}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity style={[summaryStyles.ctaButton, { backgroundColor: theme.primary }]} onPress={onPress} activeOpacity={0.8}>
         <Text style={summaryStyles.ctaText}>
           {hasDue ? `Start Practice · ${stats.dueToday} words` : 'Practice All Words'}
         </Text>
@@ -126,63 +105,23 @@ function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPr
 
 const summaryStyles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.md,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
       android: { elevation: 2 },
     }),
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.bold,
-  },
-  statLabel: {
-    fontSize: FontSize.caption,
-  },
-  divider: {
-    width: 1,
-    height: 44,
-    marginHorizontal: Spacing.sm,
-  },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
-  },
-  ctaText: {
-    color: '#fff',
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
-  },
+  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
+  stat: { flex: 1, alignItems: 'center', gap: 4 },
+  statIcon: { width: 32, height: 32, borderRadius: BorderRadius.sm, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  statValue: { fontSize: FontSize.subhead, fontWeight: FontWeight.bold },
+  statLabel: { fontSize: FontSize.caption },
+  divider: { width: 1, height: 44, marginHorizontal: Spacing.sm },
+  ctaButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md, borderRadius: BorderRadius.md, gap: Spacing.xs },
+  ctaText: { color: '#fff', fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
 });
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
@@ -193,6 +132,8 @@ export default function CategoriesScreen() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchFilter, setSearchFilter] = React.useState<SearchFilter>('all');
   const [lastCategory, setLastCategory] = React.useState<{ id: string; title: string } | null>(null);
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>('vocab');
+  const [decksExpanded, setDecksExpanded] = React.useState(false);
 
   // Load last visited category
   React.useEffect(() => {
@@ -201,45 +142,28 @@ export default function CategoriesScreen() {
     }).catch(() => {});
   }, []);
 
-  const playAudio = async (text: string) => {
-    await speak(text, speechRate);
-  };
+  const playAudio = async (text: string) => { await speak(text, speechRate); };
 
   const mergedData = React.useMemo(() => {
     const data = VOCABULARY_DATA.map(category => {
       const categoryCustomWords = customWords.filter(cw => cw.categoryId === category.id);
-      return {
-        ...category,
-        words: [...category.words, ...categoryCustomWords]
-      };
+      return { ...category, words: [...category.words, ...categoryCustomWords] };
     });
-
     const importedWords = customWords.filter(cw => cw.categoryId === 'imported');
     if (importedWords.length > 0) {
-      data.push({
-        id: 'imported',
-        title: 'Imported Words',
-        titleDutch: 'Geimporteerde Woorden',
-        description: 'Words added from CSV',
-        iconName: 'Upload',
-        words: importedWords
-      });
+      data.push({ id: 'imported', title: 'Imported Words', titleDutch: 'Geimporteerde Woorden', description: 'Words added from CSV', iconName: 'Upload', words: importedWords });
     }
-
     return data;
   }, [customWords]);
 
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
     if (category.subCategories) {
-      category.subCategories.forEach(sub => {
-        words = [...words, ...getAllWords(sub)];
-      });
+      category.subCategories.forEach(sub => { words = [...words, ...getAllWords(sub)]; });
     }
     return words;
   }, []);
 
-  // Flat list of all words with category metadata (replaces state+effect pattern)
   const allWords = React.useMemo(() => {
     const flattened: any[] = [];
     mergedData.forEach(cat => {
@@ -250,27 +174,30 @@ export default function CategoriesScreen() {
     return flattened;
   }, [mergedData, getAllWords]);
 
-  // #2: Sort categories — in-progress first, then unstarted, then complete
-  const sortedData = React.useMemo(() => {
-    return [...mergedData].sort((a, b) => {
+  // Vocab tab: all categories except traffic_signs_parent, sorted by progress
+  const vocabData = React.useMemo(() => {
+    const filtered = mergedData.filter(c => c.id !== 'traffic_signs_parent');
+    return [...filtered].sort((a, b) => {
       const aWords = getAllWords(a);
       const bWords = getAllWords(b);
       const aLearned = aWords.filter(w => learnedIds.includes(w.id)).length;
       const bLearned = bWords.filter(w => learnedIds.includes(w.id)).length;
-      const aTotal = aWords.length;
-      const bTotal = bWords.length;
-
       const rank = (learned: number, total: number) => {
-        if (learned > 0 && learned < total) return 0; // in-progress
-        if (learned === 0) return 1;                   // unstarted
-        return 2;                                       // complete
+        if (learned > 0 && learned < total) return 0;
+        if (learned === 0) return 1;
+        return 2;
       };
-
-      return rank(aLearned, aTotal) - rank(bLearned, bTotal);
+      return rank(aLearned, aWords.length) - rank(bLearned, bWords.length);
     });
   }, [mergedData, learnedIds, getAllWords]);
 
-  // #4: Word of the Day — deterministic seed from today's date
+  // Traffic tab: all TRAFFIC_CATEGORIES subcategories
+  const trafficData = React.useMemo(() => [...TRAFFIC_CATEGORIES], []);
+
+  // Active list data — empty when Decks accordion is collapsed
+  const listData = decksExpanded ? (activeTab === 'vocab' ? vocabData : trafficData) : [];
+
+  // Word of the Day
   const wordOfDay = React.useMemo(() => {
     if (allWords.length === 0) return null;
     const d = new Date();
@@ -278,13 +205,12 @@ export default function CategoriesScreen() {
     return allWords[seed % allWords.length];
   }, [allWords]);
 
-  // #5: Filtered search results with active filter
+  // Search
   const filteredWords = React.useMemo(() => {
     if (!searchQuery) return [];
     const lower = searchQuery.toLowerCase();
     let results = allWords.filter(w =>
-      w.dutch.toLowerCase().includes(lower) ||
-      w.english.toLowerCase().includes(lower)
+      w.dutch.toLowerCase().includes(lower) || w.english.toLowerCase().includes(lower)
     );
     if (searchFilter === 'saved') results = results.filter(w => favorites.includes(w.id));
     if (searchFilter === 'learned') results = results.filter(w => learnedIds.includes(w.id));
@@ -292,7 +218,6 @@ export default function CategoriesScreen() {
     return results;
   }, [searchQuery, allWords, searchFilter, favorites, learnedIds]);
 
-  // Group search results by category for SectionList
   const groupedSearchResults = React.useMemo(() => {
     const groups: Record<string, any[]> = {};
     filteredWords.forEach(w => {
@@ -303,7 +228,6 @@ export default function CategoriesScreen() {
   }, [filteredWords]);
 
   const navigateToCategory = async (item: typeof VOCABULARY_DATA[0]) => {
-    // #3: Save last visited category
     const entry = { id: item.id, title: item.title };
     setLastCategory(entry);
     await AsyncStorage.setItem(LAST_CATEGORY_KEY, JSON.stringify(entry)).catch(() => {});
@@ -317,6 +241,7 @@ export default function CategoriesScreen() {
     const totalCount = allCatWords.length;
     const percentage = totalCount > 0 ? Math.round((learnedCount / totalCount) * 100) : 0;
     const remainingCount = totalCount - learnedCount;
+    const accentColor = activeTab === 'traffic' ? '#f59e0b' : theme.primary;
 
     return (
       <TouchableOpacity
@@ -324,12 +249,12 @@ export default function CategoriesScreen() {
         onPress={() => navigateToCategory(item)}
         activeOpacity={0.7}
       >
-        <View style={[styles.iconContainer, { backgroundColor: theme.primary + '10' }]}>
-          <Icon size={22} color={theme.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: accentColor + '12' }]}>
+          <Icon size={22} color={accentColor} />
         </View>
         <View style={styles.textContainer}>
           <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>
-            {item.title}
+            {item.title.replace('Traffic Signs: ', '')}
           </Text>
           <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
             {item.titleDutch} · {remainingCount} left
@@ -359,7 +284,7 @@ export default function CategoriesScreen() {
   );
 
   const renderSectionHeader = ({ section }: { section: { title: string } }) => (
-    <Text style={[styles.sectionHeader, { color: theme.textSecondary, backgroundColor: theme.background }]}>
+    <Text style={[styles.sectionLabel, { color: theme.textSecondary, backgroundColor: theme.background }]}>
       {section.title.toUpperCase()}
     </Text>
   );
@@ -373,13 +298,9 @@ export default function CategoriesScreen() {
 
   const ListHeader = () => (
     <>
-      {/* Daily Summary Card */}
-      <DailySummaryCard
-        theme={theme}
-        onPress={() => router.push('/vocab-practice' as any)}
-      />
+      <DailySummaryCard theme={theme} onPress={() => router.push('/vocab-practice' as any)} />
 
-      {/* #4: Word of the Day */}
+      {/* Word of the Day */}
       {wordOfDay && (
         <View style={[styles.wotdCard, { backgroundColor: theme.cardBackground }]}>
           <View style={styles.wotdHeader}>
@@ -392,18 +313,58 @@ export default function CategoriesScreen() {
               <Text style={[styles.wotdEnglish, { color: theme.textSecondary }]}>{wordOfDay.english}</Text>
               <Text style={[styles.wotdCategory, { color: theme.primary }]}>{wordOfDay.categoryTitle}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => playAudio(wordOfDay.dutch)}
-              hitSlop={8}
-              style={[styles.wotdPlay, { backgroundColor: theme.primary + '15' }]}
-            >
+            <TouchableOpacity onPress={() => playAudio(wordOfDay.dutch)} hitSlop={8} style={[styles.wotdPlay, { backgroundColor: theme.primary + '15' }]}>
               <Volume2 size={18} color={theme.primary} />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* #3: Continue where you left off */}
+      {/* Decks accordion */}
+      <TouchableOpacity
+        style={[styles.decksRow, { backgroundColor: theme.cardBackground }]}
+        onPress={() => setDecksExpanded(e => !e)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.decksIcon, { backgroundColor: theme.primary + '15' }]}>
+          <Layers size={18} color={theme.primary} />
+        </View>
+        <View style={styles.decksTextBlock}>
+          <Text style={[styles.decksTitle, { color: theme.text }]}>Decks</Text>
+        </View>
+        {decksExpanded
+          ? <ChevronDown size={18} color={theme.textSecondary} />
+          : <ChevronRight size={18} color={theme.textSecondary} />
+        }
+      </TouchableOpacity>
+
+      {decksExpanded && (
+        <View style={[styles.tabSwitcher, { backgroundColor: theme.surfaceSecondary }]}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'vocab' && { backgroundColor: theme.cardBackground, ...styles.tabButtonActive }]}
+            onPress={() => setActiveTab('vocab')}
+            activeOpacity={0.8}
+          >
+            <Book size={15} color={activeTab === 'vocab' ? theme.primary : theme.textSecondary} />
+            <Text style={[styles.tabButtonText, { color: activeTab === 'vocab' ? theme.primary : theme.textSecondary }]}>
+              Vocab
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'traffic' && { backgroundColor: theme.cardBackground, ...styles.tabButtonActive }]}
+            onPress={() => setActiveTab('traffic')}
+            activeOpacity={0.8}
+          >
+            <TrafficCone size={15} color={activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary} />
+            <Text style={[styles.tabButtonText, { color: activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary }]}>
+              Traffic Signs
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Continue where you left off */}
       {lastCategory && (
         <TouchableOpacity
           style={[styles.continueRow, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
@@ -418,19 +379,54 @@ export default function CategoriesScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Import button */}
+      {/* Pronunciation Guide */}
       <TouchableOpacity
-        style={[styles.importRow, { borderColor: theme.border }]}
-        onPress={() => router.push('/import')}
-        activeOpacity={0.7}
+        style={[styles.pronGuideCard, { backgroundColor: theme.primary }]}
+        onPress={() => router.push('/pronunciation-guide' as any)}
+        activeOpacity={0.85}
       >
-        <Upload size={16} color={theme.textSecondary} />
-        <Text style={[styles.importText, { color: theme.textSecondary }]}>Import words from CSV</Text>
-        <ChevronRight size={16} color={theme.textSecondary} />
+        <View style={[styles.pronGuideIcon, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+          <AudioLines size={20} color="#fff" />
+        </View>
+        <View style={styles.pronGuideText}>
+          <Text style={styles.pronGuideTitle}>Pronunciation Guide</Text>
+          <Text style={styles.pronGuideSubtitle}>Rules, sounds & live examples</Text>
+        </View>
+        <ChevronRight size={18} color="rgba(255,255,255,0.7)" />
       </TouchableOpacity>
 
-      {/* Section header */}
-      <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>CATEGORIES</Text>
+      {/* Grammar Topics */}
+      <TouchableOpacity
+        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
+        onPress={() => router.push('/grammar' as any)}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.grammarIcon, { backgroundColor: theme.success + '18' }]}>
+          <GraduationCap size={20} color={theme.success} />
+        </View>
+        <View style={styles.pronGuideText}>
+          <Text style={[styles.grammarTitle, { color: theme.text }]}>Grammar Topics</Text>
+          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
+        </View>
+        <ChevronRight size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
+
+      {/* Sentence Builder */}
+      <TouchableOpacity
+        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
+        onPress={() => router.push('/sentence-builder' as any)}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.grammarIcon, { backgroundColor: theme.accent + '18' }]}>
+          <PenLine size={20} color={theme.accent} />
+        </View>
+        <View style={styles.pronGuideText}>
+          <Text style={[styles.grammarTitle, { color: theme.text }]}>Sentence Builder</Text>
+          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
+        </View>
+        <ChevronRight size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
+
     </>
   );
 
@@ -454,7 +450,7 @@ export default function CategoriesScreen() {
           )}
         </View>
 
-        {/* #5: Filter pills — visible when search is active */}
+        {/* Filter pills — visible when search is active */}
         {searchQuery.length > 0 && (
           <View style={styles.filterRow}>
             {filterLabels.map(({ key, label }) => {
@@ -471,10 +467,7 @@ export default function CategoriesScreen() {
                   ]}
                   activeOpacity={0.7}
                 >
-                  <Text style={[
-                    styles.filterPillText,
-                    { color: active ? '#fff' : theme.textSecondary },
-                  ]}>
+                  <Text style={[styles.filterPillText, { color: active ? '#fff' : theme.textSecondary }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>
@@ -502,9 +495,9 @@ export default function CategoriesScreen() {
         />
       ) : (
         <FlatList
-          data={sortedData}
+          data={listData}
           renderItem={renderCategoryItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={ListHeader}
           showsVerticalScrollIndicator={false}
@@ -515,9 +508,9 @@ export default function CategoriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+
+  // Search bar
   searchBarContainer: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
@@ -531,175 +524,140 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: FontSize.body,
-    height: '100%',
-  },
-  // #5: Filter pills
-  filterRow: {
+  searchInput: { flex: 1, fontSize: FontSize.body, height: '100%' },
+
+  // Filter pills
+  filterRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+  filterPill: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: BorderRadius.full },
+  filterPillText: { fontSize: FontSize.footnote, fontWeight: FontWeight.medium },
+
+  // Decks accordion row
+  decksRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  filterPill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-  },
-  filterPillText: {
-    fontSize: FontSize.footnote,
-    fontWeight: FontWeight.medium,
-  },
-  list: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
-  },
-  // #4: Word of the Day
-  wotdCard: {
-    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
     padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
+    gap: Spacing.md,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
-  wotdHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  wotdLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 0.5,
-  },
-  wotdBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  wotdDutch: {
-    fontSize: FontSize.title3,
-    fontWeight: FontWeight.bold,
-    marginBottom: 2,
-  },
-  wotdEnglish: {
-    fontSize: FontSize.footnote,
-    marginBottom: 4,
-  },
-  wotdCategory: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-  },
-  wotdPlay: {
+  decksIcon: {
     width: 40,
     height: 40,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // #3: Continue row
-  continueRow: {
+  decksTextBlock: { flex: 1 },
+  decksTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
+  decksSub: { fontSize: FontSize.caption },
+
+  // Tab switcher (shown inside accordion)
+  tabSwitcher: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-  },
-  continueText: {
-    flex: 1,
-    fontSize: FontSize.footnote,
-  },
-  // Import row
-  importRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  importText: {
-    flex: 1,
-    fontSize: FontSize.footnote,
-  },
-  // Section header
-  sectionHeader: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 0.5,
     marginBottom: Spacing.md,
-    marginTop: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    padding: 3,
+    gap: 2,
   },
-  // Category Cards
-  card: {
+  tabButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.sm,
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+  tabButtonActive: {
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 1,
-      },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
+      android: { elevation: 2 },
     }),
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
+  tabButtonText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
+
+  // List
+  list: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl },
+
+  // Word of the Day
+  wotdCard: {
+    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.sm,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
   },
-  textContainer: {
-    flex: 1,
-    marginRight: Spacing.sm,
+  wotdHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
+  wotdLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, letterSpacing: 0.5 },
+  wotdBody: { flexDirection: 'row', alignItems: 'center' },
+  wotdDutch: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, marginBottom: 2 },
+  wotdEnglish: { fontSize: FontSize.footnote, marginBottom: 4 },
+  wotdCategory: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  wotdPlay: { width: 40, height: 40, borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center' },
+
+  // Continue row
+  continueRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md, marginBottom: Spacing.sm, borderWidth: 1,
   },
-  cardTitle: {
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
-    marginBottom: 2,
+  continueText: { flex: 1, fontSize: FontSize.footnote },
+
+  // Pronunciation guide
+  pronGuideCard: {
+    flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg,
+    padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.md,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 },
+      android: { elevation: 2 },
+    }),
   },
-  cardSubtitle: {
-    fontSize: FontSize.footnote,
+  pronGuideIcon: { width: 40, height: 40, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
+  pronGuideText: { flex: 1 },
+  pronGuideTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, color: '#fff', marginBottom: 1 },
+  pronGuideSubtitle: { fontSize: FontSize.caption, color: 'rgba(255,255,255,0.8)' },
+
+  // Grammar card
+  grammarCard: {
+    flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg,
+    padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.md,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
   },
-  // Search Results
-  searchResultCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
+  grammarIcon: { width: 40, height: 40, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
+  grammarTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
+  grammarSubtitle: { fontSize: FontSize.caption },
+
+  // Section label
+  sectionLabel: {
+    fontSize: FontSize.caption, fontWeight: FontWeight.semibold,
+    letterSpacing: 0.5, marginBottom: Spacing.md, marginTop: Spacing.sm,
   },
-  searchResultDutch: {
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
+
+  // Category card
+  card: {
+    flexDirection: 'row', alignItems: 'center', padding: Spacing.lg,
+    borderRadius: BorderRadius.lg, marginBottom: Spacing.sm,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
   },
-  searchResultEnglish: {
-    fontSize: FontSize.footnote,
-    marginTop: 2,
-  },
-  emptySearch: {
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptySearchText: {
-    fontSize: FontSize.subhead,
-  },
+  iconContainer: { width: 44, height: 44, borderRadius: BorderRadius.md, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  textContainer: { flex: 1, marginRight: Spacing.sm },
+  cardTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 2 },
+  cardSubtitle: { fontSize: FontSize.footnote },
+
+  // Search results
+  searchResultCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, borderRadius: BorderRadius.md, marginBottom: Spacing.sm },
+  searchResultDutch: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
+  searchResultEnglish: { fontSize: FontSize.footnote, marginTop: 2 },
+  emptySearch: { alignItems: 'center', paddingTop: 60 },
+  emptySearchText: { fontSize: FontSize.subhead },
 });
