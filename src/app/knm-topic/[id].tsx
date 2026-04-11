@@ -76,6 +76,7 @@ export default function KNMTopicScreen() {
   const [aiError, setAiError] = useState('');
   const [aiSelected, setAiSelected] = useState<number | null>(null);
   const [aiFeedback, setAiFeedback] = useState<{ correct: boolean; explanation: string } | null>(null);
+  const [aiIsFallback, setAiIsFallback] = useState(false);
 
   const topic = KNM_TOPICS.find((t) => t.id === id);
 
@@ -83,12 +84,30 @@ export default function KNMTopicScreen() {
   // AI quiz logic — must be declared before any early return (rules of hooks)
   // -------------------------------------------------------------------------
 
+  // When Apple Intelligence is unavailable, surface a shuffled static question
+  const useStaticFallback = useCallback(() => {
+    const staticQuestions = topic?.quizQuestions ?? [];
+    if (staticQuestions.length === 0) return;
+    const q = staticQuestions[Math.floor(Math.random() * staticQuestions.length)];
+    // Shuffle options while keeping track of the correct answer text
+    const correctText = q.options[language][q.correctIndex];
+    const shuffled = [...q.options[language]].sort(() => Math.random() - 0.5);
+    setAiQuestion({
+      question: q.question[language],
+      options: shuffled,
+      correctAnswer: correctText,
+      explanation: q.explanation[language],
+    });
+    setAiIsFallback(true);
+  }, [topic, language]);
+
   const generateAIQuestion = useCallback(async () => {
     setAiLoading(true);
     setAiError('');
     setAiQuestion(null);
     setAiSelected(null);
     setAiFeedback(null);
+    setAiIsFallback(false);
     try {
       const langNote = language === 'nl'
         ? 'Write the question and all options in Dutch.'
@@ -113,19 +132,17 @@ Respond ONLY in JSON format:
       const raw = await AIModule.generateTextAsync(prompt);
       const parsed = parseAIQuestion(raw);
       if (parsed) {
-        // Normalize correctAnswer to index
+        // Normalize correctAnswer letter (A/B/C/D) to the actual option text
         const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
         const idx = letterMap[parsed.correctAnswer.toUpperCase().trim()] ?? 0;
         setAiQuestion({ ...parsed, correctAnswer: parsed.options[idx] ?? parsed.correctAnswer });
       } else {
-        setAiError(language === 'en'
-          ? 'Could not parse AI response. Please try again.'
-          : 'AI-antwoord kon niet worden verwerkt. Probeer opnieuw.');
+        // AI returned something unparseable (e.g. JS fallback on simulator).
+        // Show a shuffled static question so the tab always works.
+        useStaticFallback();
       }
-    } catch (e) {
-      setAiError(language === 'en'
-        ? 'Apple Intelligence is unavailable. Try on a supported device (iOS 26+).'
-        : 'Apple Intelligence is niet beschikbaar. Probeer op een ondersteund apparaat (iOS 26+).');
+    } catch {
+      useStaticFallback();
     } finally {
       setAiLoading(false);
     }
@@ -405,9 +422,13 @@ Respond ONLY in JSON format:
       {/* AI Question */}
       {aiQuestion && !aiLoading && (
         <View style={styles.questionCard}>
-          <View style={styles.aiBadge}>
-            <Ionicons name="sparkles" size={12} color="#7c3aed" />
-            <Text style={styles.aiBadgeText}>AI Generated</Text>
+          <View style={[styles.aiBadge, aiIsFallback && styles.aiBadgeFallback]}>
+            <Ionicons name={aiIsFallback ? 'library-outline' : 'sparkles'} size={12} color={aiIsFallback ? '#0369a1' : '#7c3aed'} />
+            <Text style={[styles.aiBadgeText, aiIsFallback && { color: '#0369a1' }]}>
+              {aiIsFallback
+                ? (language === 'en' ? 'Practice Question' : 'Oefenvraag')
+                : 'AI Generated'}
+            </Text>
           </View>
           <Text style={styles.questionText}>{aiQuestion.question}</Text>
           {aiQuestion.options.map((opt, idx) => {
@@ -757,6 +778,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   aiBadgeText: { fontSize: 11, fontWeight: '700', color: '#7c3aed' },
+  aiBadgeFallback: { backgroundColor: '#e0f2fe' },
 
   errorCard: {
     flexDirection: 'row',
