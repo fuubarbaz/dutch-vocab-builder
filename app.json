@@ -51,6 +51,7 @@
           "speechRecognitionPermission": "Allow Dutchify to securely transcribe your speech offline to provide pronunciation accuracy scores."
         }
       ],
+      "expo-notifications",
       "expo-audio",
       "./plugins/withIosLifecycleFix"
     ],

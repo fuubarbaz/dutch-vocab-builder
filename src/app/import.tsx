@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import * as DocumentPicker from 'expo-document-picker';
 
 import Papa from 'papaparse';
 import { useFavorites } from '@/context/FavoritesContext';
-import { Upload, CheckCircle, AlertCircle, Trash2 } from 'lucide-react-native';
+import { Upload, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react-native';
 import { CustomWord } from '@/types';
 
 export default function ImportScreen() {
+    const router = useRouter();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
     const { importWords, clearImportedWords, customWords } = useFavorites();
@@ -105,7 +106,14 @@ export default function ImportScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Stack.Screen options={{ title: 'Import Words' }} />
+            <Stack.Screen options={{ headerShown: false }} />
+            
+            <View style={styles.header}>
+                <Text style={[styles.title, { color: theme.text }]}>Import Words</Text>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <X size={24} color={theme.text} />
+                </TouchableOpacity>
+            </View>
 
             <ScrollView contentContainerStyle={styles.content}>
 
@@ -178,9 +186,21 @@ export default function ImportScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        padding: 20,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 30,
+        marginTop: 20,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
     },
     content: {
-        padding: 20,
+        paddingBottom: 40,
     },
     card: {
         padding: 20,

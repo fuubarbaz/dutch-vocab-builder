@@ -363,7 +363,11 @@ export default function CategoriesScreen() {
           </TouchableOpacity>
         </View>
       )}
+    </>
+  );
 
+  const ListFooter = () => (
+    <>
       {/* Continue where you left off */}
       {lastCategory && (
         <TouchableOpacity
@@ -426,9 +430,9 @@ export default function CategoriesScreen() {
         </View>
         <ChevronRight size={18} color={theme.textSecondary} />
       </TouchableOpacity>
-
     </>
   );
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -500,6 +504,7 @@ export default function CategoriesScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={ListHeader}
+          ListFooterComponent={ListFooter}
           showsVerticalScrollIndicator={false}
         />
       )}
