@@ -20,7 +20,7 @@ export interface KNMQuestion {
 
 export interface KNMTopic {
   id: string;
-  emoji: string;
+  icon: string;
   title: KNMBilingual;
   description: KNMBilingual;
   color: string;
@@ -35,7 +35,7 @@ export interface KNMTopic {
 // ============================================================================
 const LIVING: KNMTopic = {
   id: 'living',
-  emoji: '🏛️',
+  icon: 'home-outline',
   title: { en: 'Living in the Netherlands', nl: 'Wonen in Nederland' },
   description: {
     en: 'Housing, registration, and daily neighbourhood rules.',
@@ -213,7 +213,7 @@ Afvalscheiding wordt heel serieus genomen: papier, glas, plastic en gft-afval ga
 // ============================================================================
 const WORK: KNMTopic = {
   id: 'work',
-  emoji: '💼',
+  icon: 'briefcase-outline',
   title: { en: 'Work & Income', nl: 'Werk en Inkomen' },
   description: {
     en: 'Jobs, contracts, wages, taxes, and work culture.',
@@ -401,7 +401,7 @@ Belastingen worden afgehandeld door de Belastingdienst. Je werkgever houdt loonb
 // ============================================================================
 const HEALTHCARE: KNMTopic = {
   id: 'healthcare',
-  emoji: '🏥',
+  icon: 'medkit-outline',
   title: { en: 'Healthcare', nl: 'Gezondheidszorg' },
   description: {
     en: 'Insurance, GP system, emergency care, and pharmacy.',
@@ -589,7 +589,7 @@ Bij noodgevallen bel je 112 voor ambulance, brandweer of politie. De apotheek vu
 // ============================================================================
 const EDUCATION: KNMTopic = {
   id: 'education',
-  emoji: '📚',
+  icon: 'book-outline',
   title: { en: 'Education', nl: 'Onderwijs' },
   description: {
     en: 'Schools, compulsory education, childcare, and costs.',
@@ -753,7 +753,7 @@ Kinderopvang is beschikbaar voor werkende ouders en er is een overheidstoeslag (
 // ============================================================================
 const FAMILY: KNMTopic = {
   id: 'family',
-  emoji: '👨‍👩‍👧',
+  icon: 'people-outline',
   title: { en: 'Family & Social Life', nl: 'Gezin en Sociaal Leven' },
   description: {
     en: 'Raising children, gender equality, and child benefits.',
@@ -917,7 +917,7 @@ Kinderbijslag wordt uitbetaald door de SVB (Sociale Verzekeringsbank) aan alle o
 // ============================================================================
 const RIGHTS: KNMTopic = {
   id: 'rights',
-  emoji: '🧑‍⚖️',
+  icon: 'shield-checkmark-outline',
   title: { en: 'Rules, Rights & Responsibilities', nl: 'Regels, Rechten en Plichten' },
   description: {
     en: 'Laws, police, ID requirements, freedom, and equality.',
@@ -1101,7 +1101,7 @@ De politie handhaaft de openbare veiligheid en de wet. Iedereen moet dezelfde re
 // ============================================================================
 const GOVERNMENT: KNMTopic = {
   id: 'government',
-  emoji: '🏛️',
+  icon: 'business-outline',
   title: { en: 'Government & Society', nl: 'Overheid en Samenleving' },
   description: {
     en: 'How government works, voting, DigiD, and public services.',
@@ -1275,7 +1275,7 @@ DigiD is je digitale identiteit om toegang te krijgen tot overheidswebsites, bel
 // ============================================================================
 const TRANSPORT: KNMTopic = {
   id: 'transport',
-  emoji: '🚆',
+  icon: 'bicycle-outline',
   title: { en: 'Transport & Mobility', nl: 'Vervoer en Mobiliteit' },
   description: {
     en: 'Public transport, cycling culture, and traffic rules.',
@@ -1469,7 +1469,7 @@ Voor rijden is een Nederlands of EU-rijbewijs vereist. Alle verkeersregels gelde
 // ============================================================================
 const DAILY: KNMTopic = {
   id: 'daily',
-  emoji: '🛍️',
+  icon: 'basket-outline',
   title: { en: 'Daily Life & Practical Matters', nl: 'Dagelijks Leven en Praktische Zaken' },
   description: {
     en: 'Shopping, banking, insurance, and communication.',
@@ -1643,7 +1643,7 @@ Verzekeringen naast zorgverzekering zijn onder andere inboedelverzekering, aansp
 // ============================================================================
 const CULTURE: KNMTopic = {
   id: 'culture',
-  emoji: '🌍',
+  icon: 'earth-outline',
   title: { en: 'Dutch Culture & Norms', nl: 'Nederlandse Cultuur en Normen' },
   description: {
     en: 'Communication style, planning, equality, and social norms.',
@@ -1841,7 +1841,7 @@ Gelijkheid is een kernwaarde: er is weinig tolerantie voor hiërarchisch gedrag.
 // ============================================================================
 const INTEGRATION: KNMTopic = {
   id: 'integration',
-  emoji: '📄',
+  icon: 'document-text-outline',
   title: { en: 'Integration & Participation', nl: 'Inburgering en Participatie' },
   description: {
     en: 'The inburgering process, language learning, and civic participation.',

@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight, BookOpen, Globe } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -39,7 +40,9 @@ export default function KNMScreen() {
       {/* Header Banner */}
       <View style={[styles.banner, { backgroundColor: '#1d4ed8' }]}>
         <View style={styles.bannerContent}>
-          <Text style={styles.bannerEmoji}>🇳🇱</Text>
+          <View style={styles.bannerIconWrap}>
+            <Ionicons name="school" size={32} color="white" />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>{t.title}</Text>
             <Text style={styles.bannerSubtitle}>{t.subtitle}</Text>
@@ -104,8 +107,8 @@ export default function KNMScreen() {
                 } as any)
               }
             >
-              <View style={[styles.topicEmoji, { backgroundColor: topic.color + '18' }]}>
-                <Text style={styles.emojiText}>{topic.emoji}</Text>
+              <View style={[styles.topicIconWrap, { backgroundColor: topic.color + '18' }]}>
+                <Ionicons name={topic.icon as any} size={20} color={topic.color} />
               </View>
               <View style={styles.topicContent}>
                 <Text style={[styles.topicTitle, { color: theme.text }]}>
@@ -179,7 +182,14 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.md,
   },
-  bannerEmoji: { fontSize: 36 },
+  bannerIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bannerTitle: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, color: 'white', marginBottom: 2 },
   bannerSubtitle: { fontSize: FontSize.caption, color: 'rgba(255,255,255,0.75)', marginBottom: 4 },
   bannerDescription: { fontSize: FontSize.footnote, color: 'rgba(255,255,255,0.9)', lineHeight: 18 },
@@ -235,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.lg,
   },
-  topicEmoji: {
+  topicIconWrap: {
     width: 40,
     height: 40,
     borderRadius: BorderRadius.sm,
@@ -243,7 +253,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: Spacing.md,
   },
-  emojiText: { fontSize: 20 },
   topicContent: { flex: 1, marginRight: Spacing.sm },
   topicTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 2 },
   topicSubtitle: { fontSize: FontSize.caption },
