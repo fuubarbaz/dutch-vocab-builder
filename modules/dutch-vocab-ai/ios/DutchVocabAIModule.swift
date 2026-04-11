@@ -2,6 +2,7 @@ import ExpoModulesCore
 import WebKit
 import FoundationModels
 import Translation
+import SwiftUI
 
 public class DutchVocabAIModule: Module {
   public func definition() -> ModuleDefinition {
@@ -73,44 +74,52 @@ public class DutchVocabAIModule: Module {
   private func translateWithApple(texts: [String], sourceLang: String, targetLang: String) async throws -> [String] {
     guard !texts.isEmpty else { return [] }
 
-    let sourceLanguage = Locale.Language(identifier: sourceLang)
-    let targetLanguage = Locale.Language(identifier: targetLang)
+    if #available(iOS 18.0, *) {
+      return try await withCheckedThrowingContinuation { continuation in
+        let source = Locale.Language(identifier: sourceLang)
+        let target = Locale.Language(identifier: targetLang)
+        let configuration = TranslationSession.Configuration(source: source, target: target)
 
-    let session = TranslationSession(
-      installedSource: sourceLanguage,
-      target: targetLanguage
-    )
+        // Use a weak reference or a way to clean up the hosting controller
+        var hostingController: UIHostingController<HeadlessTranslationBridge>?
 
-    // prepareTranslation may show a system sheet or throw if unsupported
-    do {
-      try await session.prepareTranslation()
-    } catch {
-      throw NSError(
-        domain: "DutchVocabAI",
-        code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "Could not prepare translation: \(error.localizedDescription). Make sure Apple Intelligence is enabled in Settings → Apple Intelligence & Siri."]
-      )
-    }
+        let cleanup: @MainActor () -> Void = {
+          hostingController?.view.removeFromSuperview()
+          hostingController?.removeFromParent()
+          hostingController = nil
+        }
 
-    let requests = texts.enumerated().map { (i, text) in
-      TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
-    }
+        let bridge = HeadlessTranslationBridge(
+          texts: texts,
+          configuration: configuration
+        ) { results in
+          cleanup()
+          continuation.resume(returning: results)
+        } onError: { error in
+          cleanup()
+          continuation.resume(throwing: error)
+        }
 
-    var results = texts
-    do {
-      for try await response in session.translate(batch: requests) {
-        if let idxStr = response.clientIdentifier, let idx = Int(idxStr), idx < results.count {
-          results[idx] = response.targetText
+        hostingController = UIHostingController(rootView: bridge)
+        hostingController?.view.backgroundColor = .clear
+        hostingController?.view.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        hostingController?.view.alpha = 0.01
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController,
+           let hc = hostingController {
+          
+          rootVC.addChild(hc)
+          rootVC.view.addSubview(hc.view)
+          hc.didMove(toParent: rootVC)
+        } else {
+          cleanup()
+          continuation.resume(throwing: NSError(domain: "DutchVocabAI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not find root view controller for translation bridge."]))
         }
       }
-    } catch {
-      throw NSError(
-        domain: "DutchVocabAI",
-        code: 2,
-        userInfo: [NSLocalizedDescriptionKey: "Translation failed: \(error.localizedDescription)"]
-      )
+    } else {
+      throw NSError(domain: "DutchVocabAI", code: 4, userInfo: [NSLocalizedDescriptionKey: "On-device translation requires iOS 18.0 or later."])
     }
-    return results
   }
 
   // MARK: - Grammar Check with Apple Intelligence
@@ -238,5 +247,40 @@ class WebViewDelegate: NSObject, WKNavigationDelegate {
     if let url = webView.url {
       onUrlChange(url.absoluteString)
     }
+  }
+}
+
+// MARK: - SwiftUI Translation Bridge
+
+@available(iOS 18.0, *)
+struct HeadlessTranslationBridge: View {
+  let texts: [String]
+  let configuration: TranslationSession.Configuration?
+  let onComplete: @MainActor ([String]) -> Void
+  let onError: @MainActor (Error) -> Void
+
+  var body: some View {
+    Color.clear
+      .translationTask(configuration) { session in
+        do {
+          var results = texts
+          let requests = texts.enumerated().map { (i, text) in
+            TranslationSession.Request(sourceText: text, clientIdentifier: String(i))
+          }
+
+          // Use batch translation
+          for try await response in session.translate(batch: requests) {
+            if let idxStr = response.clientIdentifier, 
+               let idx = Int(idxStr), 
+               idx < results.count {
+              results[idx] = response.targetText
+            }
+          }
+          
+          await onComplete(results)
+        } catch {
+          await onError(error)
+        }
+      }
   }
 }

@@ -385,18 +385,18 @@ export default function CategoriesScreen() {
 
       {/* Pronunciation Guide */}
       <TouchableOpacity
-        style={[styles.pronGuideCard, { backgroundColor: theme.primary }]}
+        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
         onPress={() => router.push('/pronunciation-guide' as any)}
-        activeOpacity={0.85}
+        activeOpacity={0.8}
       >
-        <View style={[styles.pronGuideIcon, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-          <AudioLines size={20} color="#fff" />
+        <View style={[styles.grammarIcon, { backgroundColor: theme.primary + '18' }]}>
+          <AudioLines size={20} color={theme.primary} />
         </View>
-        <View style={styles.pronGuideText}>
-          <Text style={styles.pronGuideTitle}>Pronunciation Guide</Text>
-          <Text style={styles.pronGuideSubtitle}>Rules, sounds & live examples</Text>
+        <View style={styles.cardTextContainer}>
+          <Text style={[styles.grammarTitle, { color: theme.text }]}>Pronunciation Guide</Text>
+          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Rules, sounds & live examples</Text>
         </View>
-        <ChevronRight size={18} color="rgba(255,255,255,0.7)" />
+        <ChevronRight size={18} color={theme.textSecondary} />
       </TouchableOpacity>
 
       {/* Grammar Topics */}
@@ -408,7 +408,7 @@ export default function CategoriesScreen() {
         <View style={[styles.grammarIcon, { backgroundColor: theme.success + '18' }]}>
           <GraduationCap size={20} color={theme.success} />
         </View>
-        <View style={styles.pronGuideText}>
+        <View style={styles.cardTextContainer}>
           <Text style={[styles.grammarTitle, { color: theme.text }]}>Grammar Topics</Text>
           <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
         </View>
@@ -424,7 +424,7 @@ export default function CategoriesScreen() {
         <View style={[styles.grammarIcon, { backgroundColor: theme.accent + '18' }]}>
           <PenLine size={20} color={theme.accent} />
         </View>
-        <View style={styles.pronGuideText}>
+        <View style={styles.cardTextContainer}>
           <Text style={[styles.grammarTitle, { color: theme.text }]}>Sentence Builder</Text>
           <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
         </View>
@@ -612,21 +612,7 @@ const styles = StyleSheet.create({
   },
   continueText: { flex: 1, fontSize: FontSize.footnote },
 
-  // Pronunciation guide
-  pronGuideCard: {
-    flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg,
-    padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.md,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 },
-      android: { elevation: 2 },
-    }),
-  },
-  pronGuideIcon: { width: 40, height: 40, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
-  pronGuideText: { flex: 1 },
-  pronGuideTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, color: '#fff', marginBottom: 1 },
-  pronGuideSubtitle: { fontSize: FontSize.caption, color: 'rgba(255,255,255,0.8)' },
-
-  // Grammar card
+  // Grammar card & Generic Utility cards
   grammarCard: {
     flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg,
     padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.md,
@@ -638,6 +624,7 @@ const styles = StyleSheet.create({
   grammarIcon: { width: 40, height: 40, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
   grammarTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
   grammarSubtitle: { fontSize: FontSize.caption },
+  cardTextContainer: { flex: 1 },
 
   // Section label
   sectionLabel: {

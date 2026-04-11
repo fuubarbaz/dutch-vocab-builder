@@ -86,6 +86,8 @@ export const SRSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     weeklyAccuracy: 0,
   });
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -95,14 +97,36 @@ export const SRSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ]);
         const parsedSRS: Record<string, WordSRSData> = rawSRS ? JSON.parse(rawSRS) : {};
         const parsedLog: SessionEntry[] = rawLog ? JSON.parse(rawLog) : [];
+        
         setSrsData(parsedSRS);
         setSessionLog(parsedLog);
         setStats(computeStats(parsedSRS, parsedLog));
+        setIsLoaded(true);
       } catch (e) {
         console.error('Failed to load SRS data', e);
+        setIsLoaded(true);
       }
     })();
   }, []);
+
+  // Sync stats and persistence whenever data changes
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    setStats(computeStats(srsData, sessionLog));
+
+    const persist = async () => {
+      try {
+        await Promise.all([
+          AsyncStorage.setItem(SRS_KEY, JSON.stringify(srsData)),
+          AsyncStorage.setItem(SESSION_LOG_KEY, JSON.stringify(sessionLog)),
+        ]);
+      } catch (e) {
+        console.error('Failed to persist SRS data', e);
+      }
+    };
+    persist();
+  }, [srsData, sessionLog, isLoaded]);
 
   const getSRSData = useCallback(
     (wordId: string): WordSRSData => srsData[wordId] ?? DEFAULT_SRS_DATA(wordId),
@@ -111,26 +135,20 @@ export const SRSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const recordReview = useCallback(
     async (wordId: string, quality: number) => {
-      const current = srsData[wordId] ?? DEFAULT_SRS_DATA(wordId);
-      const updated = calculateNextReview(current, quality);
-      const newSRS = { ...srsData, [wordId]: updated };
-      const newEntry: SessionEntry = { date: todayISO(), wordId, quality };
-      const newLog = [...sessionLog, newEntry];
+      const today = todayISO();
+      
+      setSrsData(prev => {
+        const current = prev[wordId] ?? DEFAULT_SRS_DATA(wordId);
+        const updated = calculateNextReview(current, quality);
+        return { ...prev, [wordId]: updated };
+      });
 
-      setSrsData(newSRS);
-      setSessionLog(newLog);
-      setStats(computeStats(newSRS, newLog));
-
-      try {
-        await Promise.all([
-          AsyncStorage.setItem(SRS_KEY, JSON.stringify(newSRS)),
-          AsyncStorage.setItem(SESSION_LOG_KEY, JSON.stringify(newLog)),
-        ]);
-      } catch (e) {
-        console.error('Failed to persist SRS review', e);
-      }
+      setSessionLog(prev => {
+        const newEntry: SessionEntry = { date: today, wordId, quality };
+        return [...prev, newEntry];
+      });
     },
-    [srsData, sessionLog]
+    [] // No more stale closure!
   );
 
   const getDueWords = useCallback(
@@ -138,7 +156,7 @@ export const SRSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const today = todayISO();
       return words.filter(w => {
         const d = srsData[w.id];
-        return !d || d.nextReview <= today; // never reviewed = due
+        return !d || d.nextReview <= today;
       });
     },
     [srsData]
