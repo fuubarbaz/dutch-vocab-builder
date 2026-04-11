@@ -1,10 +1,26 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Switch, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Switch, Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useSettings } from '@/context/SettingsContext';
-import { Volume2, Check } from 'lucide-react-native';
+import { Volume2, Check, Bell, BellOff } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import {
+  requestNotificationPermission,
+  scheduleDailyReminder,
+  cancelDailyReminder,
+  REMINDER_HOUR_KEY,
+  REMINDER_ENABLED_KEY,
+} from '@/utils/notifications';
+
+const REMINDER_HOURS = [7, 8, 9, 10, 12, 18, 19, 20, 21];
+
+function formatHour(hour: number): string {
+  const suffix = hour < 12 ? 'AM' : 'PM';
+  const h = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h}${suffix}`;
+}
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -13,6 +29,46 @@ export default function SettingsScreen() {
     speechRate, setSpeechRate,
     showFlashcards, setShowFlashcards,
   } = useSettings();
+
+  const [reminderEnabled, setReminderEnabled] = React.useState(false);
+  const [reminderHour, setReminderHour] = React.useState(8);
+
+  // Load saved reminder prefs
+  React.useEffect(() => {
+    Promise.all([
+      AsyncStorage.getItem(REMINDER_ENABLED_KEY),
+      AsyncStorage.getItem(REMINDER_HOUR_KEY),
+    ]).then(([enabled, hour]) => {
+      if (enabled !== null) setReminderEnabled(JSON.parse(enabled));
+      if (hour !== null) setReminderHour(parseInt(hour, 10));
+    }).catch(() => {});
+  }, []);
+
+  const handleToggleReminder = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert(
+          'Permission Required',
+          'Enable notifications in Settings to receive daily practice reminders.',
+        );
+        return;
+      }
+      await scheduleDailyReminder(reminderHour);
+    } else {
+      await cancelDailyReminder();
+    }
+    setReminderEnabled(value);
+    await AsyncStorage.setItem(REMINDER_ENABLED_KEY, JSON.stringify(value)).catch(() => {});
+  };
+
+  const handleSelectHour = async (hour: number) => {
+    setReminderHour(hour);
+    await AsyncStorage.setItem(REMINDER_HOUR_KEY, hour.toString()).catch(() => {});
+    if (reminderEnabled) {
+      await scheduleDailyReminder(hour);
+    }
+  };
 
   const speeds = [
     { value: 0.5, label: '0.5x', description: 'Slow' },
@@ -95,6 +151,59 @@ export default function SettingsScreen() {
             value={showFlashcards}
           />
         </View>
+      </View>
+
+      {/* Daily Reminders */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>DAILY REMINDER</Text>
+      <View style={[styles.groupCard, { backgroundColor: theme.cardBackground }]}>
+        <View style={styles.settingRow}>
+          <View style={[styles.reminderIconWrap, { backgroundColor: reminderEnabled ? theme.primary + '15' : theme.surfaceSecondary }]}>
+            {reminderEnabled
+              ? <Bell size={20} color={theme.primary} />
+              : <BellOff size={20} color={theme.textSecondary} />
+            }
+          </View>
+          <View style={{ flex: 1, marginLeft: Spacing.md }}>
+            <Text style={[styles.settingTitle, { color: theme.text }]}>Practice Reminder</Text>
+            <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+              {reminderEnabled ? `Daily at ${formatHour(reminderHour)}` : 'Get a nudge each day to practice'}
+            </Text>
+          </View>
+          <Switch
+            trackColor={{ false: theme.surfaceTertiary, true: theme.primary }}
+            thumbColor="#FFFFFF"
+            ios_backgroundColor={theme.surfaceTertiary}
+            onValueChange={handleToggleReminder}
+            value={reminderEnabled}
+          />
+        </View>
+
+        {reminderEnabled && (
+          <>
+            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+            <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Reminder time</Text>
+            <View style={styles.hourGrid}>
+              {REMINDER_HOURS.map(h => {
+                const active = reminderHour === h;
+                return (
+                  <TouchableOpacity
+                    key={h}
+                    onPress={() => handleSelectHour(h)}
+                    style={[
+                      styles.hourChip,
+                      { borderColor: theme.border, backgroundColor: theme.surfaceSecondary },
+                      active && { backgroundColor: theme.primary, borderColor: theme.primary },
+                    ]}
+                  >
+                    <Text style={[styles.hourChipText, { color: active ? '#fff' : theme.text }]}>
+                      {formatHour(h)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
       </View>
 
       <View style={{ height: 40 }} />
@@ -187,5 +296,37 @@ const styles = StyleSheet.create({
   settingDescription: {
     fontSize: FontSize.footnote,
     lineHeight: 18,
+  },
+  reminderIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.md,
+  },
+  timeLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.3,
+    marginBottom: Spacing.md,
+  },
+  hourGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  hourChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  hourChipText: {
+    fontSize: FontSize.footnote,
+    fontWeight: FontWeight.medium,
   },
 });

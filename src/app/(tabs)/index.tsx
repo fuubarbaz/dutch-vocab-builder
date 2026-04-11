@@ -1,14 +1,19 @@
 import React from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, Text, View, TextInput, Platform } from 'react-native';
+import { StyleSheet, FlatList, SectionList, TouchableOpacity, Text, View, TextInput, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useSettings } from '@/context/SettingsContext';
+import { useSRS } from '@/context/SRSContext';
 import { useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, BrainCircuit, ChevronRight } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Upload, Search, X, Volume2, Octagon, ChevronRight, Flame, BookOpen, Target, Clock, Lightbulb } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
+
+const LAST_CATEGORY_KEY = 'last_category_v1';
+type SearchFilter = 'all' | 'saved' | 'learned' | 'unlearned';
 
 const iconMap: Record<string, LucideIcon> = {
   'Hand': Hand,
@@ -69,13 +74,132 @@ function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progres
   );
 }
 
+function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPress: () => void }) {
+  const { stats } = useSRS();
+  const hasDue = stats.dueToday > 0;
+
+  return (
+    <View style={[summaryStyles.card, { backgroundColor: theme.cardBackground }]}>
+      <View style={summaryStyles.statsRow}>
+        <View style={summaryStyles.stat}>
+          <View style={[summaryStyles.statIcon, { backgroundColor: theme.accentLight }]}>
+            <Flame size={16} color={theme.primary} />
+          </View>
+          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.streak}</Text>
+          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>day streak</Text>
+        </View>
+
+        <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
+
+        <View style={summaryStyles.stat}>
+          <View style={[summaryStyles.statIcon, { backgroundColor: hasDue ? theme.accentLight : theme.successLight }]}>
+            <BookOpen size={16} color={hasDue ? theme.primary : theme.success} />
+          </View>
+          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.dueToday}</Text>
+          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>due today</Text>
+        </View>
+
+        <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
+
+        <View style={summaryStyles.stat}>
+          <View style={[summaryStyles.statIcon, { backgroundColor: theme.successLight }]}>
+            <Target size={16} color={theme.success} />
+          </View>
+          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.weeklyAccuracy}%</Text>
+          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>accuracy</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={[summaryStyles.ctaButton, { backgroundColor: theme.primary }]}
+        onPress={onPress}
+        activeOpacity={0.8}
+      >
+        <Text style={summaryStyles.ctaText}>
+          {hasDue ? `Start Practice · ${stats.dueToday} words` : 'Practice All Words'}
+        </Text>
+        <ChevronRight size={16} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const summaryStyles = StyleSheet.create({
+  card: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: { elevation: 2 },
+    }),
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.bold,
+  },
+  statLabel: {
+    fontSize: FontSize.caption,
+  },
+  divider: {
+    width: 1,
+    height: 44,
+    marginHorizontal: Spacing.sm,
+  },
+  ctaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  ctaText: {
+    color: '#fff',
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
+  },
+});
+
 export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { customWords, learnedIds } = useFavorites();
+  const { customWords, learnedIds, favorites } = useFavorites();
   const { speechRate } = useSettings();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchFilter, setSearchFilter] = React.useState<SearchFilter>('all');
+  const [lastCategory, setLastCategory] = React.useState<{ id: string; title: string } | null>(null);
+
+  // Load last visited category
+  React.useEffect(() => {
+    AsyncStorage.getItem(LAST_CATEGORY_KEY).then(raw => {
+      if (raw) setLastCategory(JSON.parse(raw));
+    }).catch(() => {});
+  }, []);
 
   const playAudio = async (text: string) => {
     await speak(text, speechRate);
@@ -115,26 +239,76 @@ export default function CategoriesScreen() {
     return words;
   }, []);
 
-  const [allWords, setAllWords] = React.useState<any[]>([]);
-  React.useEffect(() => {
+  // Flat list of all words with category metadata (replaces state+effect pattern)
+  const allWords = React.useMemo(() => {
     const flattened: any[] = [];
     mergedData.forEach(cat => {
-      const catWords = getAllWords(cat);
-      catWords.forEach(w => {
-        flattened.push({ ...w, categoryTitle: cat.title });
+      getAllWords(cat).forEach(w => {
+        flattened.push({ ...w, categoryTitle: cat.title, categoryId: cat.id });
       });
     });
-    setAllWords(flattened);
+    return flattened;
   }, [mergedData, getAllWords]);
 
+  // #2: Sort categories — in-progress first, then unstarted, then complete
+  const sortedData = React.useMemo(() => {
+    return [...mergedData].sort((a, b) => {
+      const aWords = getAllWords(a);
+      const bWords = getAllWords(b);
+      const aLearned = aWords.filter(w => learnedIds.includes(w.id)).length;
+      const bLearned = bWords.filter(w => learnedIds.includes(w.id)).length;
+      const aTotal = aWords.length;
+      const bTotal = bWords.length;
+
+      const rank = (learned: number, total: number) => {
+        if (learned > 0 && learned < total) return 0; // in-progress
+        if (learned === 0) return 1;                   // unstarted
+        return 2;                                       // complete
+      };
+
+      return rank(aLearned, aTotal) - rank(bLearned, bTotal);
+    });
+  }, [mergedData, learnedIds, getAllWords]);
+
+  // #4: Word of the Day — deterministic seed from today's date
+  const wordOfDay = React.useMemo(() => {
+    if (allWords.length === 0) return null;
+    const d = new Date();
+    const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return allWords[seed % allWords.length];
+  }, [allWords]);
+
+  // #5: Filtered search results with active filter
   const filteredWords = React.useMemo(() => {
     if (!searchQuery) return [];
     const lower = searchQuery.toLowerCase();
-    return allWords.filter(w =>
+    let results = allWords.filter(w =>
       w.dutch.toLowerCase().includes(lower) ||
       w.english.toLowerCase().includes(lower)
     );
-  }, [searchQuery, allWords]);
+    if (searchFilter === 'saved') results = results.filter(w => favorites.includes(w.id));
+    if (searchFilter === 'learned') results = results.filter(w => learnedIds.includes(w.id));
+    if (searchFilter === 'unlearned') results = results.filter(w => !learnedIds.includes(w.id));
+    return results;
+  }, [searchQuery, allWords, searchFilter, favorites, learnedIds]);
+
+  // Group search results by category for SectionList
+  const groupedSearchResults = React.useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    filteredWords.forEach(w => {
+      if (!groups[w.categoryTitle]) groups[w.categoryTitle] = [];
+      groups[w.categoryTitle].push(w);
+    });
+    return Object.entries(groups).map(([title, data]) => ({ title, data }));
+  }, [filteredWords]);
+
+  const navigateToCategory = async (item: typeof VOCABULARY_DATA[0]) => {
+    // #3: Save last visited category
+    const entry = { id: item.id, title: item.title };
+    setLastCategory(entry);
+    await AsyncStorage.setItem(LAST_CATEGORY_KEY, JSON.stringify(entry)).catch(() => {});
+    router.push(`/category/${item.id}`);
+  };
 
   const renderCategoryItem = ({ item }: { item: typeof VOCABULARY_DATA[0] }) => {
     const Icon = iconMap[item.iconName] || Book;
@@ -147,7 +321,7 @@ export default function CategoriesScreen() {
     return (
       <TouchableOpacity
         style={[styles.card, { backgroundColor: theme.cardBackground }]}
-        onPress={() => router.push(`/category/${item.id}`)}
+        onPress={() => navigateToCategory(item)}
         activeOpacity={0.7}
       >
         <View style={[styles.iconContainer, { backgroundColor: theme.primary + '10' }]}>
@@ -179,15 +353,72 @@ export default function CategoriesScreen() {
       <View style={{ flex: 1 }}>
         <Text style={[styles.searchResultDutch, { color: theme.text }]}>{item.dutch}</Text>
         <Text style={[styles.searchResultEnglish, { color: theme.textSecondary }]}>{item.english}</Text>
-        <Text style={[styles.searchResultCategory, { color: theme.primary }]}>{item.categoryTitle}</Text>
       </View>
       <Volume2 size={20} color={theme.primary} />
     </TouchableOpacity>
   );
 
+  const renderSectionHeader = ({ section }: { section: { title: string } }) => (
+    <Text style={[styles.sectionHeader, { color: theme.textSecondary, backgroundColor: theme.background }]}>
+      {section.title.toUpperCase()}
+    </Text>
+  );
+
+  const filterLabels: { key: SearchFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'saved', label: 'Saved' },
+    { key: 'learned', label: 'Learned' },
+    { key: 'unlearned', label: 'Unlearned' },
+  ];
+
   const ListHeader = () => (
     <>
-      {/* Import button - subtle */}
+      {/* Daily Summary Card */}
+      <DailySummaryCard
+        theme={theme}
+        onPress={() => router.push('/vocab-practice' as any)}
+      />
+
+      {/* #4: Word of the Day */}
+      {wordOfDay && (
+        <View style={[styles.wotdCard, { backgroundColor: theme.cardBackground }]}>
+          <View style={styles.wotdHeader}>
+            <Lightbulb size={14} color={theme.primary} />
+            <Text style={[styles.wotdLabel, { color: theme.primary }]}>WORD OF THE DAY</Text>
+          </View>
+          <View style={styles.wotdBody}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.wotdDutch, { color: theme.text }]}>{wordOfDay.dutch}</Text>
+              <Text style={[styles.wotdEnglish, { color: theme.textSecondary }]}>{wordOfDay.english}</Text>
+              <Text style={[styles.wotdCategory, { color: theme.primary }]}>{wordOfDay.categoryTitle}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => playAudio(wordOfDay.dutch)}
+              hitSlop={8}
+              style={[styles.wotdPlay, { backgroundColor: theme.primary + '15' }]}
+            >
+              <Volume2 size={18} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* #3: Continue where you left off */}
+      {lastCategory && (
+        <TouchableOpacity
+          style={[styles.continueRow, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
+          onPress={() => router.push(`/category/${lastCategory.id}`)}
+          activeOpacity={0.7}
+        >
+          <Clock size={15} color={theme.textSecondary} />
+          <Text style={[styles.continueText, { color: theme.textSecondary }]} numberOfLines={1}>
+            Continue: <Text style={{ color: theme.text, fontWeight: FontWeight.semibold }}>{lastCategory.title}</Text>
+          </Text>
+          <ChevronRight size={15} color={theme.textSecondary} />
+        </TouchableOpacity>
+      )}
+
+      {/* Import button */}
       <TouchableOpacity
         style={[styles.importRow, { borderColor: theme.border }]}
         onPress={() => router.push('/import')}
@@ -222,25 +453,56 @@ export default function CategoriesScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* #5: Filter pills — visible when search is active */}
+        {searchQuery.length > 0 && (
+          <View style={styles.filterRow}>
+            {filterLabels.map(({ key, label }) => {
+              const active = searchFilter === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => setSearchFilter(key)}
+                  style={[
+                    styles.filterPill,
+                    active
+                      ? { backgroundColor: theme.primary }
+                      : { backgroundColor: theme.surfaceSecondary, borderColor: theme.border, borderWidth: 1 },
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.filterPillText,
+                    { color: active ? '#fff' : theme.textSecondary },
+                  ]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {searchQuery ? (
-        <FlatList
-          data={filteredWords}
+        <SectionList
+          sections={groupedSearchResults}
           renderItem={renderSearchItem}
+          renderSectionHeader={renderSectionHeader}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
+          stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             <View style={styles.emptySearch}>
               <Text style={[styles.emptySearchText, { color: theme.textSecondary }]}>
-                No words found for "{searchQuery}"
+                No {searchFilter !== 'all' ? searchFilter + ' ' : ''}words found for "{searchQuery}"
               </Text>
             </View>
           }
         />
       ) : (
         <FlatList
-          data={mergedData}
+          data={sortedData}
           renderItem={renderCategoryItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
@@ -274,9 +536,89 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     height: '100%',
   },
+  // #5: Filter pills
+  filterRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  filterPill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+  },
+  filterPillText: {
+    fontSize: FontSize.footnote,
+    fontWeight: FontWeight.medium,
+  },
   list: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
+  },
+  // #4: Word of the Day
+  wotdCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: { elevation: 1 },
+    }),
+  },
+  wotdHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  wotdLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.5,
+  },
+  wotdBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  wotdDutch: {
+    fontSize: FontSize.title3,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  wotdEnglish: {
+    fontSize: FontSize.footnote,
+    marginBottom: 4,
+  },
+  wotdCategory: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+  },
+  wotdPlay: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // #3: Continue row
+  continueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+  },
+  continueText: {
+    flex: 1,
+    fontSize: FontSize.footnote,
   },
   // Import row
   importRow: {
@@ -352,11 +694,6 @@ const styles = StyleSheet.create({
   searchResultEnglish: {
     fontSize: FontSize.footnote,
     marginTop: 2,
-  },
-  searchResultCategory: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-    marginTop: 4,
   },
   emptySearch: {
     alignItems: 'center',

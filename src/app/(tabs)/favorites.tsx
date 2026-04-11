@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, Text, View, Alert, Pressable, Platform } from 'react-native';
 import { useFavorites } from '@/context/FavoritesContext';
+import { useRouter } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Trash2, CheckCircle2, Circle, Heart, X } from 'lucide-react-native';
+import { Trash2, CheckCircle2, Circle, Heart, X, Zap } from 'lucide-react-native';
 
 export default function FavoritesScreen() {
   const { favorites, toggleFavorite, clearFavorites, removeFavorites } = useFavorites();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
+  const getAllWords = (cat: (typeof VOCABULARY_DATA)[0]): (typeof VOCABULARY_DATA)[0]['words'] => {
+    const words = [...cat.words];
+    if (cat.subCategories) {
+      cat.subCategories.forEach(sub => words.push(...getAllWords(sub)));
+    }
+    return words;
+  };
+
   const favoriteWords = VOCABULARY_DATA
-    .flatMap((cat) => cat.words)
+    .flatMap(getAllWords)
     .filter((word) => favorites.includes(word.id));
 
   const toggleSelection = (id: string) => {
@@ -129,6 +139,23 @@ export default function FavoritesScreen() {
         )}
       </View>
 
+      {/* Practice saved words CTA */}
+      {!isSelectionMode && (
+        <TouchableOpacity
+          style={[styles.practiceButton, { backgroundColor: theme.primary }]}
+          onPress={() =>
+            router.push({
+              pathname: '/vocab-session' as any,
+              params: { category: 'Saved Words', mode: 'all', count: '20' },
+            })
+          }
+          activeOpacity={0.85}
+        >
+          <Zap size={18} color="#fff" />
+          <Text style={styles.practiceButtonText}>Practice Saved Words</Text>
+        </TouchableOpacity>
+      )}
+
       <FlatList
         data={favoriteWords}
         keyExtractor={(item) => item.id}
@@ -236,6 +263,23 @@ const styles = StyleSheet.create({
   headerActionText: {
     fontSize: FontSize.subhead,
     fontWeight: FontWeight.medium,
+  },
+  // Practice button
+  practiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  practiceButtonText: {
+    color: '#fff',
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
   },
   // List
   list: {
