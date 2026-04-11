@@ -79,6 +79,62 @@ export default function KNMTopicScreen() {
 
   const topic = KNM_TOPICS.find((t) => t.id === id);
 
+  // -------------------------------------------------------------------------
+  // AI quiz logic — must be declared before any early return (rules of hooks)
+  // -------------------------------------------------------------------------
+
+  const generateAIQuestion = useCallback(async () => {
+    setAiLoading(true);
+    setAiError('');
+    setAiQuestion(null);
+    setAiSelected(null);
+    setAiFeedback(null);
+    try {
+      const langNote = language === 'nl'
+        ? 'Write the question and all options in Dutch.'
+        : 'Write the question and all options in English.';
+
+      const prompt = `Create a KNM exam question about "${topic?.title.en ?? ''}" in the Netherlands.
+${langNote}
+Include:
+- question (realistic multiple-choice style, as on the real KNM exam)
+- 4 options (A, B, C, D)
+- correct answer (just the letter, e.g. "A")
+- explanation (1-2 sentences)
+
+Respond ONLY in JSON format:
+{
+  "question": "...",
+  "options": ["...", "...", "...", "..."],
+  "correctAnswer": "A",
+  "explanation": "..."
+}`;
+
+      const raw = await AIModule.generateTextAsync(prompt);
+      const parsed = parseAIQuestion(raw);
+      if (parsed) {
+        // Normalize correctAnswer to index
+        const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+        const idx = letterMap[parsed.correctAnswer.toUpperCase().trim()] ?? 0;
+        setAiQuestion({ ...parsed, correctAnswer: parsed.options[idx] ?? parsed.correctAnswer });
+      } else {
+        setAiError(language === 'en'
+          ? 'Could not parse AI response. Please try again.'
+          : 'AI-antwoord kon niet worden verwerkt. Probeer opnieuw.');
+      }
+    } catch (e) {
+      setAiError(language === 'en'
+        ? 'Apple Intelligence is unavailable. Try on a supported device (iOS 26+).'
+        : 'Apple Intelligence is niet beschikbaar. Probeer op een ondersteund apparaat (iOS 26+).');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [topic?.title.en, language]);
+
+  // -------------------------------------------------------------------------
+  // Early return — after all hooks
+  // -------------------------------------------------------------------------
+
   if (!topic) {
     return (
       <View style={styles.container}>
@@ -123,58 +179,6 @@ export default function KNMTopicScreen() {
     setScore(0);
     setFinished(false);
   };
-
-  // -------------------------------------------------------------------------
-  // AI quiz logic
-  // -------------------------------------------------------------------------
-
-  const generateAIQuestion = useCallback(async () => {
-    setAiLoading(true);
-    setAiError('');
-    setAiQuestion(null);
-    setAiSelected(null);
-    setAiFeedback(null);
-    try {
-      const langNote = language === 'nl'
-        ? 'Write the question and all options in Dutch.'
-        : 'Write the question and all options in English.';
-
-      const prompt = `Create a KNM exam question about "${topic.title.en}" in the Netherlands.
-${langNote}
-Include:
-- question (realistic multiple-choice style, as on the real KNM exam)
-- 4 options (A, B, C, D)
-- correct answer (just the letter, e.g. "A")
-- explanation (1-2 sentences)
-
-Respond ONLY in JSON format:
-{
-  "question": "...",
-  "options": ["...", "...", "...", "..."],
-  "correctAnswer": "A",
-  "explanation": "..."
-}`;
-
-      const raw = await AIModule.generateTextAsync(prompt);
-      const parsed = parseAIQuestion(raw);
-      if (parsed) {
-        // Normalize correctAnswer to index
-        const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
-        const idx = letterMap[parsed.correctAnswer.toUpperCase().trim()] ?? 0;
-        setAiQuestion({ ...parsed, correctAnswer: parsed.options[idx] ?? parsed.correctAnswer });
-      } else {
-        setAiError(language === 'en'
-          ? 'Could not parse AI response. Please try again.'
-          : 'AI-antwoord kon niet worden verwerkt. Probeer opnieuw.');
-      }
-    } catch (e) {
-      setAiError(language === 'en'
-        ? 'Apple Intelligence is unavailable. Try on a supported device (iOS 26+).'
-        : 'Apple Intelligence is niet beschikbaar. Probeer op een ondersteund apparaat (iOS 26+).');
-    } finally {
-      setAiLoading(false);
-    }
-  }, [topic.title.en, language]);
 
   const handleAIOption = (index: number) => {
     if (aiFeedback || !aiQuestion) return;
