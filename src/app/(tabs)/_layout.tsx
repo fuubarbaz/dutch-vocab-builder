@@ -129,6 +129,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="knm"
+        options={{
+          title: 'KNM',
+          headerTitle: 'KNM Exam',
+          headerTitleStyle: {
+            fontSize: 17,
+            fontWeight: '600',
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name={focused ? 'school' : 'school-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
