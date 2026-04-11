@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   bannerEmoji: { fontSize: 36 },
-  bannerTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: 'white', marginBottom: 2 },
+  bannerTitle: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, color: 'white', marginBottom: 2 },
   bannerSubtitle: { fontSize: FontSize.caption, color: 'rgba(255,255,255,0.75)', marginBottom: 4 },
   bannerDescription: { fontSize: FontSize.footnote, color: 'rgba(255,255,255,0.9)', lineHeight: 18 },
 
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     }),
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statNumber: { fontSize: FontSize.title, fontWeight: FontWeight.bold },
+  statNumber: { fontSize: FontSize.title3, fontWeight: FontWeight.bold },
   statLabel: { fontSize: FontSize.caption, marginTop: 2 },
   statDivider: { width: StyleSheet.hairlineWidth, marginVertical: 4 },
 

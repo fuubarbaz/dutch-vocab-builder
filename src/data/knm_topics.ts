@@ -512,7 +512,7 @@ Bij noodgevallen bel je 112 voor ambulance, brandweer of politie. De apotheek vu
       options: {
         en: [
           'Go directly to the hospital',
-          'Call the specialist's office directly',
+          "Call the specialist's office directly",
           'Visit your huisarts (GP) to get a referral',
           'Go to the apotheek for medication',
         ],
