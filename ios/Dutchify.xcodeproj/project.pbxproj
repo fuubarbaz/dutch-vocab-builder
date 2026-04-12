@@ -7,26 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0207024068F5C32DA67F69ED /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E6D5ED7ECFF583DC62957B1B /* PrivacyInfo.xcprivacy */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		A3F52DEE934E8FC36C111D09 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9955FFFC15460100FCEE6501 /* PrivacyInfo.xcprivacy */; };
-		B40270329F6BC3F3EBD5F34C /* libPods-Dutchify.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D187271D51EA330251E9553 /* libPods-Dutchify.a */; };
+		B77A4A2F567CB6957A752FCF /* libPods-Dutchify.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46F53613ED38E0AF3DE18154 /* libPods-Dutchify.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F1CFBDB5D8645A79A22CF76A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC5EF42093F7260C1BB49F7 /* ExpoModulesProvider.swift */; };
+		F9CEA5262C11E938BF4093C4 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B60B92109BB8C226D6803C /* ExpoModulesProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* Dutchify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Dutchify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Dutchify/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Dutchify/Info.plist; sourceTree = "<group>"; };
-		40658AD846A43B57057E55DE /* Pods-Dutchify.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Dutchify.release.xcconfig"; path = "Target Support Files/Pods-Dutchify/Pods-Dutchify.release.xcconfig"; sourceTree = "<group>"; };
-		6D187271D51EA330251E9553 /* libPods-Dutchify.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Dutchify.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		9955FFFC15460100FCEE6501 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Dutchify/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		A2A7C7C546761344A3DA3C10 /* Pods-Dutchify.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Dutchify.debug.xcconfig"; path = "Target Support Files/Pods-Dutchify/Pods-Dutchify.debug.xcconfig"; sourceTree = "<group>"; };
+		27B60B92109BB8C226D6803C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Dutchify/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		45A3C63C7314A78572FF6CA2 /* Pods-Dutchify.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Dutchify.debug.xcconfig"; path = "Target Support Files/Pods-Dutchify/Pods-Dutchify.debug.xcconfig"; sourceTree = "<group>"; };
+		46F53613ED38E0AF3DE18154 /* libPods-Dutchify.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Dutchify.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Dutchify/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B0133D968C7244836EDE0207 /* Pods-Dutchify.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Dutchify.release.xcconfig"; path = "Target Support Files/Pods-Dutchify/Pods-Dutchify.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BEC5EF42093F7260C1BB49F7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Dutchify/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		E6D5ED7ECFF583DC62957B1B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Dutchify/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Dutchify/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Dutchify-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Dutchify-Bridging-Header.h"; path = "Dutchify/Dutchify-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,13 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B40270329F6BC3F3EBD5F34C /* libPods-Dutchify.a in Frameworks */,
+				B77A4A2F567CB6957A752FCF /* libPods-Dutchify.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		06D3DFC9ECA01A60D7C8918D /* Dutchify */ = {
+			isa = PBXGroup;
+			children = (
+				27B60B92109BB8C226D6803C /* ExpoModulesProvider.swift */,
+			);
+			name = Dutchify;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Dutchify */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,7 +61,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				9955FFFC15460100FCEE6501 /* PrivacyInfo.xcprivacy */,
+				E6D5ED7ECFF583DC62957B1B /* PrivacyInfo.xcprivacy */,
 			);
 			name = Dutchify;
 			sourceTree = "<group>";
@@ -62,35 +70,19 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				6D187271D51EA330251E9553 /* libPods-Dutchify.a */,
+				46F53613ED38E0AF3DE18154 /* libPods-Dutchify.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		2DE60325EA75131DEF3505E7 /* Pods */ = {
+		50CF744B5AF71F9C72229DF4 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				A2A7C7C546761344A3DA3C10 /* Pods-Dutchify.debug.xcconfig */,
-				40658AD846A43B57057E55DE /* Pods-Dutchify.release.xcconfig */,
+				45A3C63C7314A78572FF6CA2 /* Pods-Dutchify.debug.xcconfig */,
+				B0133D968C7244836EDE0207 /* Pods-Dutchify.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		2E3AF9E23950D86C3031BC70 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				384D14244BE04681D36464A7 /* Dutchify */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		384D14244BE04681D36464A7 /* Dutchify */ = {
-			isa = PBXGroup;
-			children = (
-				BEC5EF42093F7260C1BB49F7 /* ExpoModulesProvider.swift */,
-			);
-			name = Dutchify;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				2DE60325EA75131DEF3505E7 /* Pods */,
-				2E3AF9E23950D86C3031BC70 /* ExpoModulesProviders */,
+				50CF744B5AF71F9C72229DF4 /* Pods */,
+				FF0C82A2C8EC98F9170EB52D /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -132,6 +124,14 @@
 			path = Dutchify/Supporting;
 			sourceTree = "<group>";
 		};
+		FF0C82A2C8EC98F9170EB52D /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				06D3DFC9ECA01A60D7C8918D /* Dutchify */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Dutchify" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				DF86955B881A9916D4343F7F /* [Expo] Configure project */,
+				D46899C4F2911B1EC289767F /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				F2DF048503DA2F489DD8E43D /* [CP] Embed Pods Frameworks */,
+				205C40B1BB1023EB5352FBF4 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				A3F52DEE934E8FC36C111D09 /* PrivacyInfo.xcprivacy in Resources */,
+				0207024068F5C32DA67F69ED /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +242,28 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		205C40B1BB1023EB5352FBF4 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Dutchify/Pods-Dutchify-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Dutchify/Pods-Dutchify-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -253,7 +275,6 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
@@ -268,7 +289,6 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
@@ -282,7 +302,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Dutchify/Pods-Dutchify-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		DF86955B881A9916D4343F7F /* [Expo] Configure project */ = {
+		D46899C4F2911B1EC289767F /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -306,28 +326,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Dutchify/expo-configure-project.sh\"\n";
 		};
-		F2DF048503DA2F489DD8E43D /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Dutchify/Pods-Dutchify-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Dutchify/Pods-Dutchify-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -336,7 +334,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				F1CFBDB5D8645A79A22CF76A /* ExpoModulesProvider.swift in Sources */,
+				F9CEA5262C11E938BF4093C4 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,7 +343,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A2A7C7C546761344A3DA3C10 /* Pods-Dutchify.debug.xcconfig */;
+			baseConfigurationReference = 45A3C63C7314A78572FF6CA2 /* Pods-Dutchify.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -381,7 +379,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 40658AD846A43B57057E55DE /* Pods-Dutchify.release.xcconfig */;
+			baseConfigurationReference = B0133D968C7244836EDE0207 /* Pods-Dutchify.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

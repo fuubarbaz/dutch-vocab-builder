@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Pressable, View, Platform } from 'react-native';
-import { PlusCircle, Languages } from 'lucide-react-native';
+import { PlusCircle } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import Colors from '@/constants/Colors';
@@ -73,18 +73,6 @@ export default function TabLayout() {
           ),
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16, gap: 16 }}>
-              <Pressable
-                onPress={() => router.push('/translate-word' as any)}
-                hitSlop={8}
-              >
-                {({ pressed }) => (
-                  <Languages
-                    size={22}
-                    color={theme.primary}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
               <Pressable
                 onPress={() => router.push('/add-word')}
                 hitSlop={8}
