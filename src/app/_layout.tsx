@@ -72,6 +72,8 @@ function RootLayoutNav() {
               <Stack.Screen name="pronunciation" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
               <Stack.Screen name="sentence-practice" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
               <Stack.Screen name="pronunciation-guide" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="writing-exam" options={{ presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="writing-exam-exercise" options={{ presentation: 'fullScreenModal' }} />
             </Stack>
           </ThemeProvider>
         </SRSProvider>
