@@ -1,7 +1,35 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
- 
+
+## [1.7.0] - 2026-04-12
+
+### Removed
+- **Translate Word screen** — removed the standalone "Translate & Add" screen and its `Languages` icon entry point from the home header.
+
+### Added
+- **Pronunciation Guide** — new screen with Dutch pronunciation rules and examples.
+- **KNM Exam Preparation** — full KNM (Kennis van de Nederlandse Maatschappij) section with lessons and AI-powered quizzes using Apple Intelligence.
+- **Splash screen** — updated splash icon and Xcode project configuration.
+
+### Changed
+- **UI overhaul** — major redesign of the home (Learn) screen and practice screen; improved card layout, button alignment, and overall visual consistency.
+- **UI navigation** — improved navigation flow; updated import screen UX.
+- **Home screen** — better SRS context, push notifications support, and quiz flow improvements.
+- **Translation engine** — corrected `TranslationSession` initializer for iOS 26 compatibility; fixed button alignment in the translation flow.
+
+### Fixed
+- Graceful fallback for AI-generated KNM questions when Apple Intelligence is unavailable.
+- Replaced emoji characters with `Ionicons` in KNM screens to prevent question-mark rendering on some devices.
+- Moved `useCallback` hooks before early returns to comply with React rules-of-hooks.
+- Resolved TypeScript errors across KNM-related files.
+- Removed invalid `EXCLUDED_ARCHS` syntax from Xcode `pbxproj` to unblock EAS prebuild.
+
+### Chore
+- Added `CODE_SIGN_ENTITLEMENTS` to Xcode build configurations.
+
+---
+
 ## [1.6.0] - 2026-03-22
 
 ### Added

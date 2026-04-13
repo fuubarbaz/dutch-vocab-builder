@@ -17,6 +17,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { Word } from '@/types';
 import { useSRS } from '@/context/SRSContext';
+import { useFavorites } from '@/context/FavoritesContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,19 +41,38 @@ export default function VocabSessionScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { getDueWords, recordReview } = useSRS();
+  const { favorites } = useFavorites();
 
   const targetCount = parseInt(count ?? '10', 10);
 
-  // Full pool (all vocab) — used as distractor source
-  const fullPool = useMemo(() => VOCABULARY_DATA.flatMap(c => c.words), []);
+  // Recursively collect all words from a category tree, excluding traffic signs
+  const getVocabWords = (cat: typeof VOCABULARY_DATA[0]): Word[] => {
+    if (cat.id === 'traffic_signs_parent') return [];
+    const words: Word[] = [...cat.words];
+    if (cat.subCategories) {
+      cat.subCategories.forEach(sub => words.push(...getVocabWords(sub)));
+    }
+    return words;
+  };
+
+  // Full pool (all vocab, no traffic signs) — used as distractor source
+  const fullPool = useMemo(
+    () => VOCABULARY_DATA.flatMap(getVocabWords),
+    [],
+  );
 
   // ─── Build Question Deck (stable on mount) ──────────────────────────────────
 
   const questions = useMemo<Question[]>(() => {
+    // All vocab words excluding traffic signs (they have their own quiz)
+    const allWords = VOCABULARY_DATA.flatMap(getVocabWords);
+
     // Target pool
     let pool: Word[] =
       category === 'All Categories'
-        ? VOCABULARY_DATA.flatMap(c => c.words)
+        ? allWords
+        : category === 'Saved Words'
+        ? allWords.filter(w => favorites.includes(w.id))
         : VOCABULARY_DATA.find(c => c.title === category)?.words ?? [];
 
     if (mode === 'due') pool = getDueWords(pool);

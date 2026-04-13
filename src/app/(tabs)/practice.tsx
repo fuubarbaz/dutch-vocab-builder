@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mic, MessageSquare, BookOpen, PenTool, ChevronRight, BrainCircuit, Languages, TrafficCone } from 'lucide-react-native';
+import { Mic, MessageSquare, PenTool, ChevronRight, BrainCircuit, TrafficCone } from 'lucide-react-native';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -48,34 +48,6 @@ export default function PracticeScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
-          onPress={() => router.push('/sentence-builder' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: theme.accent + '15' }]}>
-            <Languages size={18} color={theme.accent} />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Sentence Builder</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
-
-        <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
-          onPress={() => router.push('/grammar' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: theme.success + '15' }]}>
-            <BookOpen size={18} color={theme.success} />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Grammar Topics</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
-
-        <Pressable
           style={styles.listRow}
           onPress={() => router.push('/grammar-check' as any)}
         >
@@ -92,6 +64,7 @@ export default function PracticeScreen() {
 
       {/* Pronunciation Section */}
       <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>PRONUNCIATION</Text>
+
       <View style={styles.actionRow}>
         <Pressable
           style={[styles.actionCard, { backgroundColor: theme.cardBackground }]}

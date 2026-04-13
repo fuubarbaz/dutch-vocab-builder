@@ -33,16 +33,28 @@ export default function QuizScreen() {
     const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
     const [isFinished, setIsFinished] = useState(false);
 
-    // 1. Full Pool for distractors (entire domain)
+    // 1. Full Pool for distractors — strictly scoped to the domain
     const fullDomainPool = useMemo(() => {
-        return domain === 'traffic' ? TRAFFIC_CATEGORIES.flatMap(c => c.words) : VOCABULARY_DATA.flatMap(c => c.words);
+        if (domain === 'traffic') {
+            return TRAFFIC_CATEGORIES.flatMap(c => c.words);
+        }
+        // Exclude traffic signs from vocab/KNM distractor pool
+        return VOCABULARY_DATA
+            .filter(c => c.id !== 'traffic_signs_parent')
+            .flatMap(c => c.words);
     }, [domain]);
 
     // 2. Filtered Pool for targets (specific category)
     const targetWords = useMemo(() => {
+        if (domain === 'traffic') {
+            if (category === 'All Categories') return fullDomainPool;
+            const cat = TRAFFIC_CATEGORIES.find(c => c.title === category);
+            return cat ? cat.words : [];
+        }
+        // Non-traffic: exclude traffic signs from target pool too
+        const vocabData = VOCABULARY_DATA.filter(c => c.id !== 'traffic_signs_parent');
         if (category === 'All Categories') return fullDomainPool;
-        const dataSource = domain === 'traffic' ? TRAFFIC_CATEGORIES : VOCABULARY_DATA;
-        const specificCat = dataSource.find(c => c.title === category);
+        const specificCat = vocabData.find(c => c.title === category);
         return specificCat ? specificCat.words : [];
     }, [domain, category, fullDomainPool]);
 

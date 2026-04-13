@@ -5,9 +5,9 @@ import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useSettings } from '@/context/SettingsContext';
 import SwipeDeck from '@/components/SwipeDeck';
-import Colors from '@/constants/Colors';
+import Colors, { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Volume2, Heart, Book, Octagon } from 'lucide-react-native';
+import { LucideIcon, Volume2, Heart, Book, Octagon, LayoutList, Layers } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -21,7 +21,7 @@ export default function CategoryScreen() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
     const { customWords, learnedIds, toggleFavorite, isFavorite } = useFavorites();
-    const { showFlashcards, speechRate } = useSettings();
+    const { showFlashcards, setShowFlashcards, speechRate } = useSettings();
     const [playingId, setPlayingId] = React.useState<string | null>(null);
 
     const staticCategory = React.useMemo(() => {
@@ -174,11 +174,30 @@ export default function CategoryScreen() {
         );
     };
 
+    const isSubcategoryView = !!(staticCategory.subCategories && staticCategory.subCategories.length > 0);
+
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Stack.Screen options={{ title: staticCategory.title }} />
+            <Stack.Screen
+              options={{
+                title: staticCategory.title,
+                headerRight: !isSubcategoryView ? () => (
+                  <TouchableOpacity
+                    onPress={() => setShowFlashcards(!showFlashcards)}
+                    hitSlop={8}
+                    style={styles.viewToggle}
+                  >
+                    {showFlashcards ? (
+                      <LayoutList size={22} color={theme.primary} />
+                    ) : (
+                      <Layers size={22} color={theme.primary} />
+                    )}
+                  </TouchableOpacity>
+                ) : undefined,
+              }}
+            />
 
-            {staticCategory.subCategories && staticCategory.subCategories.length > 0 ? (
+            {isSubcategoryView ? (
                 <FlatList
                     data={staticCategory.subCategories}
                     renderItem={renderSubcategoryItem}
@@ -207,6 +226,9 @@ export default function CategoryScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    viewToggle: {
+        marginRight: Spacing.sm,
     },
     listContent: {
         padding: 16,
