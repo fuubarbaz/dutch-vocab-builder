@@ -1109,16 +1109,24 @@ const GOVERNMENT: KNMTopic = {
   },
   color: '#6366f1',
   explanation: {
-    en: `The Netherlands is a constitutional monarchy with a parliamentary democracy. The King (Koning) has a ceremonial role. The government (kabinet) is led by the Prime Minister (Minister-President).
+    en: `The Netherlands is a constitutional monarchy with a parliamentary democracy. The King (Koning Willem-Alexander) has a mainly ceremonial role. The government (kabinet) is led by the Prime Minister (Minister-President). The king and the ministers together form the regering (government). Every year on Prinsjesdag — the third Tuesday of September — the king reads the troonrede (speech from the throne) in the Ridderzaal in Den Haag and rides through the city in the gouden koets (golden carriage).
 
-Government is organised at three levels: national (Rijksoverheid), provincial (provincie), and local (gemeente). The gemeente is where most day-to-day government services happen — registration, permits, and social services.
+The parliament (parlement) is called the Staten-Generaal and has two chambers: the Tweede Kamer (150 seats, elected every 4 years by all Dutch citizens 18+) and the Eerste Kamer (75 seats). The Tweede Kamer debates and votes on new laws. After elections, parties form a coalition and write a regeerakkoord (coalition agreement). Parties not in government form the oppositie.
 
-DigiD is your digital identity to access government websites, tax returns, and healthcare services online. Voting (stemmen) is not compulsory, but citizens are encouraged to participate. Elections are held for the Tweede Kamer (parliament), gemeente council, and European Parliament.`,
-    nl: `Nederland is een constitutionele monarchie met een parlementaire democratie. De Koning heeft een ceremoniële rol. Het kabinet wordt geleid door de Minister-President.
+Separation of powers (scheiding van machten): (1) Uitvoerende macht — the king, minister-president and ministers execute decisions. (2) Wetgevende macht — the parlement makes laws. (3) Rechterlijke macht — rechters (judges) decide what the law means. These three powers work independently.
 
-De overheid is georganiseerd op drie niveaus: nationaal (Rijksoverheid), provinciaal (provincie) en lokaal (gemeente). Bij de gemeente vinden de meeste dagelijkse overheidsdiensten plaats — inschrijving, vergunningen en sociale diensten.
+Major political parties: VVD (liberal, right), PvdA (social-democratic, left), SP (socialist), CDA (Christian-democratic), D66 (progressive-democratic), GroenLinks (environmental, left), PVV (far-right), ChristenUnie and SGP (Christian). Each party has a lijsttrekker — the leading candidate at elections.
 
-DigiD is je digitale identiteit om toegang te krijgen tot overheidswebsites, belastingaangiften en zorgdiensten online. Stemmen is niet verplicht, maar burgers worden aangemoedigd deel te nemen. Verkiezingen worden gehouden voor de Tweede Kamer (parlement), de gemeenteraad en het Europees Parlement.`,
+Government is organised at three levels: national (Rijksoverheid), provincial (provincie — 12 provinces, each with Provinciale Staten), and local (gemeente — led by a burgemeester and gemeenteraad). DigiD is your digital identity to access government websites, tax returns, and healthcare services online.`,
+    nl: `Nederland is een constitutionele monarchie met een parlementaire democratie. De Koning (Willem-Alexander) heeft voornamelijk een ceremoniële rol. Het kabinet wordt geleid door de Minister-President. De koning en de ministers samen zijn de regering. Elk jaar op Prinsjesdag — de derde dinsdag van september — leest de koning de troonrede voor in de Ridderzaal in Den Haag en rijdt hij door de stad in de gouden koets.
+
+Het parlement heet de Staten-Generaal en heeft twee kamers: de Tweede Kamer (150 zetels, elke vier jaar gekozen door alle Nederlanders van 18+) en de Eerste Kamer (75 leden). De Tweede Kamer debatteert over nieuwe wetten en stemt erover. Na verkiezingen vormen partijen een coalitie en schrijven een regeerakkoord. Partijen die niet in de regering zitten, vormen de oppositie.
+
+Scheiding van machten: (1) Uitvoerende macht — de koning, minister-president en ministers voeren besluiten uit. (2) Wetgevende macht — het parlement maakt wetten. (3) Rechterlijke macht — rechters beslissen wat de wet betekent. Deze drie machten werken onafhankelijk van elkaar.
+
+Grote politieke partijen: VVD (liberaal, rechts), PvdA (sociaal-democratisch, links), SP (socialistisch), CDA (christendemocratisch), D66 (progressief-democratisch), GroenLinks (milieu, links), PVV (rechts), ChristenUnie en SGP (christelijk). Elke partij heeft een lijsttrekker — de belangrijkste kandidaat bij verkiezingen.
+
+De overheid is georganiseerd op drie niveaus: nationaal (Rijksoverheid), provinciaal (provincie — 12 provincies, elk met Provinciale Staten) en lokaal (gemeente — geleid door een burgemeester en gemeenteraad). DigiD is je digitale identiteit voor overheidsdiensten online.`,
   },
   keyPoints: [
     {
@@ -2025,6 +2033,451 @@ DUO (Dienst Uitvoering Onderwijs) beheert het inburgeringsproces. De gemeente en
 };
 
 // ============================================================================
+// TOPIC 12 — Dutch History (De Geschiedenis van Nederland)
+// ============================================================================
+const HISTORY: KNMTopic = {
+  id: 'history',
+  icon: 'time-outline',
+  title: { en: 'Dutch History', nl: 'De Geschiedenis van Nederland' },
+  description: {
+    en: 'Key moments from the Eighty Years War to modern times.',
+    nl: 'Belangrijke momenten van de Tachtigjarige Oorlog tot de moderne tijd.',
+  },
+  color: '#92400e',
+  explanation: {
+    en: `The Netherlands has a rich history shaped by trade, religion, war, and water.
+
+The Eighty Years War (Tachtigjarige Oorlog, 1568–1648): The Dutch fought against Spanish rule. Willem van Oranje led the revolt. He became Protestant and defended freedom of religion. He was shot dead in Delft in 1584. In 1588 the Dutch became an independent republic: the Republic of the Seven United Netherlands (Republiek der Zeven Verenigde Nederlanden).
+
+The Golden Age (Gouden Eeuw, 17th century): The Dutch traded with the whole world through the VOC (Vereenigde Oost-Indische Compagnie — trading with Asia) and WIC (West-Indische Compagnie — trading with Africa and the Americas). The Netherlands had colonies including Indonesia, Suriname, and parts of South Africa. Art flourished — Rembrandt painted De Nachtwacht, still on display in the Rijksmuseum. Rich merchants built the famous canal houses (grachtenhuizen) in Amsterdam and Utrecht.
+
+After 1800: In 1814 the Netherlands became a kingdom (koninkrijk) with King Willem I. The Grondwet (constitution) was written in 1815. Belgium separated from the Netherlands in 1830. In 1848 the Grondwet was changed — the king had less power and democracy grew stronger.
+
+Social progress: After 1850 factories arrived. In 1874 children under 12 were no longer allowed to work. In 1900 leerplicht (compulsory education) began. In 1917 all men got the right to vote; in 1919 women got the vote too.
+
+World War II (Tweede Wereldoorlog, 1940–1945): Germany occupied the Netherlands from May 1940. Jewish people were persecuted — they had to wear a yellow Star of David (Jodenster). Anne Frank, a 13-year-old Jewish girl, hid with her family in the Achterhuis in Amsterdam for two years. She wrote a famous diary. She was discovered, deported, and died in Bergen-Belsen camp. Her diary became world-famous. The Achterhuis is now a museum. Six million Jews were killed across Europe. On 5 May 1945 the Netherlands was liberated. Every year on 4 May (Dodenherdenking) the whole country observes 2 minutes of silence at 20:00 to remember the dead. On 5 May (Bevrijdingsdag) freedom is celebrated.
+
+After the war: The Netherlands prospered (welvaart). Minister-President Willem Drees introduced the AOW — state pension for everyone from age 65. In 1949 Indonesia became independent. In 1953 a great flood struck Zeeland; the Deltaplan was created to build dikes and dams. Around 1970 guest workers (gastarbeiders) arrived from Turkey and Morocco. In 1975 Suriname became independent and many Surinamese came to the Netherlands. The Netherlands joined the European Union and adopted the euro in 2002. The Inburgeringswet (integration law) came into force in 2007.`,
+    nl: `Nederland heeft een rijke geschiedenis gevormd door handel, religie, oorlog en water.
+
+De Tachtigjarige Oorlog (1568–1648): De Nederlanders vochten tegen de Spaanse overheersing. Willem van Oranje leidde de opstand. Hij werd protestant en verdedigde de vrijheid van godsdienst. Hij werd in 1584 in Delft doodgeschoten. In 1588 werden de Nederlanden een onafhankelijke republiek: de Republiek der Zeven Verenigde Nederlanden.
+
+De Gouden Eeuw (17e eeuw): De Nederlanders handelden met de hele wereld via de VOC (Vereenigde Oost-Indische Compagnie — handel met Azië) en de WIC (West-Indische Compagnie — handel met Afrika en Amerika). Nederland had koloniën, waaronder Indonesië, Suriname en delen van Zuid-Afrika. De kunst bloeide — Rembrandt schilderde De Nachtwacht, nog steeds te zien in het Rijksmuseum. Rijke kooplieden bouwden de beroemde grachtenhuizen in Amsterdam en Utrecht.
+
+Na 1800: In 1814 werd Nederland een koninkrijk met koning Willem I. De Grondwet werd in 1815 geschreven. België scheidde zich in 1830 af. In 1848 werd de Grondwet veranderd — de koning had minder macht en de democratie groeide sterker.
+
+Sociale vooruitgang: Na 1850 kwamen er fabrieken. In 1874 mochten kinderen onder de 12 jaar niet meer werken. In 1900 werd de leerplicht ingevoerd. In 1917 kregen alle mannen kiesrecht; in 1919 kregen vrouwen ook het kiesrecht.
+
+Tweede Wereldoorlog (1940–1945): Duitsland bezette Nederland vanaf mei 1940. Joodse mensen werden vervolgd — ze moesten een gele Jodenster dragen. Anne Frank, een 13-jarig Joods meisje, dook met haar familie twee jaar onder in het Achterhuis in Amsterdam. Ze schreef een beroemd dagboek. Ze werd ontdekt, gedeporteerd en stierf in kamp Bergen-Belsen. Haar dagboek werd wereldberoemd. Het Achterhuis is nu een museum. Zes miljoen Joden werden in heel Europa vermoord. Op 5 mei 1945 werd Nederland bevrijd. Elk jaar op 4 mei (Dodenherdenking) houdt het hele land om 20:00 uur 2 minuten stilte ter nagedachtenis aan de doden. Op 5 mei (Bevrijdingsdag) wordt de vrijheid gevierd.
+
+Na de oorlog: Nederland werd welvarend. Minister-President Willem Drees voerde de AOW in — staatspensioen voor iedereen vanaf 65 jaar. In 1949 werd Indonesië onafhankelijk. In 1953 trof een grote overstroming Zeeland; het Deltaplan werd gemaakt. Rond 1970 kwamen gastarbeiders uit Turkije en Marokko. In 1975 werd Suriname onafhankelijk. Nederland voerde de euro in in 2002. De Inburgeringswet trad in 2007 in werking.`,
+  },
+  keyPoints: [
+    {
+      en: 'Tachtigjarige Oorlog (1568–1648): Dutch fought Spain for independence under Willem van Oranje.',
+      nl: 'Tachtigjarige Oorlog (1568–1648): Nederlanders vochten tegen Spanje voor onafhankelijkheid onder Willem van Oranje.',
+    },
+    {
+      en: 'Gouden Eeuw (17th century): VOC traded with Asia; WIC with Africa and Americas. Rembrandt painted De Nachtwacht.',
+      nl: 'Gouden Eeuw (17e eeuw): VOC handelde met Azië; WIC met Afrika en Amerika. Rembrandt schilderde De Nachtwacht.',
+    },
+    {
+      en: 'WWII (1940–1945): Germany occupied Netherlands. Anne Frank hid in the Achterhuis. Liberation on 5 May 1945.',
+      nl: 'WOII (1940–1945): Duitsland bezette Nederland. Anne Frank dook onder in het Achterhuis. Bevrijding op 5 mei 1945.',
+    },
+    {
+      en: '4 May = Dodenherdenking: 2 minutes silence at 20:00. 5 May = Bevrijdingsdag.',
+      nl: '4 mei = Dodenherdenking: 2 minuten stilte om 20:00. 5 mei = Bevrijdingsdag.',
+    },
+    {
+      en: 'Women got the right to vote in 1919. Willem Drees introduced the AOW state pension.',
+      nl: 'Vrouwen kregen in 1919 het kiesrecht. Willem Drees voerde de AOW-staatspensioen in.',
+    },
+    {
+      en: '1953 Zeeland flood → Deltaplan. ~1970: gastarbeiders from Turkey and Morocco arrived.',
+      nl: '1953 overstroming Zeeland → Deltaplan. ~1970: gastarbeiders uit Turkije en Marokko kwamen.',
+    },
+  ],
+  examples: [
+    {
+      en: 'Willem van Oranje was shot dead in Delft in 1584 — the Prinsenhof museum marks the spot today.',
+      nl: 'Willem van Oranje werd in 1584 in Delft doodgeschoten — het Prinsenhof-museum markeert de plek vandaag.',
+    },
+    {
+      en: "Anne Frank's diary was written in the Achterhuis in Amsterdam — now a museum visited by millions.",
+      nl: 'Het dagboek van Anne Frank werd geschreven in het Achterhuis in Amsterdam — nu een museum dat door miljoenen wordt bezocht.',
+    },
+    {
+      en: 'On 4 May at 20:00 the whole street falls silent for 2 minutes — Dodenherdenking.',
+      nl: 'Op 4 mei om 20:00 wordt de hele straat 2 minuten lang stil — Dodenherdenking.',
+    },
+  ],
+  quizQuestions: [
+    {
+      id: 'history-q1',
+      question: {
+        en: 'The Tachtigjarige Oorlog (1568–1648) was fought against which country?',
+        nl: 'De Tachtigjarige Oorlog (1568–1648) werd gevoerd tegen welk land?',
+      },
+      options: {
+        en: ['France', 'Spain', 'Germany', 'England'],
+        nl: ['Frankrijk', 'Spanje', 'Duitsland', 'Engeland'],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'The Tachtigjarige Oorlog (1568–1648) was fought against Spain. Led by Willem van Oranje, the Dutch fought for independence and religious freedom. In 1588 the Dutch Republic was founded.',
+        nl: 'De Tachtigjarige Oorlog (1568–1648) werd gevoerd tegen Spanje. Onder leiding van Willem van Oranje vochten de Nederlanders voor onafhankelijkheid en godsdienstvrijheid. In 1588 werd de Republiek der Nederlanden gesticht.',
+      },
+    },
+    {
+      id: 'history-q2',
+      question: {
+        en: 'What happened to Willem van Oranje in 1584?',
+        nl: 'Wat gebeurde er met Willem van Oranje in 1584?',
+      },
+      options: {
+        en: ['He became King of the Netherlands', 'He was shot dead in Delft', 'He signed a peace treaty with Spain', 'He founded the VOC trading company'],
+        nl: ['Hij werd koning van Nederland', 'Hij werd doodgeschoten in Delft', 'Hij tekende een vredesverdrag met Spanje', 'Hij stichtte de VOC handelscompagnie'],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'Willem van Oranje was assassinated (doodgeschoten) in Delft in 1584. He is considered the "Father of the Fatherland" (Vader des Vaderlands). King Willem-Alexander is his descendant — that is why the royal family is called "Van Oranje-Nassau" and why orange is the Dutch national colour.',
+        nl: 'Willem van Oranje werd in 1584 in Delft doodgeschoten. Hij wordt beschouwd als de "Vader des Vaderlands". Koning Willem-Alexander is zijn nakomeling — daarom heet de koninklijke familie "Van Oranje-Nassau" en is oranje de Nederlandse nationale kleur.',
+      },
+    },
+    {
+      id: 'history-q3',
+      question: {
+        en: 'What was the VOC during the Golden Age (Gouden Eeuw)?',
+        nl: 'Wat was de VOC tijdens de Gouden Eeuw?',
+      },
+      options: {
+        en: [
+          'A Dutch government ministry',
+          'A Dutch trading company that traded with Asia',
+          'A military organisation fighting against Spain',
+          'A Dutch art museum',
+        ],
+        nl: [
+          'Een Nederlands overheidsministerie',
+          'Een Nederlandse handelscompagnie die handelde met Azië',
+          'Een militaire organisatie die tegen Spanje vocht',
+          'Een Nederlands kunstmuseum',
+        ],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'The VOC (Vereenigde Oost-Indische Compagnie) was the world\'s first multinational trading company, founded in 1602. It traded with Asia — especially Indonesia. The WIC (West-Indische Compagnie) traded with Africa and the Americas. The Netherlands had colonies including Indonesia and Suriname.',
+        nl: 'De VOC (Vereenigde Oost-Indische Compagnie) was \'s werelds eerste multinationale handelscompagnie, opgericht in 1602. Ze handelde met Azië — met name met Indonesië. De WIC (West-Indische Compagnie) handelde met Afrika en Amerika. Nederland had koloniën, waaronder Indonesië en Suriname.',
+      },
+    },
+    {
+      id: 'history-q4',
+      question: {
+        en: 'What is Dodenherdenking and when does it take place?',
+        nl: 'Wat is de Dodenherdenking en wanneer vindt die plaats?',
+      },
+      options: {
+        en: [
+          'A day to celebrate Dutch independence — 27 April',
+          'A national remembrance for WWII victims — 4 May, 2 minutes silence at 20:00',
+          'The day Germany invaded the Netherlands — 10 May 1940',
+          'Liberation Day — 5 May 1945',
+        ],
+        nl: [
+          'Een dag om de Nederlandse onafhankelijkheid te vieren — 27 april',
+          'Een nationale herdenking voor WOII-slachtoffers — 4 mei, 2 minuten stilte om 20:00',
+          'De dag dat Duitsland Nederland binnenviel — 10 mei 1940',
+          'Bevrijdingsdag — 5 mei 1945',
+        ],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'Dodenherdenking is on 4 May. At exactly 20:00, the whole country observes 2 minutes of silence for all who died in wars, especially WWII. The following day, 5 May, is Bevrijdingsdag — celebrating the liberation from German occupation in 1945.',
+        nl: 'Dodenherdenking is op 4 mei. Precies om 20:00 uur houdt het hele land 2 minuten stilte voor allen die in oorlogen zijn gevallen, met name in de WOII. De volgende dag, 5 mei, is Bevrijdingsdag — ter viering van de bevrijding van de Duitse bezetting in 1945.',
+      },
+    },
+    {
+      id: 'history-q5',
+      question: {
+        en: 'Where did Anne Frank and her family hide during WWII?',
+        nl: 'Waar doken Anne Frank en haar familie onder tijdens de WOII?',
+      },
+      options: {
+        en: ['In the Rijksmuseum in Amsterdam', 'In het Achterhuis on the Prinsengracht in Amsterdam', 'In the Binnenhof in Den Haag', 'In a farm in Zeeland'],
+        nl: ['In het Rijksmuseum in Amsterdam', 'In het Achterhuis aan de Prinsengracht in Amsterdam', 'In het Binnenhof in Den Haag', 'Op een boerderij in Zeeland'],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'Anne Frank and her family hid in the Achterhuis (Secret Annex) on the Prinsengracht in Amsterdam for two years. Anne wrote her famous diary there. She was discovered and died in Bergen-Belsen camp. The Achterhuis is now a museum visited by over one million people each year.',
+        nl: 'Anne Frank en haar familie doken twee jaar onder in het Achterhuis aan de Prinsengracht in Amsterdam. Anne schreef er haar beroemde dagboek. Ze werd ontdekt en stierf in kamp Bergen-Belsen. Het Achterhuis is nu een museum dat jaarlijks door meer dan een miljoen mensen wordt bezocht.',
+      },
+    },
+    {
+      id: 'history-q6',
+      question: {
+        en: 'In what year did women in the Netherlands get the right to vote?',
+        nl: 'In welk jaar kregen vrouwen in Nederland het kiesrecht?',
+      },
+      options: {
+        en: ['1848', '1900', '1917', '1919'],
+        nl: ['1848', '1900', '1917', '1919'],
+      },
+      correctIndex: 3,
+      explanation: {
+        en: 'Women in the Netherlands received the right to vote in 1919. All men had already received voting rights in 1917. The first woman to study medicine in the Netherlands was Aletta Jacobs in 1871.',
+        nl: 'Vrouwen in Nederland kregen in 1919 het kiesrecht. Alle mannen hadden al in 1917 kiesrecht gekregen. De eerste vrouw die in Nederland medicijnen studeerde was Aletta Jacobs in 1871.',
+      },
+    },
+  ],
+};
+
+// ============================================================================
+// TOPIC 13 — Holidays & Social Customs (Feestdagen en Gewoonten)
+// ============================================================================
+const FEESTDAGEN: KNMTopic = {
+  id: 'feestdagen',
+  icon: 'calendar-outline',
+  title: { en: 'Holidays & Social Customs', nl: 'Feestdagen en Gewoonten' },
+  description: {
+    en: 'Dutch public holidays, celebrations, and social etiquette.',
+    nl: 'Nederlandse feestdagen, vieringen en sociale omgangsvormen.',
+  },
+  color: '#d946ef',
+  explanation: {
+    en: `The Netherlands has many special days and social traditions throughout the year.
+
+Key Dutch holidays (feestdagen):
+- Valentijnsdag: 14 February. Lovers send cards or give gifts.
+- Carnaval: Four days (Saturday to Tuesday before Ash Wednesday). People wear fancy dress, mainly in the south of the Netherlands.
+- Pasen (Easter): Sunday + Monday in March/April. Christian spring festival — Jesus rose from the dead. People eat eggs.
+- Koningsdag: 27 April — King Willem-Alexander's birthday. The whole country turns orange (de kleur van Nederland). Vrijmarkten (flea markets) everywhere. People sell their old things on the street.
+- Dodenherdenking: 4 May — at 20:00, 2 minutes of silence (stilte) for all war victims.
+- Bevrijdingsdag: 5 May — Liberation Day, end of WWII occupation 1945.
+- Moederdag: Second Sunday in May. Mothers receive flowers or gifts.
+- Hemelvaartsdag: Thursday 40 days after Easter. Ascension Day — Jesus went to heaven. Christians go to church.
+- Pinksteren: Sunday + Monday, 10 days after Hemelvaartsdag. Pentecost.
+- Vaderdag: Third Sunday in June. Fathers receive gifts.
+- Sinterklaas: 5 December. Sinterklaas arrives from Spain with Zwarte Pieten. Children put their shoe out (schoen zetten) in the evenings and get snoep (candy) or small gifts. Adults also give each other presents. Very important Dutch tradition.
+- Kerstmis: 25 + 26 December. Jesus' birth. Family celebration, kerstboom (Christmas tree) in the house.
+- Oud en Nieuw: 31 December / 1 January. Fireworks (vuurwerk) at midnight to welcome the new year.
+
+Family event customs:
+- Verjaardag (birthday): cake with candles, sing "Lang zal ze/hij leven", give gifts. Children trakteren (treat classmates at school).
+- Bruiloft (wedding): white dress (witte jurk) for the bride, ceremony at gemeentehuis (civil) and sometimes church, reception (receptie) afterwards.
+- Baby born: parents send cards; visitors get beschuit met muisjes (rusk with pink/blue anise seeds). Don't stay too long — mother needs rest.
+- Geslaagd (passed exams): hang the school bag on the flag (vlag) outside!
+- Doodgegaan (death): begrafenis (burial) or crematie. Wear dark clothes. Say "Gecondoleerd" or "Veel sterkte".
+
+Key phrases:
+- "Gefeliciteerd!" = Congratulations (birthday, new baby, passing exams, wedding)
+- "Gecondoleerd" = Condolences (when someone has died)
+- "Beterschap!" = Get well soon (when someone is sick)`,
+    nl: `Nederland heeft veel speciale dagen en sociale tradities door het jaar heen.
+
+Belangrijke feestdagen:
+- Valentijnsdag: 14 februari. Geliefden sturen kaarten of geven cadeaus.
+- Carnaval: Vier dagen (zaterdag t/m dinsdag voor Aswoensdag). Mensen dragen gekke kleren, vooral in het zuiden.
+- Pasen: Zondag + maandag in maart/april. Christelijk lentefeest. Mensen eten eieren.
+- Koningsdag: 27 april — verjaardag van koning Willem-Alexander. Het hele land kleurt oranje. Vrijmarkten overal.
+- Dodenherdenking: 4 mei — om 20:00 uur 2 minuten stilte voor alle oorlogsslachtoffers.
+- Bevrijdingsdag: 5 mei — einde van de bezetting in 1945.
+- Moederdag: Tweede zondag in mei. Moeders krijgen bloemen of cadeaus.
+- Hemelvaartsdag: Donderdag 40 dagen na Pasen.
+- Pinksteren: Zondag + maandag, 10 dagen na Hemelvaartsdag.
+- Vaderdag: Derde zondag in juni.
+- Sinterklaas: 5 december. Kinderen zetten hun schoen en krijgen snoep of cadeautjes. Zwarte Pieten helpen Sinterklaas.
+- Kerstmis: 25 + 26 december. Kerstboom in huis. Familiefeest.
+- Oud en Nieuw: 31 december / 1 januari. Vuurwerk om middernacht.
+
+Gewoonten bij familiegebeurtenissen:
+- Verjaardag: taart met kaarsjes, "Lang zal ze/hij leven" zingen, cadeaus geven. Kinderen trakteren op school.
+- Bruiloft: witte jurk voor de bruid, huwelijk op het gemeentehuis en soms in de kerk, daarna receptie.
+- Baby geboren: beschuit met muisjes voor bezoekers. Niet te lang blijven — moeder moet rusten.
+- Geslaagd: schooltas aan de vlag buiten hangen!
+- Iemand gestorven: begrafenis of crematie, donkere kleren, "Gecondoleerd" of "Veel sterkte" zeggen.`,
+  },
+  keyPoints: [
+    {
+      en: 'Koningsdag is 27 April — King\'s birthday. Everyone wears orange; vrijmarkten (flea markets) are held everywhere.',
+      nl: 'Koningsdag is 27 april — verjaardag van de koning. Iedereen draagt oranje; overal zijn er vrijmarkten.',
+    },
+    {
+      en: 'Sinterklaas is 5 December — children put their shoe out and get snoep or gifts from Sinterklaas and Zwarte Piet.',
+      nl: 'Sinterklaas is 5 december — kinderen zetten hun schoen en krijgen snoep of cadeaus van Sinterklaas en Zwarte Piet.',
+    },
+    {
+      en: '4 May = Dodenherdenking (2 minutes silence at 20:00). 5 May = Bevrijdingsdag (Liberation Day).',
+      nl: '4 mei = Dodenherdenking (2 minuten stilte om 20:00). 5 mei = Bevrijdingsdag.',
+    },
+    {
+      en: 'When a baby is born, visitors eat beschuit met muisjes (rusk with pink or blue anise seeds).',
+      nl: 'Als er een baby is geboren, eten bezoekers beschuit met muisjes (roze of blauwe).',
+    },
+    {
+      en: 'When someone passes exams (geslaagd), they hang their school bag on the flag outside.',
+      nl: 'Als iemand geslaagd is, hangt de schooltas aan de vlag buiten.',
+    },
+    {
+      en: '"Gefeliciteerd" for happy events. "Gecondoleerd" when someone has died. "Beterschap" when someone is sick.',
+      nl: '"Gefeliciteerd" bij blijde gebeurtenissen. "Gecondoleerd" als iemand is gestorven. "Beterschap" als iemand ziek is.',
+    },
+  ],
+  examples: [
+    {
+      en: 'On Koningsdag, Galo and Mirjam went to the vrijmarkt wearing orange and sold their old books.',
+      nl: 'Op Koningsdag gingen Galo en Mirjam naar de vrijmarkt in oranje kleren en verkochten hun oude boeken.',
+    },
+    {
+      en: "When Mirjam's neighbour had a baby, she brought a gift and ate beschuit met muisjes.",
+      nl: "Toen de buurvrouw van Mirjam een baby kreeg, bracht ze een cadeautje en at ze beschuit met muisjes.",
+    },
+    {
+      en: 'After passing his Dutch language exam, Ahmed hung his school bag on the flag outside his house.',
+      nl: 'Na het halen van zijn Nederlandse taalexamen hing Ahmed zijn tas aan de vlag buiten zijn huis.',
+    },
+  ],
+  quizQuestions: [
+    {
+      id: 'feest-q1',
+      question: {
+        en: 'When is Koningsdag celebrated and what colour do people wear?',
+        nl: 'Wanneer wordt Koningsdag gevierd en welke kleur dragen mensen?',
+      },
+      options: {
+        en: ['25 December — red', '27 April — orange', '5 May — blue', '5 December — yellow'],
+        nl: ['25 december — rood', '27 april — oranje', '5 mei — blauw', '5 december — geel'],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'Koningsdag is on 27 April, King Willem-Alexander\'s birthday. The whole country turns orange — the national colour and the colour of the royal family "Van Oranje-Nassau". There are vrijmarkten (flea markets) where anyone can sell anything on the street.',
+        nl: 'Koningsdag is op 27 april, de verjaardag van koning Willem-Alexander. Het hele land kleurt oranje — de nationale kleur en de kleur van de koninklijke familie "Van Oranje-Nassau". Er zijn vrijmarkten waar iedereen van alles op straat mag verkopen.',
+      },
+    },
+    {
+      id: 'feest-q2',
+      question: {
+        en: 'What do Dutch visitors eat when a new baby is born?',
+        nl: 'Wat eten Nederlandse bezoekers als er een baby is geboren?',
+      },
+      options: {
+        en: [
+          'Oliebollen (doughnuts)',
+          'Beschuit met muisjes (rusk with anise seeds)',
+          'Taart (cake)',
+          'Boterkoek (butter cake)',
+        ],
+        nl: [
+          'Oliebollen',
+          'Beschuit met muisjes',
+          'Taart',
+          'Boterkoek',
+        ],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'Beschuit met muisjes is a uniquely Dutch birth tradition. Pink muisjes (anise seeds) are for a girl; blue are for a boy. Visitors eat this when they come to congratulate the new parents.',
+        nl: 'Beschuit met muisjes is een typisch Nederlandse geboortetraditie. Roze muisjes zijn voor een meisje; blauwe voor een jongetje. Bezoekers eten dit als ze de nieuwe ouders komen feliciteren.',
+      },
+    },
+    {
+      id: 'feest-q3',
+      question: {
+        en: 'What happens in the Netherlands on 4 May at 20:00?',
+        nl: 'Wat gebeurt er in Nederland op 4 mei om 20:00 uur?',
+      },
+      options: {
+        en: [
+          'Fireworks celebrate the end of World War II',
+          'The whole country observes 2 minutes of silence (Dodenherdenking)',
+          'The King gives a speech on television',
+          'Sinterklaas arrives by boat',
+        ],
+        nl: [
+          'Vuurwerk viert het einde van de WOII',
+          'Het hele land houdt 2 minuten stilte (Dodenherdenking)',
+          'De Koning geeft een toespraak op televisie',
+          'Sinterklaas komt per boot aan',
+        ],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'On 4 May at exactly 20:00, the Netherlands observes Dodenherdenking — 2 minutes of complete silence to honour all victims of WWII and other wars. The next day, 5 May, is Bevrijdingsdag (Liberation Day), when the liberation from German occupation in 1945 is celebrated.',
+        nl: 'Op 4 mei om precies 20:00 uur houdt Nederland de Dodenherdenking — 2 minuten volledige stilte ter ere van alle slachtoffers van de WOII en andere oorlogen. De volgende dag, 5 mei, is Bevrijdingsdag, waarop de bevrijding van de Duitse bezetting in 1945 wordt gevierd.',
+      },
+    },
+    {
+      id: 'feest-q4',
+      question: {
+        en: 'Your friend\'s son has just passed his school exams (geslaagd). What is the Dutch tradition?',
+        nl: 'De zoon van je vriend is net geslaagd voor zijn school-examen. Wat is de Nederlandse traditie?',
+      },
+      options: {
+        en: [
+          'Throw a big party for all the neighbours',
+          'Hang the school bag on the flag (vlag) outside the house',
+          'Give the school a special thank-you gift',
+          'Plant a tree in the garden',
+        ],
+        nl: [
+          'Een groot feest geven voor alle buren',
+          'De schooltas aan de vlag buiten het huis hangen',
+          'De school een speciaal bedankje geven',
+          'Een boom in de tuin planten',
+        ],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: 'In the Netherlands, when someone passes their exams (geslaagd), the tradition is to hang their school bag on the flag (vlag) outside the house. This is how everyone in the neighbourhood knows the good news.',
+        nl: 'In Nederland is de traditie als iemand geslaagd is om de schooltas aan de vlag buiten het huis te hangen. Zo weet iedereen in de buurt het goede nieuws.',
+      },
+    },
+    {
+      id: 'feest-q5',
+      question: {
+        en: 'When someone you know has just died, what do you say in Dutch?',
+        nl: 'Als iemand die je kent net is gestorven, wat zeg je dan in het Nederlands?',
+      },
+      options: {
+        en: ['"Gefeliciteerd!"', '"Gecondoleerd" or "Veel sterkte"', '"Lang zal ze/hij leven!"', '"Beterschap!"'],
+        nl: ['"Gefeliciteerd!"', '"Gecondoleerd" of "Veel sterkte"', '"Lang zal ze/hij leven!"', '"Beterschap!"'],
+      },
+      correctIndex: 1,
+      explanation: {
+        en: '"Gecondoleerd" means condolences. You say this when someone has died. "Veel sterkte" (much strength) is also appropriate. "Gefeliciteerd" is for happy events like birthdays. "Beterschap" means "get well soon" — for when someone is ill.',
+        nl: '"Gecondoleerd" betekent condoleances. Je zegt dit als iemand is gestorven. "Veel sterkte" is ook gepast. "Gefeliciteerd" is voor blijde gebeurtenissen zoals verjaardagen. "Beterschap" betekent "word snel beter" — voor als iemand ziek is.',
+      },
+    },
+    {
+      id: 'feest-q6',
+      question: {
+        en: 'Which of the following statements about Sinterklaas is correct?',
+        nl: 'Welke van de volgende uitspraken over Sinterklaas klopt?',
+      },
+      options: {
+        en: [
+          'Sinterklaas is celebrated on 25 December',
+          'Sinterklaas is only for adults',
+          'Children put their shoe out and receive snoep or gifts on 5 December',
+          'Sinterklaas comes from Germany',
+        ],
+        nl: [
+          'Sinterklaas wordt gevierd op 25 december',
+          'Sinterklaas is alleen voor volwassenen',
+          'Kinderen zetten hun schoen en krijgen snoep of cadeaus op 5 december',
+          'Sinterklaas komt uit Duitsland',
+        ],
+      },
+      correctIndex: 2,
+      explanation: {
+        en: 'Sinterklaas is celebrated on 5 December (and the evenings before). Children put their shoe out and receive snoep (candy) or presents from Sinterklaas and Zwarte Piet. Sinterklaas is said to come from Spain (not Germany). It is a very important Dutch tradition.',
+        nl: 'Sinterklaas wordt gevierd op 5 december (en de avonden daarvoor). Kinderen zetten hun schoen en krijgen snoep of cadeaus van Sinterklaas en Zwarte Piet. Sinterklaas komt uit Spanje (niet uit Duitsland). Het is een heel belangrijke Nederlandse traditie.',
+      },
+    },
+  ],
+};
+
+// ============================================================================
 // Exported arrays
 // ============================================================================
 
@@ -2039,6 +2492,8 @@ export const KNM_TOPICS: KNMTopic[] = [
   TRANSPORT,
   DAILY,
   CULTURE,
+  HISTORY,
+  FEESTDAGEN,
   INTEGRATION,
 ];
 
