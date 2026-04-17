@@ -19,6 +19,32 @@ public class DutchVocabAIModule: Module {
       return await self.generateSmallTalk(topic: topic, turnCount: turnCount)
     }
 
+    AsyncFunction("getAIAvailabilityAsync") { () -> String in
+      #if targetEnvironment(simulator)
+        return "available"
+      #else
+      if #available(iOS 26, *) {
+        switch SystemLanguageModel.default.availability {
+        case .available:
+          return "available"
+        case .unavailable(let reason):
+          switch reason {
+          case .appleIntelligenceNotEnabled:
+            return "not_enabled"
+          case .modelNotReady:
+            return "model_not_ready"
+          default:
+            return "unavailable"
+          }
+        @unknown default:
+          return "unavailable"
+        }
+      } else {
+        return "requires_ios26"
+      }
+      #endif
+    }
+
     AsyncFunction("translateTextsAsync") { (texts: [String], sourceLang: String, targetLang: String) -> [String] in
       return try await Task { @MainActor in
         do {
@@ -40,6 +66,31 @@ public class DutchVocabAIModule: Module {
   // MARK: - Small Talk Generation
 
   private func generateSmallTalk(topic: String, turnCount: Int) async -> String {
+    guard #available(iOS 26, *) else {
+      print("[SmallTalk] iOS 26+ required")
+      return "ERROR:REQUIRES_IOS26"
+    }
+
+    #if !targetEnvironment(simulator)
+    let availability = SystemLanguageModel.default.availability
+    switch availability {
+    case .available:
+      break
+    case .unavailable(let reason):
+      print("[SmallTalk] Apple Intelligence unavailable: \(reason)")
+      switch reason {
+      case .appleIntelligenceNotEnabled:
+        return "ERROR:AI_NOT_ENABLED"
+      case .modelNotReady:
+        return "ERROR:MODEL_NOT_READY"
+      default:
+        return "ERROR:UNAVAILABLE:\(reason)"
+      }
+    @unknown default:
+      return "ERROR:UNKNOWN_AVAILABILITY"
+    }
+    #endif
+
     do {
       let session = LanguageModelSession()
       let turns = max(4, min(turnCount, 10))
@@ -60,7 +111,8 @@ public class DutchVocabAIModule: Module {
       let response = try await session.respond(to: prompt)
       return response.content
     } catch {
-      return generateSmallTalkFallback(topic: topic)
+      print("[SmallTalk] LanguageModelSession error: \(error)")
+      return "ERROR:SESSION:\(error.localizedDescription)"
     }
   }
 

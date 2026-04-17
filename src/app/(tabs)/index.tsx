@@ -9,7 +9,7 @@ import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { TRAFFIC_CATEGORIES } from '@/data/traffic_categories';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Search, X, Volume2, Octagon, ChevronRight, ChevronDown, Flame, BookOpen, Target, Clock, Lightbulb, AudioLines, TrafficCone, Layers, GraduationCap, PenLine } from 'lucide-react-native';
+import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Search, X, Volume2, Octagon, ChevronRight, ChevronDown, Flame, BookOpen, Target, Clock, Lightbulb, AudioLines, TrafficCone, Layers, GraduationCap, PenLine, MessagesSquare } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 
@@ -133,7 +133,7 @@ export default function CategoriesScreen() {
   const [searchFilter, setSearchFilter] = React.useState<SearchFilter>('all');
   const [lastCategory, setLastCategory] = React.useState<{ id: string; title: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('vocab');
-  const [decksExpanded, setDecksExpanded] = React.useState(false);
+  const [flashcardsExpanded, setFlashcardsExpanded] = React.useState(false);
 
   // Load last visited category
   React.useEffect(() => {
@@ -194,8 +194,8 @@ export default function CategoriesScreen() {
   // Traffic tab: all TRAFFIC_CATEGORIES subcategories
   const trafficData = React.useMemo(() => [...TRAFFIC_CATEGORIES], []);
 
-  // Active list data — empty when Decks accordion is collapsed
-  const listData = decksExpanded ? (activeTab === 'vocab' ? vocabData : trafficData) : [];
+  // Active list data — empty when Flashcards accordion is collapsed
+  const listData = flashcardsExpanded ? (activeTab === 'vocab' ? vocabData : trafficData) : [];
 
   // Word of the Day
   const wordOfDay = React.useMemo(() => {
@@ -320,25 +320,25 @@ export default function CategoriesScreen() {
         </View>
       )}
 
-      {/* Decks accordion */}
+      {/* Flashcards accordion */}
       <TouchableOpacity
-        style={[styles.decksRow, { backgroundColor: theme.cardBackground }]}
-        onPress={() => setDecksExpanded(e => !e)}
+        style={[styles.flashcardsRow, { backgroundColor: theme.cardBackground }]}
+        onPress={() => setFlashcardsExpanded(e => !e)}
         activeOpacity={0.7}
       >
-        <View style={[styles.decksIcon, { backgroundColor: theme.primary + '15' }]}>
+        <View style={[styles.flashcardsIcon, { backgroundColor: theme.primary + '15' }]}>
           <Layers size={18} color={theme.primary} />
         </View>
-        <View style={styles.decksTextBlock}>
-          <Text style={[styles.decksTitle, { color: theme.text }]}>Decks</Text>
+        <View style={styles.flashcardsTextBlock}>
+          <Text style={[styles.flashcardsTitle, { color: theme.text }]}>Flashcards</Text>
         </View>
-        {decksExpanded
+        {flashcardsExpanded
           ? <ChevronDown size={18} color={theme.textSecondary} />
           : <ChevronRight size={18} color={theme.textSecondary} />
         }
       </TouchableOpacity>
 
-      {decksExpanded && (
+      {flashcardsExpanded && (
         <View style={[styles.tabSwitcher, { backgroundColor: theme.surfaceSecondary }]}>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === 'vocab' && { backgroundColor: theme.cardBackground, ...styles.tabButtonActive }]}
@@ -427,6 +427,22 @@ export default function CategoriesScreen() {
         <View style={styles.cardTextContainer}>
           <Text style={[styles.grammarTitle, { color: theme.text }]}>Sentence Builder</Text>
           <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
+        </View>
+        <ChevronRight size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
+
+      {/* Learn Phrases */}
+      <TouchableOpacity
+        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
+        onPress={() => router.push('/learn-phrases' as any)}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.grammarIcon, { backgroundColor: '#6366f1' + '18' }]}>
+          <MessagesSquare size={20} color="#6366f1" />
+        </View>
+        <View style={styles.cardTextContainer}>
+          <Text style={[styles.grammarTitle, { color: theme.text }]}>Learn Phrases</Text>
+          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Browse phrases by topic</Text>
         </View>
         <ChevronRight size={18} color={theme.textSecondary} />
       </TouchableOpacity>
@@ -536,8 +552,8 @@ const styles = StyleSheet.create({
   filterPill: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: BorderRadius.full },
   filterPillText: { fontSize: FontSize.footnote, fontWeight: FontWeight.medium },
 
-  // Decks accordion row
-  decksRow: {
+  // Flashcards accordion row
+  flashcardsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.lg,
@@ -549,16 +565,16 @@ const styles = StyleSheet.create({
       android: { elevation: 1 },
     }),
   },
-  decksIcon: {
+  flashcardsIcon: {
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  decksTextBlock: { flex: 1 },
-  decksTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
-  decksSub: { fontSize: FontSize.caption },
+  flashcardsTextBlock: { flex: 1 },
+  flashcardsTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
+  flashcardsSub: { fontSize: FontSize.caption },
 
   // Tab switcher (shown inside accordion)
   tabSwitcher: {

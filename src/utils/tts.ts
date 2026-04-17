@@ -91,3 +91,82 @@ export const cleanupTTS = () => {
     Speech.stop();
     isSpeaking = false;
 };
+
+// ─── Language-aware speak (for audiobook) ────────────────────────────────────
+
+let enVoiceInitialized = false;
+let preferredEnVoiceIdentifier: string | undefined = undefined;
+
+const initEnTTS = async () => {
+    if (enVoiceInitialized) return;
+    enVoiceInitialized = true;
+    try {
+        const voices = await Speech.getAvailableVoicesAsync();
+
+        const isHighQuality = (v: Speech.Voice) =>
+            v.name.toLowerCase().includes('siri') ||
+            v.identifier.toLowerCase().includes('siri') ||
+            v.identifier.toLowerCase().includes('premium') ||
+            v.identifier.toLowerCase().includes('enhanced') ||
+            v.quality === 'Enhanced';
+
+        // Prefer en-US, then en-GB, then any English
+        const enUS = voices.filter(v => v.language === 'en-US');
+        const enGB = voices.filter(v => v.language === 'en-GB');
+        const enAny = voices.filter(v => v.language?.startsWith('en'));
+
+        const bestVoice =
+            enUS.find(isHighQuality) ??
+            enGB.find(isHighQuality) ??
+            enAny.find(isHighQuality) ??
+            enUS[0] ??
+            enGB[0] ??
+            enAny[0];
+
+        if (bestVoice) {
+            preferredEnVoiceIdentifier = bestVoice.identifier;
+            console.log('Selected English TTS voice:', bestVoice.name, bestVoice.language);
+        }
+    } catch (e) {
+        enVoiceInitialized = false; // allow retry next time
+        console.warn('Failed to fetch English TTS voices:', e);
+    }
+};
+
+// ─── Global playback generation ──────────────────────────────────────────────
+// Incremented each time a new playback session starts. Loops compare against
+// their captured generation to detect when they've been superseded.
+let _playbackGeneration = 0;
+export const startNewPlayback = () => ++_playbackGeneration;
+export const getPlaybackGeneration = () => _playbackGeneration;
+
+/** Speak text in either English or Dutch with completion callbacks. */
+export const speakInLanguage = async (
+    text: string,
+    lang: 'en' | 'nl',
+    rate: number = 1.0,
+    callbacks: { onDone?: () => void; onStopped?: () => void; onError?: () => void } = {}
+) => {
+    Speech.stop();
+    if (lang === 'nl') {
+        if (!preferredVoiceIdentifier) await initTTS();
+        Speech.speak(text, {
+            language: 'nl-NL',
+            voice: preferredVoiceIdentifier,
+            rate,
+            onDone: callbacks.onDone,
+            onStopped: callbacks.onStopped,
+            onError: callbacks.onError,
+        });
+    } else {
+        await initEnTTS();
+        Speech.speak(text, {
+            language: 'en-US',
+            voice: preferredEnVoiceIdentifier,
+            rate,
+            onDone: callbacks.onDone,
+            onStopped: callbacks.onStopped,
+            onError: callbacks.onError,
+        });
+    }
+};

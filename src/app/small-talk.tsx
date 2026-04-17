@@ -1,14 +1,91 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Clock, RotateCcw } from 'lucide-react-native';
 import { speakWithCallback, stopTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+
+type AIAvailability = 'available' | 'not_enabled' | 'model_not_ready' | 'requires_ios26' | 'unavailable' | 'checking';
+
+type SetupStep = { label: string; detail?: string };
+
+type SetupGuideConfig = {
+  icon: any;
+  accentColor: string;
+  bg: string;
+  borderColor: string;
+  title: string;
+  subtitle: string;
+  steps: SetupStep[];
+  note?: string;
+};
+
+const SETUP_GUIDES: Partial<Record<AIAvailability, SetupGuideConfig>> = {
+  not_enabled: {
+    icon: AlertCircle,
+    accentColor: '#B45309',
+    bg: '#FFFBEB',
+    borderColor: '#FCD34D',
+    title: 'Apple Intelligence Required',
+    subtitle: 'Enable Apple Intelligence to generate conversations using on-device AI.',
+    steps: [
+      { label: 'Open Settings on your iPhone' },
+      { label: 'Tap Apple Intelligence & Siri' },
+      { label: 'Turn on Apple Intelligence' },
+      { label: 'Set device language to English (US)', detail: 'Settings → General → Language & Region → iPhone Language' },
+      { label: 'Wait for the model to download', detail: 'A progress bar will appear in Apple Intelligence & Siri' },
+      { label: 'Come back here and tap Check Again' },
+    ],
+  },
+  model_not_ready: {
+    icon: Clock,
+    accentColor: '#1D4ED8',
+    bg: '#EFF6FF',
+    borderColor: '#93C5FD',
+    title: 'Apple Intelligence is Setting Up',
+    subtitle: 'The on-device model is downloading. This usually takes a few minutes on Wi-Fi.',
+    steps: [
+      { label: 'Make sure you are connected to Wi-Fi' },
+      { label: 'Open Settings → Apple Intelligence & Siri', detail: 'Look for a progress bar — it shows download status' },
+      { label: 'Keep the screen on and wait for it to finish' },
+      { label: 'Come back here and tap Check Again' },
+    ],
+    note: 'Do not switch your device language away from English (US) while downloading.',
+  },
+  requires_ios26: {
+    icon: AlertCircle,
+    accentColor: '#991B1B',
+    bg: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    title: 'iOS 26 Required',
+    subtitle: 'This feature uses Apple Intelligence which requires iOS 26 or later.',
+    steps: [
+      { label: 'Open Settings → General → Software Update' },
+      { label: 'Download and install iOS 26' },
+      { label: 'After updating, enable Apple Intelligence', detail: 'Settings → Apple Intelligence & Siri' },
+      { label: 'Come back here and tap Check Again' },
+    ],
+  },
+  unavailable: {
+    icon: AlertCircle,
+    accentColor: '#6B7280',
+    bg: '#F9FAFB',
+    borderColor: '#D1D5DB',
+    title: 'Apple Intelligence Unavailable',
+    subtitle: 'This feature requires Apple Intelligence on a supported device.',
+    steps: [
+      { label: 'Supported devices: iPhone 15 Pro, 15 Pro Max, iPhone 16 series or later' },
+      { label: 'Requires iOS 26 or later' },
+      { label: 'Enable Apple Intelligence in Settings → Apple Intelligence & Siri' },
+      { label: 'Set device language to English (US)' },
+    ],
+  },
+};
 
 type Turn = {
   speaker: 'A' | 'B';
@@ -52,8 +129,20 @@ export default function SmallTalkScreen() {
   const [activeTurnIdx, setActiveTurnIdx] = useState<number | null>(null);
   const [showTranslations, setShowTranslations] = useState<Record<number, boolean>>({});
   const [showAllTranslations, setShowAllTranslations] = useState(false);
+  const [aiStatus, setAiStatus] = useState<AIAvailability>('checking');
 
   const stopRef = useRef(false);
+
+  const checkAvailability = () => {
+    setAiStatus('checking');
+    AIModule.getAIAvailabilityAsync()
+      .then(setAiStatus)
+      .catch(() => setAiStatus('unavailable'));
+  };
+
+  useEffect(() => {
+    checkAvailability();
+  }, []);
 
   const generate = async () => {
     const t = topic.trim();
@@ -67,6 +156,21 @@ export default function SmallTalkScreen() {
     setIsGenerating(true);
     try {
       const raw = await AIModule.generateSmallTalkAsync(t, turnCount);
+      console.log('[SmallTalk] raw response:', raw);
+
+      if (raw.startsWith('ERROR:')) {
+        const code = raw.replace('ERROR:', '');
+        const messages: Record<string, string> = {
+          REQUIRES_IOS26: 'iOS 26 or later is required.',
+          DEVICE_NOT_SUPPORTED: 'Your device does not support Apple Intelligence.',
+          AI_NOT_ENABLED: 'Apple Intelligence is not enabled. Go to Settings → Apple Intelligence & Siri to enable it.',
+          MODEL_NOT_READY: 'Apple Intelligence model is still downloading. Please wait a few minutes and try again.',
+        };
+        const msg = messages[code] ?? `Apple Intelligence error: ${code}`;
+        Alert.alert('Apple Intelligence Unavailable', msg);
+        return;
+      }
+
       const parsed = parseTurns(raw);
       if (parsed.length === 0) {
         Alert.alert('Generation failed', 'Could not parse the conversation. Please try again.');
@@ -137,6 +241,59 @@ export default function SmallTalkScreen() {
       <Stack.Screen options={{ title: 'Small Talk' }} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* Apple Intelligence setup guide */}
+        {(() => {
+          if (aiStatus === 'checking' || aiStatus === 'available') return null;
+          const guide = SETUP_GUIDES[aiStatus];
+          if (!guide) return null;
+          const Icon = guide.icon;
+          return (
+            <View style={[styles.setupCard, { backgroundColor: guide.bg, borderColor: guide.borderColor }]}>
+              {/* Header */}
+              <View style={styles.setupHeader}>
+                <Icon size={20} color={guide.accentColor} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.setupTitle, { color: guide.accentColor }]}>{guide.title}</Text>
+                  <Text style={[styles.setupSubtitle, { color: guide.accentColor }]}>{guide.subtitle}</Text>
+                </View>
+              </View>
+
+              {/* Steps */}
+              <View style={styles.stepsContainer}>
+                {guide.steps.map((step, i) => (
+                  <View key={i} style={styles.stepRow}>
+                    <View style={[styles.stepNumber, { backgroundColor: guide.accentColor }]}>
+                      <Text style={styles.stepNumberText}>{i + 1}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.stepLabel, { color: guide.accentColor }]}>{step.label}</Text>
+                      {step.detail && (
+                        <Text style={[styles.stepDetail, { color: guide.accentColor + 'CC' }]}>{step.detail}</Text>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {/* Note */}
+              {guide.note && (
+                <Text style={[styles.setupNote, { color: guide.accentColor + 'BB' }]}>{guide.note}</Text>
+              )}
+
+              {/* Check Again button */}
+              {aiStatus !== 'requires_ios26' && (
+                <TouchableOpacity
+                  style={[styles.checkAgainBtn, { borderColor: guide.accentColor }]}
+                  onPress={checkAvailability}
+                >
+                  <RotateCcw size={14} color={guide.accentColor} />
+                  <Text style={[styles.checkAgainText, { color: guide.accentColor }]}>Check Again</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })()}
 
         {/* Topic input */}
         <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
@@ -285,6 +442,46 @@ export default function SmallTalkScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: Spacing.lg },
+  setupCard: {
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  setupHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  setupTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.bold, marginBottom: 2 },
+  setupSubtitle: { fontSize: FontSize.footnote, lineHeight: 18, opacity: 0.85 },
+  stepsContainer: { gap: Spacing.md },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+  stepNumber: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  stepNumberText: { color: '#fff', fontSize: 11, fontWeight: FontWeight.bold },
+  stepLabel: { fontSize: FontSize.footnote, fontWeight: FontWeight.medium, lineHeight: 18 },
+  stepDetail: { fontSize: 11, lineHeight: 16, marginTop: 2 },
+  setupNote: { fontSize: FontSize.footnote, fontStyle: 'italic', marginTop: Spacing.md, lineHeight: 18 },
+  checkAgainBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+  },
+  checkAgainText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
   card: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,

@@ -6,6 +6,7 @@ declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> 
   generateTextAsync(prompt: string): Promise<string>;
   translateTextsAsync(texts: string[], sourceLang: string, targetLang: string): Promise<string[]>;
   generateSmallTalkAsync(topic: string, turnCount: number): Promise<string>;
+  getAIAvailabilityAsync(): Promise<'available' | 'not_enabled' | 'model_not_ready' | 'requires_ios26' | 'unavailable'>;
 }
 
 /**
@@ -106,6 +107,7 @@ try {
     generateTextAsync: generateTextAsyncFallback,
     translateTextsAsync: translateTextsAsyncFallback,
     generateSmallTalkAsync: generateSmallTalkAsyncFallback,
+    getAIAvailabilityAsync: async () => 'unavailable' as const,
     addListener: () => ({ remove: () => {} }),
     removeAllListeners: () => {},
   } as unknown as DutchVocabAIModule;
