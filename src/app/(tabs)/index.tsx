@@ -1,15 +1,23 @@
 import React from 'react';
-import { StyleSheet, FlatList, SectionList, TouchableOpacity, Text, View, TextInput, Platform } from 'react-native';
+import {
+  StyleSheet, FlatList, SectionList, TouchableOpacity, Text, View,
+  TextInput, Platform, Pressable,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useSRS } from '@/context/SRSContext';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { TRAFFIC_CATEGORIES } from '@/data/traffic_categories';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus, HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile, Search, X, Volume2, Octagon, ChevronRight, ChevronDown, Flame, BookOpen, Target, Clock, Lightbulb, AudioLines, TrafficCone, Layers, GraduationCap, PenLine, MessagesSquare } from 'lucide-react-native';
+import {
+  LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus,
+  HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile,
+  Search, X, Volume2, Octagon, ChevronRight, Flame, BookOpen, Clock,
+  TrafficCone, Heart, PlusCircle,
+} from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 
@@ -18,29 +26,17 @@ type SearchFilter = 'all' | 'saved' | 'learned' | 'unlearned';
 type ActiveTab = 'vocab' | 'traffic';
 
 const iconMap: Record<string, LucideIcon> = {
-  'Hand': Hand,
-  'Hash': Hash,
-  'Utensils': Utensils,
-  'Home': Home,
-  'ShoppingCart': ShoppingCart,
-  'Bus': Bus,
-  'HeartPulse': HeartPulse,
-  'Shirt': Shirt,
-  'Briefcase': Briefcase,
-  'Cloud': Cloud,
-  'Languages': Languages,
-  'MessageCircle': MessageCircle,
-  'Smile': Smile,
-  'Octagon': Octagon,
+  Hand, Hash, Utensils, Home, ShoppingCart, Bus, HeartPulse, Shirt,
+  Briefcase, Cloud, Languages, MessageCircle, Smile, Octagon,
 };
 
 // ─── Progress Ring ────────────────────────────────────────────────────────────
 
-function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progress: number; size?: number; strokeWidth?: number; color: string }) {
+function ProgressRing({ progress, size = 36, strokeWidth = 3, color }: {
+  progress: number; size?: number; strokeWidth?: number; color: string;
+}) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
@@ -49,77 +45,16 @@ function ProgressRing({ progress, size = 40, strokeWidth = 3, color }: { progres
           cx={size / 2} cy={size / 2} r={radius}
           stroke={color} strokeWidth={strokeWidth} fill="transparent"
           strokeDasharray={`${circumference}`}
-          strokeDashoffset={strokeDashoffset}
+          strokeDashoffset={circumference - (progress / 100) * circumference}
           strokeLinecap="round"
         />
       </Svg>
-      <Text style={{ position: 'absolute', fontSize: 10, fontWeight: FontWeight.semibold, color }}>
+      <Text style={{ position: 'absolute', fontSize: 9, fontWeight: FontWeight.semibold, color }}>
         {progress}%
       </Text>
     </View>
   );
 }
-
-// ─── Daily Summary Card ───────────────────────────────────────────────────────
-
-function DailySummaryCard({ theme, onPress }: { theme: typeof Colors.light; onPress: () => void }) {
-  const { stats } = useSRS();
-  const hasDue = stats.dueToday > 0;
-
-  return (
-    <View style={[summaryStyles.card, { backgroundColor: theme.cardBackground }]}>
-      <View style={summaryStyles.statsRow}>
-        <View style={summaryStyles.stat}>
-          <View style={[summaryStyles.statIcon, { backgroundColor: theme.accentLight }]}>
-            <Flame size={16} color={theme.primary} />
-          </View>
-          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.streak}</Text>
-          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>day streak</Text>
-        </View>
-        <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
-        <View style={summaryStyles.stat}>
-          <View style={[summaryStyles.statIcon, { backgroundColor: hasDue ? theme.accentLight : theme.successLight }]}>
-            <BookOpen size={16} color={hasDue ? theme.primary : theme.success} />
-          </View>
-          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.dueToday}</Text>
-          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>due today</Text>
-        </View>
-        <View style={[summaryStyles.divider, { backgroundColor: theme.border }]} />
-        <View style={summaryStyles.stat}>
-          <View style={[summaryStyles.statIcon, { backgroundColor: theme.successLight }]}>
-            <Target size={16} color={theme.success} />
-          </View>
-          <Text style={[summaryStyles.statValue, { color: theme.text }]}>{stats.weeklyAccuracy}%</Text>
-          <Text style={[summaryStyles.statLabel, { color: theme.textSecondary }]}>accuracy</Text>
-        </View>
-      </View>
-      <TouchableOpacity style={[summaryStyles.ctaButton, { backgroundColor: theme.primary }]} onPress={onPress} activeOpacity={0.8}>
-        <Text style={summaryStyles.ctaText}>
-          {hasDue ? `Start Practice · ${stats.dueToday} words` : 'Practice All Words'}
-        </Text>
-        <ChevronRight size={16} color="#fff" />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-const summaryStyles = StyleSheet.create({
-  card: {
-    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.md,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
-      android: { elevation: 2 },
-    }),
-  },
-  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statIcon: { width: 32, height: 32, borderRadius: BorderRadius.sm, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  statValue: { fontSize: FontSize.subhead, fontWeight: FontWeight.bold },
-  statLabel: { fontSize: FontSize.caption },
-  divider: { width: 1, height: 44, marginHorizontal: Spacing.sm },
-  ctaButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md, borderRadius: BorderRadius.md, gap: Spacing.xs },
-  ctaText: { color: '#fff', fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
-});
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
@@ -127,13 +62,16 @@ export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const navigation = useNavigation();
   const { customWords, learnedIds, favorites } = useFavorites();
   const { speechRate } = useSettings();
+  const { stats } = useSRS();
+
+  const [searchVisible, setSearchVisible] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchFilter, setSearchFilter] = React.useState<SearchFilter>('all');
   const [lastCategory, setLastCategory] = React.useState<{ id: string; title: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('vocab');
-  const [flashcardsExpanded, setFlashcardsExpanded] = React.useState(false);
 
   // Load last visited category
   React.useEffect(() => {
@@ -142,7 +80,30 @@ export default function CategoriesScreen() {
     }).catch(() => {});
   }, []);
 
-  const playAudio = async (text: string) => { await speak(text, speechRate); };
+  // Search icon in nav header
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16, gap: 16 }}>
+          <Pressable onPress={() => {
+            setSearchVisible(v => {
+              if (v) setSearchQuery('');
+              return !v;
+            });
+          }} hitSlop={8}>
+            {({ pressed }) => (
+              <Search size={20} color={searchVisible ? theme.primary : theme.text} style={{ opacity: pressed ? 0.5 : 1 }} />
+            )}
+          </Pressable>
+          <Pressable onPress={() => router.push('/add-word')} hitSlop={8}>
+            {({ pressed }) => (
+              <PlusCircle size={22} color={theme.primary} style={{ opacity: pressed ? 0.5 : 1 }} />
+            )}
+          </Pressable>
+        </View>
+      ),
+    });
+  }, [navigation, searchVisible, theme]);
 
   const mergedData = React.useMemo(() => {
     const data = VOCABULARY_DATA.map(category => {
@@ -174,7 +135,6 @@ export default function CategoriesScreen() {
     return flattened;
   }, [mergedData, getAllWords]);
 
-  // Vocab tab: all categories except traffic_signs_parent, sorted by progress
   const vocabData = React.useMemo(() => {
     const filtered = mergedData.filter(c => c.id !== 'traffic_signs_parent');
     return [...filtered].sort((a, b) => {
@@ -191,13 +151,9 @@ export default function CategoriesScreen() {
     });
   }, [mergedData, learnedIds, getAllWords]);
 
-  // Traffic tab: all TRAFFIC_CATEGORIES subcategories
   const trafficData = React.useMemo(() => [...TRAFFIC_CATEGORIES], []);
+  const listData = activeTab === 'vocab' ? vocabData : trafficData;
 
-  // Active list data — empty when Flashcards accordion is collapsed
-  const listData = flashcardsExpanded ? (activeTab === 'vocab' ? vocabData : trafficData) : [];
-
-  // Word of the Day
   const wordOfDay = React.useMemo(() => {
     if (allWords.length === 0) return null;
     const d = new Date();
@@ -260,11 +216,10 @@ export default function CategoriesScreen() {
             {item.titleDutch} · {remainingCount} left
           </Text>
         </View>
-        {percentage > 0 ? (
-          <ProgressRing progress={percentage} color={theme.success} />
-        ) : (
-          <ChevronRight size={18} color={theme.textSecondary} />
-        )}
+        {percentage > 0
+          ? <ProgressRing progress={percentage} color={theme.success} />
+          : <ChevronRight size={18} color={theme.textSecondary} />
+        }
       </TouchableOpacity>
     );
   };
@@ -272,7 +227,7 @@ export default function CategoriesScreen() {
   const renderSearchItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={[styles.searchResultCard, { backgroundColor: theme.cardBackground }]}
-      onPress={() => playAudio(item.dutch)}
+      onPress={() => speak(item.dutch, speechRate)}
       activeOpacity={0.7}
     >
       <View style={{ flex: 1 }}>
@@ -296,77 +251,9 @@ export default function CategoriesScreen() {
     { key: 'unlearned', label: 'Unlearned' },
   ];
 
+  const hasDue = stats.dueToday > 0;
+
   const ListHeader = () => (
-    <>
-      <DailySummaryCard theme={theme} onPress={() => router.push('/vocab-practice' as any)} />
-
-      {/* Word of the Day */}
-      {wordOfDay && (
-        <View style={[styles.wotdCard, { backgroundColor: theme.cardBackground }]}>
-          <View style={styles.wotdHeader}>
-            <Lightbulb size={14} color={theme.primary} />
-            <Text style={[styles.wotdLabel, { color: theme.primary }]}>WORD OF THE DAY</Text>
-          </View>
-          <View style={styles.wotdBody}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.wotdDutch, { color: theme.text }]}>{wordOfDay.dutch}</Text>
-              <Text style={[styles.wotdEnglish, { color: theme.textSecondary }]}>{wordOfDay.english}</Text>
-              <Text style={[styles.wotdCategory, { color: theme.primary }]}>{wordOfDay.categoryTitle}</Text>
-            </View>
-            <TouchableOpacity onPress={() => playAudio(wordOfDay.dutch)} hitSlop={8} style={[styles.wotdPlay, { backgroundColor: theme.primary + '15' }]}>
-              <Volume2 size={18} color={theme.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Flashcards accordion */}
-      <TouchableOpacity
-        style={[styles.flashcardsRow, { backgroundColor: theme.cardBackground }]}
-        onPress={() => setFlashcardsExpanded(e => !e)}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.flashcardsIcon, { backgroundColor: theme.primary + '15' }]}>
-          <Layers size={18} color={theme.primary} />
-        </View>
-        <View style={styles.flashcardsTextBlock}>
-          <Text style={[styles.flashcardsTitle, { color: theme.text }]}>Flashcards</Text>
-        </View>
-        {flashcardsExpanded
-          ? <ChevronDown size={18} color={theme.textSecondary} />
-          : <ChevronRight size={18} color={theme.textSecondary} />
-        }
-      </TouchableOpacity>
-
-      {flashcardsExpanded && (
-        <View style={[styles.tabSwitcher, { backgroundColor: theme.surfaceSecondary }]}>
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'vocab' && { backgroundColor: theme.cardBackground, ...styles.tabButtonActive }]}
-            onPress={() => setActiveTab('vocab')}
-            activeOpacity={0.8}
-          >
-            <Book size={15} color={activeTab === 'vocab' ? theme.primary : theme.textSecondary} />
-            <Text style={[styles.tabButtonText, { color: activeTab === 'vocab' ? theme.primary : theme.textSecondary }]}>
-              Vocab
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'traffic' && { backgroundColor: theme.cardBackground, ...styles.tabButtonActive }]}
-            onPress={() => setActiveTab('traffic')}
-            activeOpacity={0.8}
-          >
-            <TrafficCone size={15} color={activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary} />
-            <Text style={[styles.tabButtonText, { color: activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary }]}>
-              Traffic Signs
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </>
-  );
-
-  const ListFooter = () => (
     <>
       {/* Continue where you left off */}
       {lastCategory && (
@@ -375,127 +262,155 @@ export default function CategoriesScreen() {
           onPress={() => router.push(`/category/${lastCategory.id}`)}
           activeOpacity={0.7}
         >
-          <Clock size={15} color={theme.textSecondary} />
+          <Clock size={14} color={theme.textSecondary} />
           <Text style={[styles.continueText, { color: theme.textSecondary }]} numberOfLines={1}>
             Continue: <Text style={{ color: theme.text, fontWeight: FontWeight.semibold }}>{lastCategory.title}</Text>
           </Text>
-          <ChevronRight size={15} color={theme.textSecondary} />
+          <ChevronRight size={14} color={theme.textSecondary} />
         </TouchableOpacity>
       )}
 
-      {/* Pronunciation Guide */}
-      <TouchableOpacity
-        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
-        onPress={() => router.push('/pronunciation-guide' as any)}
-        activeOpacity={0.8}
-      >
-        <View style={[styles.grammarIcon, { backgroundColor: theme.primary + '18' }]}>
-          <AudioLines size={20} color={theme.primary} />
-        </View>
-        <View style={styles.cardTextContainer}>
-          <Text style={[styles.grammarTitle, { color: theme.text }]}>Pronunciation Guide</Text>
-          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Rules, sounds & live examples</Text>
-        </View>
-        <ChevronRight size={18} color={theme.textSecondary} />
-      </TouchableOpacity>
+      {/* ── TODAY ─────────────────────────────────────── */}
+      <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TODAY</Text>
 
-      {/* Grammar Topics */}
-      <TouchableOpacity
-        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
-        onPress={() => router.push('/grammar' as any)}
-        activeOpacity={0.8}
-      >
-        <View style={[styles.grammarIcon, { backgroundColor: theme.success + '18' }]}>
-          <GraduationCap size={20} color={theme.success} />
-        </View>
-        <View style={styles.cardTextContainer}>
-          <Text style={[styles.grammarTitle, { color: theme.text }]}>Grammar Topics</Text>
-          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Rules & explanations</Text>
-        </View>
-        <ChevronRight size={18} color={theme.textSecondary} />
-      </TouchableOpacity>
+      <View style={[styles.todayCard, { backgroundColor: theme.cardBackground }]}>
+        {/* Streak row */}
+        {stats.streak > 0 && (
+          <View style={styles.streakRow}>
+            <Flame size={14} color={theme.primary} />
+            <Text style={[styles.streakText, { color: theme.primary }]}>
+              {stats.streak} day streak
+            </Text>
+          </View>
+        )}
 
-      {/* Sentence Builder */}
-      <TouchableOpacity
-        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
-        onPress={() => router.push('/sentence-builder' as any)}
-        activeOpacity={0.8}
-      >
-        <View style={[styles.grammarIcon, { backgroundColor: theme.accent + '18' }]}>
-          <PenLine size={20} color={theme.accent} />
-        </View>
-        <View style={styles.cardTextContainer}>
-          <Text style={[styles.grammarTitle, { color: theme.text }]}>Sentence Builder</Text>
-          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Construct full phrases</Text>
-        </View>
-        <ChevronRight size={18} color={theme.textSecondary} />
-      </TouchableOpacity>
+        {/* Word of the Day */}
+        {wordOfDay && (
+          <View style={[styles.wotdRow, { borderTopColor: theme.border, borderTopWidth: stats.streak > 0 ? 1 : 0, marginTop: stats.streak > 0 ? Spacing.md : 0, paddingTop: stats.streak > 0 ? Spacing.md : 0 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.wotdLabel, { color: theme.textSecondary }]}>WORD OF THE DAY</Text>
+              <Text style={[styles.wotdDutch, { color: theme.text }]}>{wordOfDay.dutch}</Text>
+              <Text style={[styles.wotdEnglish, { color: theme.textSecondary }]}>{wordOfDay.english}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => speak(wordOfDay.dutch, speechRate)}
+              hitSlop={8}
+              style={[styles.wotdPlay, { backgroundColor: theme.primary + '15' }]}
+            >
+              <Volume2 size={16} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {/* Learn Phrases */}
-      <TouchableOpacity
-        style={[styles.grammarCard, { backgroundColor: theme.cardBackground }]}
-        onPress={() => router.push('/learn-phrases' as any)}
-        activeOpacity={0.8}
-      >
-        <View style={[styles.grammarIcon, { backgroundColor: '#6366f1' + '18' }]}>
-          <MessagesSquare size={20} color="#6366f1" />
+        {/* CTA */}
+        <TouchableOpacity
+          style={[styles.ctaButton, { backgroundColor: theme.primary, marginTop: Spacing.md }]}
+          onPress={() => router.push('/vocab-practice' as any)}
+          activeOpacity={0.8}
+        >
+          <BookOpen size={16} color="#fff" />
+          <Text style={styles.ctaText}>
+            {hasDue ? `Start Practice · ${stats.dueToday} words due` : 'Practice All Words'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── LEARN ─────────────────────────────────────── */}
+      <View style={styles.learnHeader}>
+        <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginBottom: 0 }]}>LEARN</Text>
+        <View style={[styles.tabSwitcher, { backgroundColor: theme.surfaceSecondary }]}>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'vocab' && { backgroundColor: theme.cardBackground, ...styles.tabBtnActive }]}
+            onPress={() => setActiveTab('vocab')}
+            activeOpacity={0.8}
+          >
+            <Book size={13} color={activeTab === 'vocab' ? theme.primary : theme.textSecondary} />
+            <Text style={[styles.tabBtnText, { color: activeTab === 'vocab' ? theme.primary : theme.textSecondary }]}>
+              Vocab
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'traffic' && { backgroundColor: theme.cardBackground, ...styles.tabBtnActive }]}
+            onPress={() => setActiveTab('traffic')}
+            activeOpacity={0.8}
+          >
+            <TrafficCone size={13} color={activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary} />
+            <Text style={[styles.tabBtnText, { color: activeTab === 'traffic' ? '#f59e0b' : theme.textSecondary }]}>
+              Traffic
+            </Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.cardTextContainer}>
-          <Text style={[styles.grammarTitle, { color: theme.text }]}>Learn Phrases</Text>
-          <Text style={[styles.grammarSubtitle, { color: theme.textSecondary }]}>Browse phrases by topic</Text>
-        </View>
-        <ChevronRight size={18} color={theme.textSecondary} />
-      </TouchableOpacity>
+      </View>
+
+      {/* Saved Words — pinned at top of list */}
+      {favorites.length > 0 && (
+        <TouchableOpacity
+          style={[styles.savedRow, { backgroundColor: theme.cardBackground }]}
+          onPress={() => router.push('/favorites' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.savedIcon, { backgroundColor: '#ec4899' + '18' }]}>
+            <Heart size={18} color="#ec4899" />
+          </View>
+          <Text style={[styles.savedText, { color: theme.text }]}>Saved Words</Text>
+          <Text style={[styles.savedCount, { backgroundColor: '#ec4899' + '18', color: '#ec4899' }]}>
+            {favorites.length}
+          </Text>
+          <ChevronRight size={16} color={theme.textSecondary} />
+        </TouchableOpacity>
+      )}
     </>
   );
 
+  const ListFooter = () => null;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Search Bar */}
-      <View style={[styles.searchBarContainer, { backgroundColor: theme.background }]}>
-        <View style={[styles.searchBar, { backgroundColor: theme.surfaceSecondary }]}>
-          <Search size={18} color={theme.textSecondary} />
-          <TextInput
-            placeholder="Search words..."
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.searchInput, { color: theme.text }]}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+      {/* Search bar — only visible when toggled */}
+      {searchVisible && (
+        <View style={[styles.searchBarContainer, { backgroundColor: theme.background }]}>
+          <View style={[styles.searchBar, { backgroundColor: theme.surfaceSecondary }]}>
+            <Search size={16} color={theme.textSecondary} />
+            <TextInput
+              placeholder="Search words..."
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.searchInput, { color: theme.text }]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
+                <X size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
-              <X size={18} color={theme.textSecondary} />
-            </TouchableOpacity>
+            <View style={styles.filterRow}>
+              {filterLabels.map(({ key, label }) => {
+                const active = searchFilter === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    onPress={() => setSearchFilter(key)}
+                    style={[
+                      styles.filterPill,
+                      active
+                        ? { backgroundColor: theme.primary }
+                        : { backgroundColor: theme.surfaceSecondary, borderColor: theme.border, borderWidth: 1 },
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.filterPillText, { color: active ? '#fff' : theme.textSecondary }]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
         </View>
-
-        {/* Filter pills — visible when search is active */}
-        {searchQuery.length > 0 && (
-          <View style={styles.filterRow}>
-            {filterLabels.map(({ key, label }) => {
-              const active = searchFilter === key;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  onPress={() => setSearchFilter(key)}
-                  style={[
-                    styles.filterPill,
-                    active
-                      ? { backgroundColor: theme.primary }
-                      : { backgroundColor: theme.surfaceSecondary, borderColor: theme.border, borderWidth: 1 },
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.filterPillText, { color: active ? '#fff' : theme.textSecondary }]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-      </View>
+      )}
 
       {searchQuery ? (
         <SectionList
@@ -531,122 +446,67 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  // Search bar
-  searchBarContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-  },
-  searchInput: { flex: 1, fontSize: FontSize.body, height: '100%' },
-
-  // Filter pills
-  filterRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  filterPill: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: BorderRadius.full },
-  filterPillText: { fontSize: FontSize.footnote, fontWeight: FontWeight.medium },
-
-  // Flashcards accordion row
-  flashcardsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+  // Section headers
+  sectionHeader: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.8,
     marginBottom: Spacing.sm,
-    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+
+  // TODAY card
+  todayCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
-      android: { elevation: 1 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
+      android: { elevation: 2 },
     }),
   },
-  flashcardsIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  streakText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
+  wotdRow: { flexDirection: 'row', alignItems: 'center' },
+  wotdLabel: { fontSize: 10, fontWeight: FontWeight.semibold, letterSpacing: 0.5, marginBottom: 4 },
+  wotdDutch: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, marginBottom: 2 },
+  wotdEnglish: { fontSize: FontSize.footnote },
+  wotdPlay: { width: 36, height: 36, borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center' },
+  ctaButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: Spacing.md, borderRadius: BorderRadius.md, gap: Spacing.sm,
   },
-  flashcardsTextBlock: { flex: 1 },
-  flashcardsTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
-  flashcardsSub: { fontSize: FontSize.caption },
+  ctaText: { color: '#fff', fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
 
-  // Tab switcher (shown inside accordion)
+  // LEARN header row
+  learnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
+  },
   tabSwitcher: {
     flexDirection: 'row',
-    marginBottom: Spacing.md,
     borderRadius: BorderRadius.md,
     padding: 3,
     gap: 2,
   },
-  tabButton: {
-    flex: 1,
+  tabBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 5,
+    paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.sm,
-    gap: Spacing.xs,
+    gap: 4,
   },
-  tabButtonActive: {
+  tabBtnActive: {
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
       android: { elevation: 2 },
     }),
   },
-  tabButtonText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
-
-  // List
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl },
-
-  // Word of the Day
-  wotdCard: {
-    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.sm,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
-      android: { elevation: 1 },
-    }),
-  },
-  wotdHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  wotdLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, letterSpacing: 0.5 },
-  wotdBody: { flexDirection: 'row', alignItems: 'center' },
-  wotdDutch: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, marginBottom: 2 },
-  wotdEnglish: { fontSize: FontSize.footnote, marginBottom: 4 },
-  wotdCategory: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
-  wotdPlay: { width: 40, height: 40, borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center' },
-
-  // Continue row
-  continueRow: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md, marginBottom: Spacing.sm, borderWidth: 1,
-  },
-  continueText: { flex: 1, fontSize: FontSize.footnote },
-
-  // Grammar card & Generic Utility cards
-  grammarCard: {
-    flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg,
-    padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.md,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
-      android: { elevation: 1 },
-    }),
-  },
-  grammarIcon: { width: 40, height: 40, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
-  grammarTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 1 },
-  grammarSubtitle: { fontSize: FontSize.caption },
-  cardTextContainer: { flex: 1 },
-
-  // Section label
-  sectionLabel: {
-    fontSize: FontSize.caption, fontWeight: FontWeight.semibold,
-    letterSpacing: 0.5, marginBottom: Spacing.md, marginTop: Spacing.sm,
-  },
+  tabBtnText: { fontSize: 12, fontWeight: FontWeight.semibold },
 
   // Category card
   card: {
@@ -662,10 +522,57 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 2 },
   cardSubtitle: { fontSize: FontSize.footnote },
 
+  // Continue row
+  continueRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md, marginBottom: Spacing.md, borderWidth: 1,
+  },
+  continueText: { flex: 1, fontSize: FontSize.footnote },
+
+  // Saved words row
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    gap: Spacing.md,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  savedIcon: { width: 36, height: 36, borderRadius: BorderRadius.sm, alignItems: 'center', justifyContent: 'center' },
+  savedText: { flex: 1, fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
+  savedCount: { fontSize: FontSize.footnote, fontWeight: FontWeight.bold, paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.full },
+
+  // Search
+  searchBarContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+  },
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: Spacing.md, height: 40,
+    borderRadius: BorderRadius.md, gap: Spacing.sm,
+  },
+  searchInput: { flex: 1, fontSize: FontSize.body, height: '100%' },
+  filterRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+  filterPill: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: BorderRadius.full },
+  filterPillText: { fontSize: FontSize.footnote, fontWeight: FontWeight.medium },
+
   // Search results
+  sectionLabel: {
+    fontSize: FontSize.caption, fontWeight: FontWeight.semibold,
+    letterSpacing: 0.5, marginBottom: Spacing.md, marginTop: Spacing.sm,
+  },
   searchResultCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, borderRadius: BorderRadius.md, marginBottom: Spacing.sm },
   searchResultDutch: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
   searchResultEnglish: { fontSize: FontSize.footnote, marginTop: 2 },
   emptySearch: { alignItems: 'center', paddingTop: 60 },
   emptySearchText: { fontSize: FontSize.subhead },
+
+  list: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl },
 });

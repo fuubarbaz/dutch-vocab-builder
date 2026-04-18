@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mic, MessageSquare, PenTool, ChevronRight, BrainCircuit, TrafficCone, FileEdit } from 'lucide-react-native';
+import { Mic, MessageSquare, PenTool, ChevronRight, BrainCircuit, TrafficCone } from 'lucide-react-native';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -48,7 +48,7 @@ export default function PracticeScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.listRow, { borderBottomColor: theme.divider }]}
+          style={styles.listRow}
           onPress={() => router.push('/grammar-check' as any)}
         >
           <View style={[styles.listIcon, { backgroundColor: '#8B5CF6' + '15' }]}>
@@ -61,19 +61,6 @@ export default function PracticeScreen() {
           <ChevronRight size={18} color={theme.textSecondary} />
         </Pressable>
 
-        <Pressable
-          style={styles.listRow}
-          onPress={() => router.push('/writing-exam' as any)}
-        >
-          <View style={[styles.listIcon, { backgroundColor: '#e86912' + '15' }]}>
-            <FileEdit size={18} color="#e86912" />
-          </View>
-          <View style={styles.listText}>
-            <Text style={[styles.listTitle, { color: theme.text }]}>Writing Exam A2</Text>
-            <Text style={[styles.listSubtitle, { color: theme.textSecondary }]}>Practice DUO schrijfvaardigheid</Text>
-          </View>
-          <ChevronRight size={18} color={theme.textSecondary} />
-        </Pressable>
       </View>
 
       {/* Pronunciation Section */}

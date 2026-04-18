@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Pressable, View, Platform } from 'react-native';
-import { PlusCircle } from 'lucide-react-native';
+import { PlusCircle, Compass } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import Colors from '@/constants/Colors';
@@ -92,6 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
+          href: null,
           title: 'Saved',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'heart' : 'heart-outline'} color={color} />
@@ -119,6 +120,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="knm"
         options={{
+          href: null,
           title: 'KNM',
           headerTitle: 'KNM Exam',
           headerTitleStyle: {
@@ -127,6 +129,25 @@ export default function TabLayout() {
           },
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'school' : 'school-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="a2"
+        options={{
+          title: 'A2',
+          headerTitle: 'A2 Exam Prep',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name={focused ? 'school' : 'school-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => (
+            <Compass size={22} color={color} />
           ),
         }}
       />

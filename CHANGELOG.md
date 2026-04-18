@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-04-17
+
+### Added
+- **Learn Phrases** — new section with 778 Dutch phrases across 9 topic categories (General, Questions, Weekend Activities, Work & Life, Traffic & Transportation, Greetings & Introductions, Courtesy & Etiquette, Dining & Shopping, Getting Information).
+- **Audiobook playback** — "Play All" button on both the category list and individual category screens reads each phrase aloud in Dutch followed by the English translation, with auto-scroll to the active phrase.
+- **Audio controls bar** — persistent player bar while playing: progress track, current phrase display, skip-phrase (‹ ›) and skip-category (⏮ ⏭) buttons, and a stop button. All colored to match the active category.
+- **Category-level playback** — each category card has a dedicated play button to start or jump playback from that category.
+- **Global playback generation** — a module-level generation counter in `tts.ts` ensures any new play request (from any screen) immediately cancels a running playback loop elsewhere.
+
+### Changed
+- **Home screen redesign** — simplified into three clearly labeled sections: TODAY, LEARN, and EXPLORE.
+  - *TODAY*: single card combining the streak indicator (only shown when > 0), Word of the Day with speaker button, and one primary practice CTA.
+  - *LEARN*: category list always visible (Flashcard accordion removed); Vocab / Traffic tab switcher inline with the section header.
+  - *EXPLORE*: Pronunciation Guide, Grammar Topics, Sentence Builder, and Learn Phrases arranged in a compact 2×2 grid.
+- **Search moved to nav header** — search bar hidden by default; toggled via a Search icon in the navigation header, freeing up persistent screen space.
+- **Word of the Day merged into TODAY card** — no longer a separate card.
+- **Weekly accuracy stat removed** from the daily summary to reduce noise.
+
+### Fixed
+- Navigating back from Learn Phrases or a phrase category now immediately stops audio playback (unmount cleanup via `useEffect`).
+- Tapping any play button stops the previously playing audio before starting the new one (`speakInLanguage` calls `Speech.stop()` first).
+
+---
+
 ## [1.7.0] - 2026-04-12
 
 ### Removed
