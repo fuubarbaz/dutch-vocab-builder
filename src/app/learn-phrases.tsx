@@ -1,15 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
   MessageCircle, HelpCircle, Palmtree, Briefcase, Bus, Hand, Heart,
-  Utensils, Info, ChevronRight, ChevronLeft, Play, Square, SkipBack, SkipForward,
+  Utensils, Info, ChevronRight, ChevronLeft, Play, Pause, Square,
+  SkipBack, SkipForward,
 } from 'lucide-react-native';
 import { PHRASE_CATEGORIES, PhraseCategory } from '@/data/phrases';
-import { speakInLanguage, stopTTS, startNewPlayback, getPlaybackGeneration } from '@/utils/tts';
-import { useSettings } from '@/context/SettingsContext';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useAudioQueue, QueuePhrase } from '@/hooks/useAudioQueue';
+import { useSettings } from '@/context/SettingsContext';
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   MessageCircle, HelpCircle, Palmtree, Briefcase, Bus, Hand, Heart, Utensils, Info,
@@ -27,37 +28,39 @@ const categoryColors: Record<string, string> = {
   info: '#8b5cf6',
 };
 
-const ALL_PHRASES = PHRASE_CATEGORIES.flatMap(cat =>
-  cat.phrases.map(p => ({ ...p, catId: cat.id, catTitle: cat.title, catTitleDutch: cat.titleDutch }))
+// Build the flat phrase list once
+const ALL_QUEUE_PHRASES: QueuePhrase[] = PHRASE_CATEGORIES.flatMap(cat =>
+  cat.phrases.map(p => ({
+    id: `${cat.id}_${p.id}`,
+    dutch: p.dutch,
+    english: p.english,
+    category: cat.title,
+  }))
 );
-const TOTAL = ALL_PHRASES.length;
+const TOTAL = ALL_QUEUE_PHRASES.length;
 
-// First phrase index for each category
 const CAT_START_INDICES = PHRASE_CATEGORIES.map((_, i) =>
   PHRASE_CATEGORIES.slice(0, i).reduce((sum, c) => sum + c.phrases.length, 0)
 );
 
+// ── Category card ─────────────────────────────────────────────────────────────
+
 function CategoryCard({
-  category, catIdx, onPress, onPlay, isActive,
+  category, isActive, color, onPress, onPlay,
 }: {
   category: PhraseCategory;
-  catIdx: number;
+  isActive: boolean;
+  color: string;
   onPress: () => void;
   onPlay: () => void;
-  isActive: boolean;
 }) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const Icon = iconMap[category.icon] ?? MessageCircle;
-  const color = categoryColors[category.id] ?? theme.primary;
 
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        { backgroundColor: theme.cardBackground },
-        isActive && { borderWidth: 2, borderColor: color },
-      ]}
+      style={[styles.card, { backgroundColor: theme.cardBackground }, isActive && { borderWidth: 2, borderColor: color }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -70,11 +73,7 @@ function CategoryCard({
           {category.titleDutch} · {category.phrases.length} phrases
         </Text>
       </View>
-      <TouchableOpacity
-        style={[styles.cardPlayBtn, { backgroundColor: color + '18' }]}
-        onPress={onPlay}
-        hitSlop={8}
-      >
+      <TouchableOpacity style={[styles.cardPlayBtn, { backgroundColor: color + '18' }]} onPress={onPlay} hitSlop={8}>
         {isActive
           ? <View style={[styles.activeDot, { backgroundColor: color }]} />
           : <Play size={13} color={color} />
@@ -87,136 +86,62 @@ function CategoryCard({
   );
 }
 
+// ── Main screen ───────────────────────────────────────────────────────────────
+
 export default function LearnPhrasesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { speechRate } = useSettings();
+  const { speechRate, phrasePause } = useSettings();
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentIdx, setCurrentIdx] = useState<number | null>(null);
-  const stopRef = useRef(false);
-  const jumpRef = useRef<number | null>(null);
+  const { state, load, play, pause, stop, next, prev, jumpTo } = useAudioQueue();
+  const { isPlaying, isSynthesizing, isReady, currentIndex, currentPhrase, usingNative } = state;
 
-  useEffect(() => {
-    return () => {
-      stopRef.current = true;
-      stopTTS();
-    };
-  }, []);
+  const color = currentPhrase
+    ? (categoryColors[PHRASE_CATEGORIES.find(c => c.title === currentPhrase.category)?.id ?? ''] ?? theme.primary)
+    : theme.primary;
 
-  const currentPhrase = currentIdx !== null ? ALL_PHRASES[currentIdx] : null;
-  const color = currentPhrase ? (categoryColors[currentPhrase.catId] ?? theme.primary) : theme.primary;
+  const currentCatIdx = useMemo(() => {
+    if (!currentPhrase) return -1;
+    return PHRASE_CATEGORIES.findIndex(c => c.title === currentPhrase.category);
+  }, [currentPhrase]);
 
-  const currentCatIdx = currentPhrase
-    ? PHRASE_CATEGORIES.findIndex(c => c.id === currentPhrase.catId)
-    : -1;
+  const handlePlayAll = useCallback(async () => {
+    if (isPlaying) { stop(); return; }
+    if (isReady && usingNative && !isPlaying) { play(); return; }
+    await load(ALL_QUEUE_PHRASES, 0, speechRate, phrasePause);
+    if (usingNative !== false) play();
+  }, [isPlaying, isReady, usingNative, load, play, stop, speechRate, phrasePause]);
 
-  const speakLang = (text: string, lang: 'nl' | 'en'): Promise<void> =>
-    new Promise(resolve => {
-      speakInLanguage(text, lang, speechRate, {
-        onDone: resolve,
-        onError: resolve,
-        onStopped: resolve,
-      });
-    });
+  const handlePlayCategory = useCallback(async (catIdx: number) => {
+    await load(ALL_QUEUE_PHRASES, CAT_START_INDICES[catIdx], speechRate, phrasePause);
+    if (state.usingNative !== false) play();
+  }, [load, play, speechRate, phrasePause, state.usingNative]);
 
-  const startFrom = async (startIdx: number) => {
-    const gen = startNewPlayback();
-    stopRef.current = false;
-    jumpRef.current = null;
-    setIsPlaying(true);
-
-    const superseded = () => stopRef.current || getPlaybackGeneration() !== gen;
-
-    let i = startIdx;
-    while (i < TOTAL) {
-      if (superseded()) break;
-
-      if (jumpRef.current !== null) {
-        i = jumpRef.current;
-        jumpRef.current = null;
-        continue;
-      }
-
-      setCurrentIdx(i);
-      await speakLang(ALL_PHRASES[i].dutch, 'nl');
-      if (superseded()) break;
-
-      if (jumpRef.current !== null) { i = jumpRef.current; jumpRef.current = null; continue; }
-
-      await new Promise(r => setTimeout(r, 300));
-      await speakLang(ALL_PHRASES[i].english, 'en');
-      if (superseded()) break;
-
-      if (jumpRef.current !== null) { i = jumpRef.current; jumpRef.current = null; continue; }
-
-      await new Promise(r => setTimeout(r, 600));
-      i++;
-    }
-
-    if (getPlaybackGeneration() === gen) {
-      setIsPlaying(false);
-      setCurrentIdx(null);
-    }
-  };
-
-  const handleStop = () => {
-    stopRef.current = true;
-    stopTTS();
-    setIsPlaying(false);
-    setCurrentIdx(null);
-  };
-
-  const jumpTo = (idx: number) => {
-    if (isPlaying) {
-      jumpRef.current = Math.max(0, Math.min(TOTAL - 1, idx));
-      stopTTS();
-    } else {
-      startFrom(Math.max(0, Math.min(TOTAL - 1, idx)));
-    }
-  };
-
-  // Phrase-level skips
-  const handlePrevPhrase = () => {
-    if (currentIdx === null) return;
-    jumpTo(currentIdx - 1);
-  };
-  const handleNextPhrase = () => {
-    if (currentIdx === null) return;
-    jumpTo(currentIdx + 1);
-  };
-
-  // Category-level skips
-  const handlePrevCategory = () => {
-    if (currentIdx === null) return;
+  const handlePrevCategory = useCallback(async () => {
     const catStart = CAT_START_INDICES[currentCatIdx];
-    if (currentIdx > catStart) {
-      jumpTo(catStart);
+    if (currentIndex > catStart) {
+      await jumpTo(catStart, speechRate, phrasePause);
     } else if (currentCatIdx > 0) {
-      jumpTo(CAT_START_INDICES[currentCatIdx - 1]);
+      await jumpTo(CAT_START_INDICES[currentCatIdx - 1], speechRate, phrasePause);
     }
-  };
-  const handleNextCategory = () => {
-    if (currentCatIdx === -1) return;
-    if (currentCatIdx < PHRASE_CATEGORIES.length - 1) {
-      jumpTo(CAT_START_INDICES[currentCatIdx + 1]);
+  }, [currentIndex, currentCatIdx, jumpTo, speechRate, phrasePause]);
+
+  const handleNextCategory = useCallback(async () => {
+    if (currentCatIdx >= 0 && currentCatIdx < PHRASE_CATEGORIES.length - 1) {
+      await jumpTo(CAT_START_INDICES[currentCatIdx + 1], speechRate, phrasePause);
     }
-  };
+  }, [currentCatIdx, jumpTo, speechRate, phrasePause]);
 
-  // Select a category to play
-  const handlePlayCategory = (catIdx: number) => {
-    jumpTo(CAT_START_INDICES[catIdx]);
-  };
-
-  const progress = currentIdx !== null ? (currentIdx + 1) / TOTAL : 0;
+  const progress = TOTAL > 0 ? (currentIndex + 1) / TOTAL : 0;
+  const showBar = !!currentPhrase || isPlaying || isSynthesizing;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Stack.Screen options={{ title: 'Learn Phrases' }} />
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, isPlaying && { paddingBottom: 140 }]}
+        contentContainerStyle={[styles.scroll, showBar && { paddingBottom: 140 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -229,12 +154,17 @@ export default function LearnPhrasesScreen() {
           </View>
           <TouchableOpacity
             style={[styles.playAllBtn, { backgroundColor: theme.primary }]}
-            onPress={() => isPlaying ? handleStop() : startFrom(0)}
+            onPress={handlePlayAll}
             activeOpacity={0.8}
+            disabled={isSynthesizing}
           >
-            {isPlaying
-              ? <><Square size={14} color="#fff" /><Text style={styles.playAllText}>Stop</Text></>
-              : <><Play size={14} color="#fff" /><Text style={styles.playAllText}>Play All</Text></>
+            {isSynthesizing
+              ? <ActivityIndicator color="#fff" size="small" />
+              : isPlaying
+                ? usingNative
+                  ? <><Pause size={14} color="#fff" /><Text style={styles.playAllText}>Pause</Text></>
+                  : <><Square size={14} color="#fff" /><Text style={styles.playAllText}>Stop</Text></>
+                : <><Play size={14} color="#fff" /><Text style={styles.playAllText}>Play All</Text></>
             }
           </TouchableOpacity>
         </View>
@@ -244,37 +174,41 @@ export default function LearnPhrasesScreen() {
           <CategoryCard
             key={cat.id}
             category={cat}
-            catIdx={catIdx}
-            isActive={currentPhrase?.catId === cat.id}
+            isActive={currentPhrase?.category === cat.title}
+            color={categoryColors[cat.id] ?? theme.primary}
             onPress={() => router.push(`/phrase-category/${cat.id}` as any)}
             onPlay={() => handlePlayCategory(catIdx)}
           />
         ))}
       </ScrollView>
 
-      {/* Audio controls bar */}
-      {currentPhrase && (
+      {/* ── Persistent audio bar ──────────────────────────────────────────── */}
+      {showBar && (
         <View style={[styles.playerBar, { backgroundColor: theme.cardBackground, borderTopColor: theme.border }]}>
-          {/* Progress bar */}
           <View style={[styles.progressTrack, { backgroundColor: theme.surfaceSecondary }]}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: color }]} />
           </View>
 
           <View style={styles.playerContent}>
-            {/* Info */}
             <View style={styles.playerInfo}>
-              <Text style={[styles.playerCategory, { color }]} numberOfLines={1}>
-                {currentPhrase.catTitle}
-              </Text>
-              <Text style={[styles.playerPhrase, { color: theme.text }]} numberOfLines={2}>
-                {currentPhrase.dutch}
-              </Text>
-              <Text style={[styles.playerEnglish, { color: theme.textSecondary }]} numberOfLines={1}>
-                {currentPhrase.english}
-              </Text>
+              {isSynthesizing && !currentPhrase ? (
+                <Text style={[styles.playerCategory, { color }]}>Preparing audio…</Text>
+              ) : (
+                <>
+                  <Text style={[styles.playerCategory, { color }]} numberOfLines={1}>
+                    {currentPhrase?.category}
+                  </Text>
+                  <Text style={[styles.playerPhrase, { color: theme.text }]} numberOfLines={2}>
+                    {currentPhrase?.dutch}
+                  </Text>
+                  <Text style={[styles.playerEnglish, { color: theme.textSecondary }]} numberOfLines={1}>
+                    {currentPhrase?.english}
+                  </Text>
+                </>
+              )}
             </View>
 
-            {/* Controls: ⏮ cat | ◀ phrase | ■ stop | ▶ phrase | ⏭ cat */}
+            {/* Controls: ⏮ cat | ◀ phrase | ▶/⏸ | ▶ phrase | ⏭ cat */}
             <View style={styles.playerControls}>
               <TouchableOpacity
                 onPress={handlePrevCategory}
@@ -285,25 +219,31 @@ export default function LearnPhrasesScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={handlePrevPhrase}
+                onPress={() => prev()}
                 hitSlop={10}
-                style={{ opacity: currentIdx === 0 ? 0.3 : 1 }}
+                style={{ opacity: currentIndex <= 0 ? 0.3 : 1 }}
               >
                 <ChevronLeft size={20} color={theme.text} />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.stopBtn, { backgroundColor: color }]}
-                onPress={handleStop}
+                style={[styles.centerBtn, { backgroundColor: color }]}
+                onPress={isPlaying ? pause : play}
+                disabled={isSynthesizing}
                 activeOpacity={0.8}
               >
-                <Square size={14} color="#fff" />
+                {isSynthesizing
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : isPlaying
+                    ? <Pause size={16} color="#fff" />
+                    : <Play size={16} color="#fff" />
+                }
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={handleNextPhrase}
+                onPress={() => next()}
                 hitSlop={10}
-                style={{ opacity: currentIdx === TOTAL - 1 ? 0.3 : 1 }}
+                style={{ opacity: currentIndex >= TOTAL - 1 ? 0.3 : 1 }}
               >
                 <ChevronRight size={20} color={theme.text} />
               </TouchableOpacity>
@@ -319,7 +259,7 @@ export default function LearnPhrasesScreen() {
           </View>
 
           <Text style={[styles.positionText, { color: theme.textSecondary }]}>
-            {(currentIdx ?? 0) + 1} / {TOTAL} · {currentPhrase.catTitle}
+            {currentIndex + 1} / {TOTAL} · {currentPhrase?.category ?? ''}
           </Text>
         </View>
       )}
@@ -332,12 +272,8 @@ const styles = StyleSheet.create({
   scroll: { padding: Spacing.lg },
 
   headerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    gap: Spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg, gap: Spacing.md,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
       android: { elevation: 2 },
@@ -346,22 +282,15 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: FontSize.title3, fontWeight: FontWeight.bold, marginBottom: 2 },
   headerSub: { fontSize: FontSize.footnote, lineHeight: 18 },
   playAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: BorderRadius.full,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm + 2, borderRadius: BorderRadius.full,
+    minWidth: 90, justifyContent: 'center',
   },
   playAllText: { color: '#fff', fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
 
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.sm,
-    gap: Spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.sm, gap: Spacing.md,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
       android: { elevation: 1 },
@@ -371,23 +300,12 @@ const styles = StyleSheet.create({
   cardText: { flex: 1 },
   cardTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, marginBottom: 2 },
   cardSub: { fontSize: FontSize.footnote },
-  cardPlayBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cardPlayBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   activeDot: { width: 8, height: 8, borderRadius: 4 },
 
-  // Player bar
   playerBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    paddingBottom: Platform.OS === 'ios' ? 24 : Spacing.md,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    borderTopWidth: 1, paddingBottom: Platform.OS === 'ios' ? 24 : Spacing.md,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.08, shadowRadius: 8 },
       android: { elevation: 8 },
@@ -396,28 +314,17 @@ const styles = StyleSheet.create({
   progressTrack: { height: 3 },
   progressFill: { height: 3 },
   playerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, gap: Spacing.md,
   },
   playerInfo: { flex: 1 },
   playerCategory: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, marginBottom: 2 },
   playerPhrase: { fontSize: FontSize.subhead, fontWeight: FontWeight.semibold, lineHeight: 20 },
   playerEnglish: { fontSize: FontSize.caption, fontStyle: 'italic', marginTop: 2 },
   playerControls: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  stopBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  centerBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    alignItems: 'center', justifyContent: 'center',
   },
-  positionText: {
-    textAlign: 'center',
-    fontSize: FontSize.caption,
-    paddingTop: Spacing.xs,
-    paddingBottom: 2,
-  },
+  positionText: { textAlign: 'center', fontSize: FontSize.caption, paddingTop: Spacing.xs, paddingBottom: 2 },
 });

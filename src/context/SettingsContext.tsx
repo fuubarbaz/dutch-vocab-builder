@@ -6,6 +6,8 @@ interface SettingsContextType {
     setSpeechRate: (rate: number) => Promise<void>;
     showFlashcards: boolean;
     setShowFlashcards: (show: boolean) => Promise<void>;
+    phrasePause: number;
+    setPhrasePause: (seconds: number) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -13,6 +15,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [speechRate, setSpeechRateState] = useState<number>(0.9);
     const [showFlashcards, setShowFlashcardsState] = useState<boolean>(true);
+    const [phrasePause, setPhrasePauseState] = useState<number>(1);
 
     useEffect(() => {
         loadSettings();
@@ -29,8 +32,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (storedShowFlashcards !== null) {
                 setShowFlashcardsState(JSON.parse(storedShowFlashcards));
             }
-            if (storedShowFlashcards !== null) {
-                setShowFlashcardsState(JSON.parse(storedShowFlashcards));
+
+            const storedPhrasePause = await AsyncStorage.getItem('settings_phrase_pause');
+            if (storedPhrasePause !== null) {
+                setPhrasePauseState(parseFloat(storedPhrasePause));
             }
         } catch (e) {
             console.error('Failed to load settings', e);
@@ -55,12 +60,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     };
 
-
+    const setPhrasePause = async (seconds: number) => {
+        try {
+            setPhrasePauseState(seconds);
+            await AsyncStorage.setItem('settings_phrase_pause', seconds.toString());
+        } catch (e) {
+            console.error('Failed to save phrase pause setting', e);
+        }
+    };
 
     return (
         <SettingsContext.Provider value={{
             speechRate, setSpeechRate,
-            showFlashcards, setShowFlashcards
+            showFlashcards, setShowFlashcards,
+            phrasePause, setPhrasePause,
         }}>
             {children}
         </SettingsContext.Provider>

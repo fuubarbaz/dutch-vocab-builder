@@ -255,21 +255,6 @@ export default function CategoriesScreen() {
 
   const ListHeader = () => (
     <>
-      {/* Continue where you left off */}
-      {lastCategory && (
-        <TouchableOpacity
-          style={[styles.continueRow, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
-          onPress={() => router.push(`/category/${lastCategory.id}`)}
-          activeOpacity={0.7}
-        >
-          <Clock size={14} color={theme.textSecondary} />
-          <Text style={[styles.continueText, { color: theme.textSecondary }]} numberOfLines={1}>
-            Continue: <Text style={{ color: theme.text, fontWeight: FontWeight.semibold }}>{lastCategory.title}</Text>
-          </Text>
-          <ChevronRight size={14} color={theme.textSecondary} />
-        </TouchableOpacity>
-      )}
-
       {/* ── TODAY ─────────────────────────────────────── */}
       <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TODAY</Text>
 
@@ -314,6 +299,21 @@ export default function CategoriesScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Continue where you left off */}
+      {lastCategory && (
+        <TouchableOpacity
+          style={[styles.continueRow, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
+          onPress={() => router.push(`/category/${lastCategory.id}`)}
+          activeOpacity={0.7}
+        >
+          <Clock size={14} color={theme.textSecondary} />
+          <Text style={[styles.continueText, { color: theme.textSecondary }]} numberOfLines={1}>
+            Continue: <Text style={{ color: theme.text, fontWeight: FontWeight.semibold }}>{lastCategory.title}</Text>
+          </Text>
+          <ChevronRight size={14} color={theme.textSecondary} />
+        </TouchableOpacity>
+      )}
 
       {/* ── LEARN ─────────────────────────────────────── */}
       <View style={styles.learnHeader}>
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   todayCard: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
       android: { elevation: 2 },

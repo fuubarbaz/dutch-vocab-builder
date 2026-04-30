@@ -10,7 +10,7 @@ import AIModule from 'dutch-vocab-ai';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-type AIAvailability = 'available' | 'not_enabled' | 'model_not_ready' | 'requires_ios26' | 'unavailable' | 'checking';
+type AIAvailability = 'available' | 'not_enabled' | 'model_not_ready' | 'requires_ios26' | 'device_not_eligible' | 'checking';
 
 type SetupStep = { label: string; detail?: string };
 
@@ -71,7 +71,7 @@ const SETUP_GUIDES: Partial<Record<AIAvailability, SetupGuideConfig>> = {
       { label: 'Come back here and tap Check Again' },
     ],
   },
-  unavailable: {
+  device_not_eligible: {
     icon: AlertCircle,
     accentColor: '#6B7280',
     bg: '#F9FAFB',
@@ -137,7 +137,7 @@ export default function SmallTalkScreen() {
     setAiStatus('checking');
     AIModule.getAIAvailabilityAsync()
       .then(setAiStatus)
-      .catch(() => setAiStatus('unavailable'));
+      .catch(() => setAiStatus('device_not_eligible'));
   };
 
   useEffect(() => {
@@ -156,21 +156,6 @@ export default function SmallTalkScreen() {
     setIsGenerating(true);
     try {
       const raw = await AIModule.generateSmallTalkAsync(t, turnCount);
-      console.log('[SmallTalk] raw response:', raw);
-
-      if (raw.startsWith('ERROR:')) {
-        const code = raw.replace('ERROR:', '');
-        const messages: Record<string, string> = {
-          REQUIRES_IOS26: 'iOS 26 or later is required.',
-          DEVICE_NOT_SUPPORTED: 'Your device does not support Apple Intelligence.',
-          AI_NOT_ENABLED: 'Apple Intelligence is not enabled. Go to Settings → Apple Intelligence & Siri to enable it.',
-          MODEL_NOT_READY: 'Apple Intelligence model is still downloading. Please wait a few minutes and try again.',
-        };
-        const msg = messages[code] ?? `Apple Intelligence error: ${code}`;
-        Alert.alert('Apple Intelligence Unavailable', msg);
-        return;
-      }
-
       const parsed = parseTurns(raw);
       if (parsed.length === 0) {
         Alert.alert('Generation failed', 'Could not parse the conversation. Please try again.');
@@ -178,8 +163,13 @@ export default function SmallTalkScreen() {
         setTurns(parsed);
       }
     } catch (e) {
-      console.error('Small talk error:', e);
-      Alert.alert('Error', 'Apple Intelligence is required to generate conversations (iOS 26+ with Apple Intelligence enabled).');
+      const msg = e instanceof Error ? e.message : String(e);
+      let detail = 'Apple Intelligence is required (iOS 26+ with Apple Intelligence enabled).';
+      if (msg.includes('not_enabled')) detail = 'Enable Apple Intelligence in Settings → Apple Intelligence & Siri.';
+      else if (msg.includes('model_not_ready')) detail = 'Apple Intelligence model is still downloading. Please wait and try again.';
+      else if (msg.includes('requires_ios26')) detail = 'iOS 26 or later is required for this feature.';
+      else if (msg.includes('device_not_eligible')) detail = 'Your device does not support Apple Intelligence.';
+      Alert.alert('Apple Intelligence Unavailable', detail);
     } finally {
       setIsGenerating(false);
     }

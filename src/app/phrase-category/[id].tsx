@@ -1,77 +1,59 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Platform,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Volume2, Play, Square } from 'lucide-react-native';
+import { Volume2, Play, Pause, Square } from 'lucide-react-native';
 import { PHRASE_CATEGORIES, Phrase } from '@/data/phrases';
-import { speak, speakInLanguage, stopTTS, startNewPlayback, getPlaybackGeneration } from '@/utils/tts';
+import { speak, stopTTS } from '@/utils/tts';
 import { useSettings } from '@/context/SettingsContext';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useAudioQueue, QueuePhrase } from '@/hooks/useAudioQueue';
 
 export default function PhraseCategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { speechRate } = useSettings();
-
-  const category = PHRASE_CATEGORIES.find(c => c.id === id);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const stopRef = useRef(false);
   const listRef = useRef<FlatList>(null);
 
+  const category = PHRASE_CATEGORIES.find(c => c.id === id);
+
+  const categoryPhrases: QueuePhrase[] = useMemo(() => {
+    if (!category) return [];
+    return category.phrases.map(p => ({
+      id: `${category.id}_${p.id}`,
+      dutch: p.dutch,
+      english: p.english,
+      category: category.title,
+    }));
+  }, [category]);
+
+  const { state, load, play, pause, stop } = useAudioQueue();
+  const { isPlaying, currentPhrase, usingNative } = state;
+
+  const activeIdx = useMemo(() => {
+    if (!currentPhrase) return null;
+    return categoryPhrases.findIndex(p => p.id === currentPhrase.id);
+  }, [currentPhrase, categoryPhrases]);
+
+  // Scroll to active phrase
   useEffect(() => {
-    return () => {
-      stopRef.current = true;
-      stopTTS();
-    };
-  }, []);
+    if (activeIdx != null && activeIdx >= 0) {
+      listRef.current?.scrollToIndex({ index: activeIdx, animated: true, viewPosition: 0.5 });
+    }
+  }, [activeIdx]);
 
   if (!category) return null;
 
-  const speakLang = (text: string, lang: 'nl' | 'en'): Promise<void> =>
-    new Promise(resolve => {
-      speakInLanguage(text, lang, speechRate, {
-        onDone: resolve,
-        onError: resolve,
-        onStopped: resolve,
-      });
-    });
-
   const playAll = async () => {
     if (isPlaying) {
-      stopRef.current = true;
-      stopTTS();
-      setIsPlaying(false);
-      setActiveIdx(null);
+      stop();
       return;
     }
-
-    const gen = startNewPlayback();
-    stopRef.current = false;
-    setIsPlaying(true);
-
-    const superseded = () => stopRef.current || getPlaybackGeneration() !== gen;
-
-    for (let i = 0; i < category.phrases.length; i++) {
-      if (superseded()) break;
-      setActiveIdx(i);
-      listRef.current?.scrollToIndex({ index: i, animated: true, viewPosition: 0.5 });
-      await speakLang(category.phrases[i].dutch, 'nl');
-      if (superseded()) break;
-      await new Promise(r => setTimeout(r, 300));
-      if (superseded()) break;
-      await speakLang(category.phrases[i].english, 'en');
-      if (superseded()) break;
-      await new Promise(r => setTimeout(r, 600));
-    }
-
-    if (getPlaybackGeneration() === gen) {
-      setIsPlaying(false);
-      setActiveIdx(null);
-    }
+    await load(categoryPhrases, 0, speechRate);
+    if (usingNative !== false) play();
   };
 
   const renderItem = ({ item, index }: { item: Phrase; index: number }) => {
@@ -117,7 +99,9 @@ export default function PhraseCategoryScreen() {
               activeOpacity={0.7}
             >
               {isPlaying
-                ? <><Square size={12} color="#fff" /><Text style={styles.playBtnText}>Stop</Text></>
+                ? usingNative
+                  ? <><Pause size={12} color="#fff" /><Text style={styles.playBtnText}>Pause</Text></>
+                  : <><Square size={12} color="#fff" /><Text style={styles.playBtnText}>Stop</Text></>
                 : <><Play size={12} color="#fff" /><Text style={styles.playBtnText}>Play All</Text></>
               }
             </TouchableOpacity>

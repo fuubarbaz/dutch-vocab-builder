@@ -14,11 +14,13 @@ Pod::Spec.new do |s|
 
   s.dependency 'ExpoModulesCore'
 
-  # Swift/Objective-C compatibility
-  # Translation and other system frameworks are auto-linked via Swift `import`
+  # Weak-link FoundationModels since it's iOS 26+ only
+  s.weak_frameworks = 'FoundationModels', 'Translation'
+
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'OTHER_SWIFT_FLAGS' => '$(inherited)',
+    'OTHER_LDFLAGS' => '$(inherited) -weak_framework FoundationModels',
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"

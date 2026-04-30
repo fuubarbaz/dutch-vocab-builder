@@ -5,6 +5,11 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import TrackPlayer from 'react-native-track-player';
+
+// Register the background playback service once at app startup.
+// Must be called before any TrackPlayer API calls.
+TrackPlayer.registerPlaybackService(() => require('../services/PlaybackService'));
 
 import { useColorScheme } from '@/components/useColorScheme';
 

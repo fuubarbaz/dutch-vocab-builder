@@ -28,6 +28,7 @@ export default function SettingsScreen() {
   const {
     speechRate, setSpeechRate,
     showFlashcards, setShowFlashcards,
+    phrasePause, setPhrasePause,
   } = useSettings();
 
   const [reminderEnabled, setReminderEnabled] = React.useState(false);
@@ -76,6 +77,14 @@ export default function SettingsScreen() {
     { value: 0.9, label: '0.9x', description: 'Normal' },
     { value: 1.0, label: '1.0x', description: 'Natural' },
     { value: 1.25, label: '1.25x', description: 'Fast' },
+  ];
+
+  const pauses = [
+    { value: 0.5, label: '0.5s', description: 'Quick' },
+    { value: 1, label: '1s', description: 'Normal' },
+    { value: 2, label: '2s', description: 'Relaxed' },
+    { value: 3, label: '3s', description: 'Slow' },
+    { value: 5, label: '5s', description: 'Extra' },
   ];
 
   const testAudio = () => {
@@ -131,6 +140,43 @@ export default function SettingsScreen() {
           <Volume2 size={18} color={theme.primary} />
           <Text style={[styles.testButtonText, { color: theme.primary }]}>Test Audio</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Phrase Pause */}
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>PAUSE BETWEEN PHRASES</Text>
+      <View style={[styles.groupCard, { backgroundColor: theme.cardBackground }]}>
+        <View style={styles.speedGrid}>
+          {pauses.map((p) => {
+            const isActive = phrasePause === p.value;
+            return (
+              <TouchableOpacity
+                key={p.value}
+                style={[
+                  styles.speedOption,
+                  { borderColor: theme.border },
+                  isActive && { borderColor: theme.primary, backgroundColor: theme.primary + '08' },
+                ]}
+                onPress={() => setPhrasePause(p.value)}
+              >
+                {isActive && (
+                  <View style={[styles.speedCheck, { backgroundColor: theme.primary }]}>
+                    <Check size={10} color="#FFFFFF" strokeWidth={3} />
+                  </View>
+                )}
+                <Text style={[
+                  styles.speedValue,
+                  { color: theme.text },
+                  isActive && { color: theme.primary },
+                ]}>
+                  {p.label}
+                </Text>
+                <Text style={[styles.speedDesc, { color: theme.textSecondary }]}>
+                  {p.description}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {/* View Mode */}
