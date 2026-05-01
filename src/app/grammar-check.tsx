@@ -16,7 +16,12 @@ function parseGrammarResult(raw: string): GrammarResult | null {
     const match = trimmed.match(/^(CORRECT|INCORRECT)[.:!\s]*/im);
     if (!match) return null;
     const isCorrect = match[1].toUpperCase() === 'CORRECT';
-    const explanation = trimmed.replace(/^(CORRECT|INCORRECT)[.:!\s]*/i, '').trim();
+    // Strip any JSON blocks the AI may have appended (e.g. evaluation JSON)
+    const explanation = trimmed
+        .replace(/^(CORRECT|INCORRECT)[.:!\s]*/i, '')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/\{[\s\S]*\}/g, '')
+        .trim();
     return { isCorrect, explanation };
 }
 
@@ -123,7 +128,7 @@ export default function GrammarCheckScreen() {
         setIsEvaluating(true);
         setResult(null);
         try {
-            const prompt = `[grammar-check] Check this Dutch sentence: "${userInput}"`;
+            const prompt = `[grammar-check] Check this Dutch sentence. Reply with CORRECT or INCORRECT on the first line, then a plain-text explanation. Do NOT return JSON.\n\nSentence: "${userInput}"`;
             const raw = await AIModule.generateTextAsync(prompt);
             const parsed = parseGrammarResult(raw);
             if (!parsed) {

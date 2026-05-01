@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import {
   MessageCircle, HelpCircle, Palmtree, Briefcase, Bus, Hand, Heart,
   Utensils, Info, ChevronRight, ChevronLeft, Play, Pause, Square,
-  SkipBack, SkipForward,
+  SkipBack, SkipForward, Timer,
 } from 'lucide-react-native';
 import { PHRASE_CATEGORIES, PhraseCategory } from '@/data/phrases';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
@@ -15,6 +15,14 @@ import { useSettings } from '@/context/SettingsContext';
 const iconMap: Record<string, React.ComponentType<any>> = {
   MessageCircle, HelpCircle, Palmtree, Briefcase, Bus, Hand, Heart, Utensils, Info,
 };
+
+const PAUSE_OPTIONS = [
+  { value: 0.5, label: '0.5s' },
+  { value: 1, label: '1s' },
+  { value: 2, label: '2s' },
+  { value: 3, label: '3s' },
+  { value: 5, label: '5s' },
+];
 
 const categoryColors: Record<string, string> = {
   generic: '#6366f1',
@@ -92,9 +100,9 @@ export default function LearnPhrasesScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { speechRate, phrasePause } = useSettings();
+  const { speechRate, phrasePause, setPhrasePause } = useSettings();
 
-  const { state, load, play, pause, stop, next, prev, jumpTo } = useAudioQueue();
+  const { state, load, play, pause, stop, next, prev, jumpTo } = useAudioQueue(phrasePause);
   const { isPlaying, isSynthesizing, isReady, currentIndex, currentPhrase, usingNative } = state;
 
   const color = currentPhrase
@@ -109,14 +117,14 @@ export default function LearnPhrasesScreen() {
   const handlePlayAll = useCallback(async () => {
     if (isPlaying) { stop(); return; }
     if (isReady && usingNative && !isPlaying) { play(); return; }
-    await load(ALL_QUEUE_PHRASES, 0, speechRate, phrasePause);
-    if (usingNative !== false) play();
+    const isNative = await load(ALL_QUEUE_PHRASES, 0, speechRate, phrasePause);
+    if (isNative) play();
   }, [isPlaying, isReady, usingNative, load, play, stop, speechRate, phrasePause]);
 
   const handlePlayCategory = useCallback(async (catIdx: number) => {
-    await load(ALL_QUEUE_PHRASES, CAT_START_INDICES[catIdx], speechRate, phrasePause);
-    if (state.usingNative !== false) play();
-  }, [load, play, speechRate, phrasePause, state.usingNative]);
+    const isNative = await load(ALL_QUEUE_PHRASES, CAT_START_INDICES[catIdx], speechRate, phrasePause);
+    if (isNative) play();
+  }, [load, play, speechRate, phrasePause]);
 
   const handlePrevCategory = useCallback(async () => {
     const catStart = CAT_START_INDICES[currentCatIdx];
@@ -167,6 +175,34 @@ export default function LearnPhrasesScreen() {
                 : <><Play size={14} color="#fff" /><Text style={styles.playAllText}>Play All</Text></>
             }
           </TouchableOpacity>
+        </View>
+
+        {/* Delay pause picker */}
+        <View style={[styles.pauseRow, { backgroundColor: theme.cardBackground }]}>
+          <Timer size={14} color={theme.textSecondary} />
+          <Text style={[styles.pauseLabel, { color: theme.textSecondary }]}>Delay</Text>
+          {PAUSE_OPTIONS.map(opt => {
+            const active = phrasePause === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.pauseChip,
+                  { borderColor: theme.border },
+                  active && { borderColor: theme.primary, backgroundColor: theme.primary + '12' },
+                ]}
+                onPress={() => setPhrasePause(opt.value)}
+              >
+                <Text style={[
+                  styles.pauseChipText,
+                  { color: theme.textSecondary },
+                  active && { color: theme.primary, fontWeight: FontWeight.bold as any },
+                ]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Category list */}
@@ -287,6 +323,22 @@ const styles = StyleSheet.create({
     minWidth: 90, justifyContent: 'center',
   },
   playAllText: { color: '#fff', fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
+
+  pauseRow: {
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    marginBottom: Spacing.lg, gap: Spacing.xs,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  pauseLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, marginRight: Spacing.xs },
+  pauseChip: {
+    paddingHorizontal: Spacing.sm + 2, paddingVertical: 4,
+    borderRadius: BorderRadius.full, borderWidth: 1.5,
+  },
+  pauseChipText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
 
   card: {
     flexDirection: 'row', alignItems: 'center',

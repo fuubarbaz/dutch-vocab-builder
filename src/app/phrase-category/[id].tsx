@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Platform,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Volume2, Play, Pause, Square } from 'lucide-react-native';
+import { Volume2, Play, Pause, Square, Timer } from 'lucide-react-native';
 import { PHRASE_CATEGORIES, Phrase } from '@/data/phrases';
 import { speak, stopTTS } from '@/utils/tts';
 import { useSettings } from '@/context/SettingsContext';
@@ -11,11 +11,19 @@ import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAudioQueue, QueuePhrase } from '@/hooks/useAudioQueue';
 
+const PAUSE_OPTIONS = [
+  { value: 0.5, label: '0.5s' },
+  { value: 1, label: '1s' },
+  { value: 2, label: '2s' },
+  { value: 3, label: '3s' },
+  { value: 5, label: '5s' },
+];
+
 export default function PhraseCategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { speechRate } = useSettings();
+  const { speechRate, phrasePause, setPhrasePause } = useSettings();
   const listRef = useRef<FlatList>(null);
 
   const category = PHRASE_CATEGORIES.find(c => c.id === id);
@@ -30,7 +38,7 @@ export default function PhraseCategoryScreen() {
     }));
   }, [category]);
 
-  const { state, load, play, pause, stop } = useAudioQueue();
+  const { state, load, play, pause, stop } = useAudioQueue(phrasePause);
   const { isPlaying, currentPhrase, usingNative } = state;
 
   const activeIdx = useMemo(() => {
@@ -52,8 +60,8 @@ export default function PhraseCategoryScreen() {
       stop();
       return;
     }
-    await load(categoryPhrases, 0, speechRate);
-    if (usingNative !== false) play();
+    const isNative = await load(categoryPhrases, 0, speechRate, phrasePause);
+    if (isNative) play();
   };
 
   const renderItem = ({ item, index }: { item: Phrase; index: number }) => {
@@ -89,23 +97,51 @@ export default function PhraseCategoryScreen() {
         showsVerticalScrollIndicator={false}
         onScrollToIndexFailed={() => {}}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              {category.titleDutch} · {category.phrases.length} phrases
-            </Text>
-            <TouchableOpacity
-              style={[styles.playBtn, { backgroundColor: theme.primary }]}
-              onPress={playAll}
-              activeOpacity={0.7}
-            >
-              {isPlaying
-                ? usingNative
-                  ? <><Pause size={12} color="#fff" /><Text style={styles.playBtnText}>Pause</Text></>
-                  : <><Square size={12} color="#fff" /><Text style={styles.playBtnText}>Stop</Text></>
-                : <><Play size={12} color="#fff" /><Text style={styles.playBtnText}>Play All</Text></>
-              }
-            </TouchableOpacity>
-          </View>
+          <>
+            <View style={styles.header}>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+                {category.titleDutch} · {category.phrases.length} phrases
+              </Text>
+              <TouchableOpacity
+                style={[styles.playBtn, { backgroundColor: theme.primary }]}
+                onPress={playAll}
+                activeOpacity={0.7}
+              >
+                {isPlaying
+                  ? usingNative
+                    ? <><Pause size={12} color="#fff" /><Text style={styles.playBtnText}>Pause</Text></>
+                    : <><Square size={12} color="#fff" /><Text style={styles.playBtnText}>Stop</Text></>
+                  : <><Play size={12} color="#fff" /><Text style={styles.playBtnText}>Play All</Text></>
+                }
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.pauseRow, { backgroundColor: theme.cardBackground }]}>
+              <Timer size={14} color={theme.textSecondary} />
+              <Text style={[styles.pauseLabel, { color: theme.textSecondary }]}>Delay</Text>
+              {PAUSE_OPTIONS.map(opt => {
+                const active = phrasePause === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      styles.pauseChip,
+                      { borderColor: theme.border },
+                      active && { borderColor: theme.primary, backgroundColor: theme.primary + '12' },
+                    ]}
+                    onPress={() => setPhrasePause(opt.value)}
+                  >
+                    <Text style={[
+                      styles.pauseChipText,
+                      { color: theme.textSecondary },
+                      active && { color: theme.primary, fontWeight: FontWeight.bold as any },
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
         }
       />
     </View>
@@ -132,6 +168,21 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   playBtnText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold, color: '#fff' },
+  pauseRow: {
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md, gap: Spacing.xs,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  pauseLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, marginRight: Spacing.xs },
+  pauseChip: {
+    paddingHorizontal: Spacing.sm + 2, paddingVertical: 4,
+    borderRadius: BorderRadius.full, borderWidth: 1.5,
+  },
+  pauseChipText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
   phraseCard: {
     borderRadius: BorderRadius.md,
     padding: Spacing.md,

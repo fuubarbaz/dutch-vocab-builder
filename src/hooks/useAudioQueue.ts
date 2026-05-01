@@ -117,15 +117,22 @@ const phraseToTrack = (phraseIndex: number) => phraseIndex * 2;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useAudioQueue() {
+export function useAudioQueue(livePhrasePause?: number) {
   const [state, setState] = useState<AudioQueueState>(INITIAL_STATE);
 
   const phrasesRef    = useRef<QueuePhrase[]>([]);
   const stopRef       = useRef(false);
   const jumpRef       = useRef<number | null>(null);
   const startIndexRef = useRef<number>(0);
-  const phrasePauseRef = useRef<number>(1);
+  const phrasePauseRef = useRef<number>(livePhrasePause ?? 1);
   const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep phrasePauseRef in sync when the setting changes mid-playback
+  useEffect(() => {
+    if (livePhrasePause != null) {
+      phrasePauseRef.current = livePhrasePause;
+    }
+  }, [livePhrasePause]);
 
   // ── Expo-speech fallback ──────────────────────────────────────────────────
 
@@ -140,7 +147,6 @@ export function useAudioQueue() {
     jumpRef.current = null;
 
     const superseded = () => stopRef.current || getPlaybackGeneration() !== gen;
-    const pauseMs = pauseSec * 1000;
 
     let i = startIdx;
     while (i < phrases.length) {
@@ -155,7 +161,8 @@ export function useAudioQueue() {
       await new Promise(r => setTimeout(r, 300));
       await speakLang(phrase.english, 'en', rate);
       if (superseded()) break;
-      await new Promise(r => setTimeout(r, pauseMs));
+      // Read live value from ref so mid-playback changes take effect
+      await new Promise(r => setTimeout(r, phrasePauseRef.current * 1000));
       i++;
     }
 
@@ -215,12 +222,13 @@ export function useAudioQueue() {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
+  /** Load phrases and return `true` if native track player is ready (caller should follow with `play()`). */
   const load = useCallback(async (
     phrases: QueuePhrase[],
     startIndex = 0,
     speechRate = 0.85,
     phrasePause = 1,
-  ) => {
+  ): Promise<boolean> => {
     phrasesRef.current = phrases;
     startIndexRef.current = startIndex;
     phrasePauseRef.current = phrasePause;
@@ -249,7 +257,7 @@ export function useAudioQueue() {
 
           await tp.add(allTracks);
           setState(prev => ({ ...prev, isReady: true, usingNative: true }));
-          return;
+          return true;
         } catch (e: any) {
           console.warn('Track player load failed, falling back to expo-speech:', e?.message);
           nativeAvailable = false;
@@ -258,9 +266,10 @@ export function useAudioQueue() {
       }
     }
 
-    // expo-speech fallback
+    // expo-speech fallback (starts playing immediately, no need for caller to call play())
     setState(prev => ({ ...prev, isReady: true, usingNative: false }));
     runTtsLoop(startIndex, phrases, speechRate, phrasePause);
+    return false;
   }, []);
 
   const play = useCallback(async () => {
@@ -326,8 +335,8 @@ export function useAudioQueue() {
   const jumpTo = useCallback(async (phraseIndex: number, speechRate = 0.85, phrasePause = 1) => {
     const phrases = phrasesRef.current;
     if (phraseIndex < 0 || phraseIndex >= phrases.length) return;
-    await load(phrases, phraseIndex, speechRate, phrasePause);
-    if (nativeAvailable === true) await play();
+    const isNative = await load(phrases, phraseIndex, speechRate, phrasePause);
+    if (isNative) await play();
   }, [load, play]);
 
   return { state, load, play, pause, stop, next, prev, jumpTo };
