@@ -2,12 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - 2026-04-17
+## [2.1.0] - 2026-05-01
 
 ### Added
+- **Writing Exam (A2)** — new practice section for the Inburgering A2 writing exam, featuring sample prompts and AI-driven feedback on responses.
 - **Learn Phrases** — new section with 778 Dutch phrases across 9 topic categories (General, Questions, Weekend Activities, Work & Life, Traffic & Transportation, Greetings & Introductions, Courtesy & Etiquette, Dining & Shopping, Getting Information).
 - **Audiobook playback** — "Play All" button on both the category list and individual category screens reads each phrase aloud in Dutch followed by the English translation, with auto-scroll to the active phrase.
-- **Audio controls bar** — persistent player bar while playing: progress track, current phrase display, skip-phrase (‹ ›) and skip-category (⏮ ⏭) buttons, and a stop button. All colored to match the active category.
+- **Audio controls bar** — persistent player bar while playing: progress track, current phrase display, skip-phrase (‹ ›) and skip-category (⏮ ⏭) buttons, and a stop button.
+- **Configurable Phrase Delay** — added "Delay" chips (0s, 1s, 2s, 3s) to the phrase player header, allowing users to customize the pause duration between Dutch and English audio during playback.
 - **Category-level playback** — each category card has a dedicated play button to start or jump playback from that category.
 - **Global playback generation** — a module-level generation counter in `tts.ts` ensures any new play request (from any screen) immediately cancels a running playback loop elsewhere.
 
@@ -21,8 +23,12 @@ All notable changes to this project will be documented in this file.
 - **Weekly accuracy stat removed** from the daily summary to reduce noise.
 
 ### Fixed
+- **Grammar check output** — improved the formatting and accuracy of the AI grammar checker.
+- **Writing exam navigation** — fixed missing back button on writing exam screens.
 - Navigating back from Learn Phrases or a phrase category now immediately stops audio playback (unmount cleanup via `useEffect`).
 - Tapping any play button stops the previously playing audio before starting the new one (`speakInLanguage` calls `Speech.stop()` first).
+- Mid-playback control: audio playback settings (like delay) now update in real-time without needing to restart the track.
+
 
 ---
 
