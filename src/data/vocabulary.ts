@@ -616,7 +616,7 @@ export const VOCABULARY_DATA: Category[] = [
             { id: 'foo30', dutch: 'de taart', english: 'cake, tart', exampleDutch: 'Ze bakt een chocoladetaart voor zijn verjaardag.', exampleEnglish: 'She bakes a chocolate cake for his birthday.' },
             { id: 'foo31', dutch: 'de thee', english: 'tea', exampleDutch: 'Ik drink \'s avonds altijd thee.', exampleEnglish: 'I always drink tea in the evening.' },
             { id: 'foo32', dutch: 'het toetje', english: 'dessert', exampleDutch: 'Wat nemen jullie als toetje?', exampleEnglish: 'What are you having for dessert?' },
-            { id: 'foo33', dutch: 'e', english: 'vis fish', exampleDutch: 'We eten vis elke vrijdag.', exampleEnglish: 'We eat fish every Friday.' },
+            { id: 'foo33', dutch: 'vis', english: 'fish', exampleDutch: 'We eten vis elke vrijdag.', exampleEnglish: 'We eat fish every Friday.' },
             { id: 'foo34', dutch: 'het vlees', english: 'meat', exampleDutch: 'Hij eet elke dag vlees.', exampleEnglish: 'He eats meat every day.' },
             { id: 'foo35', dutch: 'het water', english: 'water', exampleDutch: 'Drink voldoende water per dag.', exampleEnglish: 'Drink enough water each day.' },
             { id: 'foo36', dutch: 'het zout', english: 'salt', exampleDutch: 'Doe niet te veel zout in het eten.', exampleEnglish: 'Do not put too much salt in the food.' },
