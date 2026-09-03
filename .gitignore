@@ -86,3 +86,9 @@ fuubarbaz_github
 fuubarbaz_github.pub
 .claude/
 
+
+# Local credentials (EAS / signing) — never commit
+credentials.json
+
+# graphify knowledge-graph output
+graphify-out/
