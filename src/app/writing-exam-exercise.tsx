@@ -519,8 +519,8 @@ export default function WritingExamExerciseScreen() {
       Alert.alert(
         showEnglish ? 'AI Unavailable' : 'AI niet beschikbaar',
         showEnglish
-          ? 'Apple Intelligence is not available. Make sure you are on iOS 26+ with AI enabled.'
-          : 'Apple Intelligence is niet beschikbaar. Zorg dat je iOS 26+ gebruikt met AI ingeschakeld.',
+          ? 'The on-device AI model is not available. Install it from Settings › On-device AI.'
+          : 'Het AI-model is niet beschikbaar. Installeer het via Instellingen › AI op het apparaat.',
       );
     } finally {
       setIsEvaluating(false);

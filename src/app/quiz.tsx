@@ -9,6 +9,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { TRAFFIC_CATEGORIES } from '@/data/traffic_categories';
 import { Word } from '@/types';
+import { useMistakeJournal } from '@/context/MistakeJournalContext';
 
 type Question = {
     targetWord: Word;
@@ -21,6 +22,7 @@ export default function QuizScreen() {
     const router = useRouter();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
+    const { logMistake } = useMistakeJournal();
 
     const targetCount = parseInt(count || '10', 10);
 
@@ -109,8 +111,11 @@ export default function QuizScreen() {
         if (selectedOptionIndex !== null) return; // Prevent multiple clicks
 
         setSelectedOptionIndex(index);
-        if (index === questions[currentQIndex].correctIndex) {
+        const q = questions[currentQIndex];
+        if (index === q.correctIndex) {
             setScore(prev => prev + 1);
+        } else {
+            logMistake(q.targetWord, 'quiz');
         }
     };
 

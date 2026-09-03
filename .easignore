@@ -2,6 +2,9 @@ node_modules/
 .expo/
 android/
 ios/
+# `ios/` matches at every level, including modules/*/ios — re-include local
+# native modules so their podspec and sources reach the build (mirrors .gitignore).
+!modules/**/ios/
 tmp/
 *.log
 .npm-cache/

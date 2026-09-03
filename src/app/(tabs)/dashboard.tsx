@@ -9,6 +9,8 @@ import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { BookOpen, CheckCircle, Heart, Target, RotateCcw, Flame, Clock, TrendingUp, Brain } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSRS } from '@/context/SRSContext';
+import { useMistakeJournal } from '@/context/MistakeJournalContext';
+import { AlertCircle } from 'lucide-react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -60,6 +62,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { learnedIds, favorites, customWords, resetProgress, resetCategoryProgress } = useFavorites();
   const { stats: srsStats } = useSRS();
+  const { unresolvedCount } = useMistakeJournal();
 
   const getAllWords = React.useCallback((category: typeof VOCABULARY_DATA[0]): any[] => {
     let words = [...category.words];
@@ -210,6 +213,30 @@ export default function DashboardScreen() {
           </View>
         </View>
       </View>
+
+      {/* Mistake Journal entry */}
+      <Pressable
+        style={[styles.srsDueRow, {
+          backgroundColor: unresolvedCount > 0 ? '#dc354512' : theme.cardBackground,
+          marginHorizontal: Spacing.lg,
+          marginTop: Spacing.sm,
+          padding: Spacing.md,
+          borderRadius: BorderRadius.lg,
+        }]}
+        onPress={() => router.push('/mistake-journal' as any)}
+      >
+        <View style={[styles.srsIconBox, { backgroundColor: unresolvedCount > 0 ? '#dc354520' : theme.surfaceSecondary }]}>
+          <AlertCircle size={20} color={unresolvedCount > 0 ? '#dc3545' : theme.textSecondary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.srsDueCount, { color: unresolvedCount > 0 ? '#dc3545' : theme.text }]}>
+            {unresolvedCount === 0 ? 'No mistakes to review' : `${unresolvedCount} mistake${unresolvedCount !== 1 ? 's' : ''} to review`}
+          </Text>
+          <Text style={[styles.srsDueSub, { color: theme.textSecondary }]}>
+            {unresolvedCount === 0 ? 'Tap to view journal' : 'Tap to revisit'}
+          </Text>
+        </View>
+      </Pressable>
 
       {/* Stats Grid */}
       <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>DETAILS</Text>

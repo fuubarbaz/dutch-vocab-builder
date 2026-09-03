@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from '
 import { useRouter } from 'expo-router';
 import {
   AudioLines, GraduationCap, PenLine, MessagesSquare,
-  MessageCircle, ChevronRight,
+  MessageCircle, ChevronRight, Mic2, Drama,
 } from 'lucide-react-native';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -23,6 +23,13 @@ const LANGUAGE_TOOLS: Tool[] = [
     subtitle: 'Rules, sounds & live examples',
     color: '#6366f1',
     route: '/pronunciation-guide',
+  },
+  {
+    icon: Mic2,
+    title: 'Vowel Practice',
+    subtitle: 'Listen, record & compare vowel sounds',
+    color: '#0ea5e9',
+    route: '/vowel-practice',
   },
   {
     icon: GraduationCap,
@@ -54,6 +61,13 @@ const PRACTICE_TOOLS: Tool[] = [
     subtitle: 'AI-generated Dutch conversations',
     color: '#ec4899',
     route: '/small-talk',
+  },
+  {
+    icon: Drama,
+    title: 'Roleplay',
+    subtitle: 'Play out a scene, turn by turn',
+    color: '#8b5cf6',
+    route: '/roleplay',
   },
 ];
 

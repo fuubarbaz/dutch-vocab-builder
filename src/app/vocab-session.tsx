@@ -18,6 +18,7 @@ import { VOCABULARY_DATA } from '@/data/vocabulary';
 import { Word } from '@/types';
 import { useSRS } from '@/context/SRSContext';
 import { useFavorites } from '@/context/FavoritesContext';
+import { useMistakeJournal } from '@/context/MistakeJournalContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ export default function VocabSessionScreen() {
   const theme = Colors[colorScheme ?? 'light'];
   const { getDueWords, recordReview } = useSRS();
   const { favorites } = useFavorites();
+  const { logMistake } = useMistakeJournal();
 
   const targetCount = parseInt(count ?? '10', 10);
 
@@ -127,6 +129,7 @@ export default function VocabSessionScreen() {
     const q = questions[currentIndex];
     const correct = idx === q.correctIndex;
     if (correct) setScore(s => s + 1);
+    else logMistake(q.targetWord, 'vocab-session');
 
     // SRS: correct → Easy (5), wrong → Hard (2)
     await recordReview(q.targetWord.id, correct ? 5 : 2);

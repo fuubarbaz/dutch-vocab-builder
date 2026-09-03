@@ -16,7 +16,7 @@ import {
   LucideIcon, Hand, Hash, Utensils, Book, Home, ShoppingCart, Bus,
   HeartPulse, Shirt, Briefcase, Cloud, Languages, MessageCircle, Smile,
   Search, X, Volume2, Octagon, ChevronRight, Flame, BookOpen, Clock,
-  TrafficCone, Heart, PlusCircle,
+  TrafficCone, Heart, PlusCircle, List,
 } from 'lucide-react-native';
 import { speak } from '@/utils/tts';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
@@ -93,6 +93,11 @@ export default function CategoriesScreen() {
           }} hitSlop={8}>
             {({ pressed }) => (
               <Search size={20} color={searchVisible ? theme.primary : theme.text} style={{ opacity: pressed ? 0.5 : 1 }} />
+            )}
+          </Pressable>
+          <Pressable onPress={() => router.push('/vocab-list' as any)} hitSlop={8}>
+            {({ pressed }) => (
+              <List size={20} color={theme.text} style={{ opacity: pressed ? 0.5 : 1 }} />
             )}
           </Pressable>
           <Pressable onPress={() => router.push('/add-word')} hitSlop={8}>

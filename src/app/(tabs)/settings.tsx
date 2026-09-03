@@ -4,8 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useSettings } from '@/context/SettingsContext';
-import { Volume2, Check, Bell, BellOff } from 'lucide-react-native';
+import { Volume2, Check, Bell, BellOff, Cpu, Trash2, Download, RotateCcw, X } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import AIModule, { isFallback, type DownloadProgress } from 'dutch-vocab-ai';
+import { AI_MODEL_SKIPPED_KEY } from '@/components/AIModelGate';
 import {
   requestNotificationPermission,
   scheduleDailyReminder,
@@ -33,6 +35,87 @@ export default function SettingsScreen() {
 
   const [reminderEnabled, setReminderEnabled] = React.useState(false);
   const [reminderHour, setReminderHour] = React.useState(8);
+
+  // ── AI model state ────────────────────────────────────────────────────────
+  type ModelStatus = 'checking' | 'available' | 'not_downloaded' | 'downloading' | 'load_error';
+  const [modelStatus, setModelStatus] = React.useState<ModelStatus>('checking');
+  const [downloadProgress, setDownloadProgress] = React.useState<DownloadProgress | null>(null);
+  const [modelError, setModelError] = React.useState<string | null>(null);
+  const downloadSubRef = React.useRef<{ remove: () => void } | null>(null);
+
+  const checkModelStatus = React.useCallback(async () => {
+    if (isFallback) return;
+    try {
+      const status = await AIModule.getAIAvailabilityAsync();
+      setModelStatus(status as ModelStatus);
+      if (status === 'load_error') {
+        const detail = await AIModule.getLoadErrorAsync().catch(() => null);
+        setModelError(detail);
+      }
+    } catch {
+      setModelStatus('load_error');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    checkModelStatus();
+    return () => { downloadSubRef.current?.remove(); };
+  }, [checkModelStatus]);
+
+  const handleDownload = async () => {
+    setModelStatus('downloading');
+    setDownloadProgress({ bytesReceived: 0, totalBytes: 0, fraction: 0 });
+    downloadSubRef.current?.remove();
+    downloadSubRef.current = AIModule.addListener('onDownloadProgress', (p) => setDownloadProgress(p));
+    try {
+      await AIModule.downloadModelAsync();
+      downloadSubRef.current?.remove();
+      downloadSubRef.current = null;
+      // Mirror AIModelGate: once the model is installed the earlier "skip" is
+      // spent, so a later delete re-arms the first-run prompt instead of
+      // leaving the gate permanently silent.
+      await AsyncStorage.removeItem(AI_MODEL_SKIPPED_KEY).catch(() => {});
+      setModelStatus('available');
+      setDownloadProgress(null);
+    } catch (e) {
+      downloadSubRef.current?.remove();
+      downloadSubRef.current = null;
+      setModelError(e instanceof Error ? e.message : String(e));
+      setModelStatus('not_downloaded');
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleCancelDownload = async () => {
+    try { await AIModule.cancelDownloadAsync(); } catch { /* ignore */ }
+    downloadSubRef.current?.remove();
+    downloadSubRef.current = null;
+    setModelStatus('not_downloaded');
+    setDownloadProgress(null);
+  };
+
+  const handleDeleteModel = () => {
+    Alert.alert(
+      'Delete AI Model',
+      'Removes the ~2.6 GB model file. AI features stop working until you re-download.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AIModule.resetModelAsync(true);
+              setModelStatus('not_downloaded');
+              setModelError(null);
+            } catch {
+              Alert.alert('Error', 'Could not delete the model file.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   // Load saved reminder prefs
   React.useEffect(() => {
@@ -252,6 +335,117 @@ export default function SettingsScreen() {
         )}
       </View>
 
+      {/* ── AI MODEL ─────────────────────────────────────────────────── */}
+      {!isFallback && (
+        <>
+          <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>ON-DEVICE AI</Text>
+          <View style={[styles.groupCard, { backgroundColor: theme.cardBackground }]}>
+
+            {/* Header row */}
+            <View style={styles.settingRow}>
+              <View style={[styles.reminderIconWrap, { backgroundColor: theme.primary + '15' }]}>
+                <Cpu size={20} color={theme.primary} />
+              </View>
+              <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                <Text style={[styles.settingTitle, { color: theme.text }]}>Gemma 4 E2B</Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                  On-device model · ~2.6 GB
+                </Text>
+              </View>
+              {/* Status badge */}
+              {modelStatus === 'available' && (
+                <View style={[styles.statusBadge, { backgroundColor: theme.successLight }]}>
+                  <Text style={[styles.statusBadgeText, { color: theme.success }]}>Ready</Text>
+                </View>
+              )}
+              {modelStatus === 'load_error' && (
+                <View style={[styles.statusBadge, { backgroundColor: theme.dangerLight }]}>
+                  <Text style={[styles.statusBadgeText, { color: theme.danger }]}>Error</Text>
+                </View>
+              )}
+              {modelStatus === 'not_downloaded' && (
+                <View style={[styles.statusBadge, { backgroundColor: theme.surfaceSecondary }]}>
+                  <Text style={[styles.statusBadgeText, { color: theme.textSecondary }]}>Not installed</Text>
+                </View>
+              )}
+              {modelStatus === 'checking' && (
+                <View style={[styles.statusBadge, { backgroundColor: theme.surfaceSecondary }]}>
+                  <Text style={[styles.statusBadgeText, { color: theme.textSecondary }]}>Checking…</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Error detail */}
+            {modelStatus === 'load_error' && modelError && (
+              <Text style={[styles.settingDescription, { color: theme.danger, marginTop: Spacing.sm }]}>
+                {modelError}
+              </Text>
+            )}
+
+            {/* Download progress bar */}
+            {modelStatus === 'downloading' && downloadProgress && (
+              <View style={{ marginTop: Spacing.md }}>
+                <View style={[styles.progressTrack, { backgroundColor: theme.surfaceSecondary }]}>
+                  <View style={[styles.progressFill, { backgroundColor: theme.primary, width: `${Math.round(downloadProgress.fraction * 100)}%` }]} />
+                </View>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary, marginTop: Spacing.xs, textAlign: 'center' }]}>
+                  {Math.round(downloadProgress.fraction * 100)}%
+                  {downloadProgress.totalBytes > 0
+                    ? ` · ${(downloadProgress.bytesReceived / 1024 / 1024).toFixed(0)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(0)} MB`
+                    : ` · ${(downloadProgress.bytesReceived / 1024 / 1024).toFixed(0)} MB`}
+                </Text>
+              </View>
+            )}
+
+            <View style={[styles.divider, { backgroundColor: theme.border, marginTop: Spacing.md }]} />
+
+            {/* Actions */}
+            {modelStatus === 'not_downloaded' && (
+              <TouchableOpacity style={[styles.settingRow, { marginTop: Spacing.xs }]} onPress={handleDownload} activeOpacity={0.7}>
+                <Download size={18} color={theme.primary} />
+                <Text style={[styles.settingTitle, { color: theme.primary, marginLeft: Spacing.md, flex: 1 }]}>
+                  Download model
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {modelStatus === 'downloading' && (
+              <TouchableOpacity style={[styles.settingRow, { marginTop: Spacing.xs }]} onPress={handleCancelDownload} activeOpacity={0.7}>
+                <X size={18} color={theme.danger} />
+                <Text style={[styles.settingTitle, { color: theme.danger, marginLeft: Spacing.md, flex: 1 }]}>
+                  Cancel download
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {modelStatus === 'available' && (
+              <TouchableOpacity style={[styles.settingRow, { marginTop: Spacing.xs }]} onPress={handleDeleteModel} activeOpacity={0.7}>
+                <Trash2 size={18} color={theme.danger} />
+                <Text style={[styles.settingTitle, { color: theme.danger, marginLeft: Spacing.md, flex: 1 }]}>
+                  Delete model file
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {modelStatus === 'load_error' && (
+              <>
+                <TouchableOpacity style={[styles.settingRow, { marginTop: Spacing.xs }]} onPress={async () => {
+                  await AIModule.resetModelAsync(true).catch(() => {});
+                  setModelStatus('not_downloaded');
+                  setModelError(null);
+                }} activeOpacity={0.7}>
+                  <RotateCcw size={18} color={theme.primary} />
+                  <Text style={[styles.settingTitle, { color: theme.primary, marginLeft: Spacing.md, flex: 1 }]}>
+                    Delete & re-download
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+          </View>
+        </>
+      )}
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -374,5 +568,23 @@ const styles = StyleSheet.create({
   hourChipText: {
     fontSize: FontSize.footnote,
     fontWeight: FontWeight.medium,
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+  },
+  statusBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });

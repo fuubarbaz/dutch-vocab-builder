@@ -1,16 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Clock, RotateCcw } from 'lucide-react-native';
+import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle, RotateCcw } from 'lucide-react-native';
 import { speakWithCallback, stopTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-type AIAvailability = 'available' | 'not_enabled' | 'model_not_ready' | 'requires_ios26' | 'device_not_eligible' | 'checking';
+type AIAvailability = 'available' | 'not_downloaded' | 'downloading' | 'load_error' | 'checking';
 
 type SetupStep = { label: string; detail?: string };
 
@@ -26,63 +26,31 @@ type SetupGuideConfig = {
 };
 
 const SETUP_GUIDES: Partial<Record<AIAvailability, SetupGuideConfig>> = {
-  not_enabled: {
+  not_downloaded: {
     icon: AlertCircle,
     accentColor: '#B45309',
     bg: '#FFFBEB',
     borderColor: '#FCD34D',
-    title: 'Apple Intelligence Required',
-    subtitle: 'Enable Apple Intelligence to generate conversations using on-device AI.',
+    title: 'AI Model Not Downloaded',
+    subtitle: 'The on-device AI model (Gemma 4) needs to be downloaded before conversations can be generated.',
     steps: [
-      { label: 'Open Settings on your iPhone' },
-      { label: 'Tap Apple Intelligence & Siri' },
-      { label: 'Turn on Apple Intelligence' },
-      { label: 'Set device language to English (US)', detail: 'Settings → General → Language & Region → iPhone Language' },
-      { label: 'Wait for the model to download', detail: 'A progress bar will appear in Apple Intelligence & Siri' },
-      { label: 'Come back here and tap Check Again' },
-    ],
-  },
-  model_not_ready: {
-    icon: Clock,
-    accentColor: '#1D4ED8',
-    bg: '#EFF6FF',
-    borderColor: '#93C5FD',
-    title: 'Apple Intelligence is Setting Up',
-    subtitle: 'The on-device model is downloading. This usually takes a few minutes on Wi-Fi.',
-    steps: [
+      { label: 'Open the Settings tab' },
+      { label: 'Under "On-device AI", tap "Download model" (~2.6 GB)' },
       { label: 'Make sure you are connected to Wi-Fi' },
-      { label: 'Open Settings → Apple Intelligence & Siri', detail: 'Look for a progress bar — it shows download status' },
-      { label: 'Keep the screen on and wait for it to finish' },
-      { label: 'Come back here and tap Check Again' },
+      { label: 'Come back here after the download completes' },
     ],
-    note: 'Do not switch your device language away from English (US) while downloading.',
   },
-  requires_ios26: {
+  load_error: {
     icon: AlertCircle,
     accentColor: '#991B1B',
     bg: '#FEF2F2',
     borderColor: '#FCA5A5',
-    title: 'iOS 26 Required',
-    subtitle: 'This feature uses Apple Intelligence which requires iOS 26 or later.',
+    title: 'AI Model Failed to Load',
+    subtitle: 'The on-device AI model could not be loaded. This may be due to insufficient memory or a corrupted download.',
     steps: [
-      { label: 'Open Settings → General → Software Update' },
-      { label: 'Download and install iOS 26' },
-      { label: 'After updating, enable Apple Intelligence', detail: 'Settings → Apple Intelligence & Siri' },
-      { label: 'Come back here and tap Check Again' },
-    ],
-  },
-  device_not_eligible: {
-    icon: AlertCircle,
-    accentColor: '#6B7280',
-    bg: '#F9FAFB',
-    borderColor: '#D1D5DB',
-    title: 'Apple Intelligence Unavailable',
-    subtitle: 'This feature requires Apple Intelligence on a supported device.',
-    steps: [
-      { label: 'Supported devices: iPhone 15 Pro, 15 Pro Max, iPhone 16 series or later' },
-      { label: 'Requires iOS 26 or later' },
-      { label: 'Enable Apple Intelligence in Settings → Apple Intelligence & Siri' },
-      { label: 'Set device language to English (US)' },
+      { label: 'Close other apps to free up memory' },
+      { label: 'Restart the app and try again' },
+      { label: 'If the issue persists, close and reopen the app to re-download the model' },
     ],
   },
 };
@@ -132,19 +100,54 @@ export default function SmallTalkScreen() {
   const [aiStatus, setAiStatus] = useState<AIAvailability>('checking');
 
   const stopRef = useRef(false);
+  const seenTurnCountRef = useRef(0);
+  const generatingRef = useRef(false);
 
   const checkAvailability = () => {
     setAiStatus('checking');
     AIModule.getAIAvailabilityAsync()
-      .then(setAiStatus)
-      .catch(() => setAiStatus('device_not_eligible'));
+      .then((status) => {
+        const known: AIAvailability[] = ['available', 'not_downloaded', 'downloading', 'load_error'];
+        setAiStatus(known.includes(status as AIAvailability) ? (status as AIAvailability) : 'load_error');
+      })
+      .catch(() => setAiStatus('load_error'));
   };
 
   useEffect(() => {
     checkAvailability();
   }, []);
 
+  // Extracts complete turn objects from accumulated streaming JSON.
+  // Parses turn-by-turn as each closing `}` arrives so turns appear progressively.
+  const extractCompletedTurns = useCallback((text: string): Turn[] => {
+    const result: Turn[] = [];
+    let depth = 0;
+    let objStart = -1;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === '{') {
+        if (depth === 0) objStart = i;
+        depth++;
+      } else if (text[i] === '}') {
+        depth--;
+        if (depth === 0 && objStart !== -1) {
+          try {
+            const obj = JSON.parse(text.slice(objStart, i + 1));
+            if (obj.speaker && typeof obj.dutch === 'string' && typeof obj.english === 'string') {
+              result.push(obj as Turn);
+            }
+          } catch {}
+          objStart = -1;
+        }
+      }
+    }
+    return result;
+  }, []);
+
   const generate = async () => {
+    // The keyboard's return key can fire this while a run is already in flight;
+    // overlapping requests fight over the single on-device model session.
+    if (generatingRef.current) return;
+
     const t = topic.trim();
     if (!t) {
       Alert.alert('Enter a topic', 'Please type or choose a topic first.');
@@ -153,24 +156,48 @@ export default function SmallTalkScreen() {
     setTurns([]);
     setShowTranslations({});
     setShowAllTranslations(false);
+    generatingRef.current = true;
     setIsGenerating(true);
+    seenTurnCountRef.current = 0;
+
+    let subscription: ReturnType<typeof AIModule.addListener> | null = null;
+
     try {
-      const raw = await AIModule.generateSmallTalkAsync(t, turnCount);
-      const parsed = parseTurns(raw);
-      if (parsed.length === 0) {
-        Alert.alert('Generation failed', 'Could not parse the conversation. Please try again.');
-      } else {
-        setTurns(parsed);
-      }
+      subscription = AIModule.addListener('onSmallTalkChunk', ({ text, done }) => {
+        const completed = extractCompletedTurns(text);
+        if (completed.length > seenTurnCountRef.current) {
+          seenTurnCountRef.current = completed.length;
+          setTurns(completed);
+        }
+        if (done && completed.length === 0) {
+          Alert.alert('Generation failed', 'Could not parse the conversation. Please try again.');
+        }
+      });
+
+      await AIModule.generateSmallTalkStreamAsync(t, turnCount);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      let detail = 'Apple Intelligence is required (iOS 26+ with Apple Intelligence enabled).';
-      if (msg.includes('not_enabled')) detail = 'Enable Apple Intelligence in Settings → Apple Intelligence & Siri.';
-      else if (msg.includes('model_not_ready')) detail = 'Apple Intelligence model is still downloading. Please wait and try again.';
-      else if (msg.includes('requires_ios26')) detail = 'iOS 26 or later is required for this feature.';
-      else if (msg.includes('device_not_eligible')) detail = 'Your device does not support Apple Intelligence.';
-      Alert.alert('Apple Intelligence Unavailable', detail);
+      const raw = e instanceof Error ? e.message : String(e);
+      console.warn('[small-talk] generate error:', raw);
+      // Expo wraps native errors as "Call to function '…' has been rejected. → Caused by: <message>"
+      const msg = raw.split('Caused by:').pop()!.trim();
+
+      if (msg.includes('not_downloaded')) {
+        setAiStatus('not_downloaded');
+        Alert.alert('AI Unavailable', 'The AI model has not been downloaded yet. Go to Settings › On-device AI and tap "Download model".');
+      } else if (msg.includes('load_error') || msg.includes('load_failed')) {
+        setAiStatus('load_error');
+        Alert.alert('AI Unavailable', 'The AI model failed to load. Try restarting the app.');
+      } else {
+        // The model is present and loaded — this one request failed. Saying
+        // "AI Unavailable" here sends people to Settings to fix nothing.
+        Alert.alert(
+          'Generation failed',
+          `Could not generate this conversation. Please try again.\n\n${msg.replace(/^generation_failed:\s*/, '')}`,
+        );
+      }
     } finally {
+      subscription?.remove();
+      generatingRef.current = false;
       setIsGenerating(false);
     }
   };
@@ -232,7 +259,7 @@ export default function SmallTalkScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-        {/* Apple Intelligence setup guide */}
+        {/* AI model setup guide */}
         {(() => {
           if (aiStatus === 'checking' || aiStatus === 'available') return null;
           const guide = SETUP_GUIDES[aiStatus];
@@ -272,7 +299,7 @@ export default function SmallTalkScreen() {
               )}
 
               {/* Check Again button */}
-              {aiStatus !== 'requires_ios26' && (
+              {(
                 <TouchableOpacity
                   style={[styles.checkAgainBtn, { borderColor: guide.accentColor }]}
                   onPress={checkAvailability}
