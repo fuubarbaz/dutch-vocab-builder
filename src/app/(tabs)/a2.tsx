@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { School, FileText, Headphones, ChevronRight } from 'lucide-react-native';
+import { School, FileText, Headphones, Mic, ChevronRight } from 'lucide-react-native';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -21,6 +21,14 @@ const ITEMS = [
     description: 'Practice structured writing exercises to prepare for the A2 exam.',
     color: '#ef4444',
     route: '/writing-exam',
+  },
+  {
+    icon: Mic,
+    title: 'Speaking Exam',
+    subtitle: 'A2 speaking practice',
+    description: 'Answer exam-style questions out loud and get feedback, plus a cheat sheet of phrases.',
+    color: '#f59e0b',
+    route: '/speaking-exam',
   },
   {
     icon: Headphones,
