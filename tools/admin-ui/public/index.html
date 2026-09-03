@@ -1,229 +1,434 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dutchify - Admin UI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dutchify — Vocab Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade { transition: opacity 0.15s; }
+    .editing-row td { background: #fefce8; }
+    input:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
-    <div class="max-w-3xl mx-auto p-6 mt-10">
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">Vocabulary Admin UI</h1>
-            
-            <form id="wordForm" class="space-y-6">
-                <!-- Data Source / Type -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Source</label>
-                    <div class="flex space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="targetFile" value="vocab" checked onchange="loadCategories()">
-                            <span class="ml-2">Vocabulary (vocabulary.ts)</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="targetFile" value="traffic" onchange="loadCategories()">
-                            <span class="ml-2">Traffic Signs (traffic_categories.ts)</span>
-                        </label>
-                    </div>
-                </div>
+<body class="bg-gray-50 text-gray-800 font-sans">
 
-                <!-- Category -->
-                <div>
-                    <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-                    <select id="category" name="category" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
-                        <option value="">Select a category...</option>
-                    </select>
-                </div>
+<!-- ── Header ── -->
+<header class="bg-white border-b sticky top-0 z-20 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6">
+    <h1 class="text-xl font-bold text-orange-500 shrink-0">🇳🇱 Vocab Admin</h1>
 
-                <!-- Word Details -->
-                <div class="space-y-4 border-t pt-4">
-                    <h3 class="text-lg font-medium">Word Details</h3>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="id" class="block text-sm font-medium text-gray-700">ID (e.g. w1, tr_a1)</label>
-                            <input type="text" id="id" name="id" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        
-                        <div id="imageFieldContainer" class="hidden">
-                            <label for="imageAsset" class="block text-sm font-medium text-gray-700">Image Asset (e.g. a1.png)</label>
-                            <input type="text" id="imageAsset" name="imageAsset" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="dutch" class="block text-sm font-medium text-gray-700">Dutch</label>
-                            <input type="text" id="dutch" name="dutch" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        <div>
-                            <label for="english" class="block text-sm font-medium text-gray-700">English</label>
-                            <input type="text" id="english" name="english" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label for="exampleDutch" class="block text-sm font-medium text-gray-700">Example Dutch</label>
-                            <input type="text" id="exampleDutch" name="exampleDutch" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        <div>
-                            <label for="exampleEnglish" class="block text-sm font-medium text-gray-700">Example English</label>
-                            <input type="text" id="exampleEnglish" name="exampleEnglish" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Add Word
-                    </button>
-                </div>
-                
-                <div id="message" class="mt-4 text-center text-sm font-medium"></div>
-            </form>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow-lg p-8 mt-6">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Existing Words</h2>
-            <div id="existingWordsList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                <p class="text-gray-500 italic">Select a category to view its words...</p>
-            </div>
-        </div>
+    <!-- Global search -->
+    <div class="flex items-center gap-2 flex-1 max-w-lg">
+      <input id="searchInput" type="search" placeholder="Search all words…"
+        class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+        oninput="onSearchInput()">
+      <span id="searchCount" class="text-xs text-gray-400 whitespace-nowrap"></span>
     </div>
 
-    <script>
-        async function loadCategories() {
-            const type = document.querySelector('input[name="targetFile"]:checked').value;
-            const categorySelect = document.getElementById('category');
-            const imageFieldContainer = document.getElementById('imageFieldContainer');
-            const imageAssetInput = document.getElementById('imageAsset');
-            
-            // Show/hide image field based on type
-            if (type === 'traffic') {
-                imageFieldContainer.classList.remove('hidden');
-                imageAssetInput.required = true;
-            } else {
-                imageFieldContainer.classList.add('hidden');
-                imageAssetInput.required = false;
-            }
+    <!-- Source toggle -->
+    <div class="flex gap-3 text-sm shrink-0">
+      <label class="flex items-center gap-1 cursor-pointer">
+        <input type="radio" name="source" value="vocab" checked onchange="onSourceChange()"> Vocabulary
+      </label>
+      <label class="flex items-center gap-1 cursor-pointer">
+        <input type="radio" name="source" value="traffic" onchange="onSourceChange()"> Traffic Signs
+      </label>
+    </div>
 
-            try {
-                const response = await fetch(`/api/categories/${type}`);
-                const categories = await response.json();
-                
-                categorySelect.innerHTML = '<option value="">Select a category...</option>';
-                categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat.id;
-                    option.textContent = `${cat.title} (${cat.id})`;
-                    categorySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading categories:', error);
-                showMessage('Error loading categories', 'error');
-            }
-        }
+    <button onclick="openAddModal()"
+      class="shrink-0 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-1.5 rounded-lg">
+      + Add Word
+    </button>
+  </div>
+</header>
 
-        function showMessage(text, type) {
-            const msgEl = document.getElementById('message');
-            msgEl.textContent = text;
-            msgEl.className = `mt-4 text-center text-sm font-medium ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
-            setTimeout(() => { msgEl.textContent = ''; }, 5000);
-        }
+<!-- ── Main ── -->
+<div class="max-w-7xl mx-auto px-6 py-6 flex gap-6">
 
-        document.getElementById('wordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const type = document.querySelector('input[name="targetFile"]:checked').value;
-             
-            const payload = {
-                categoryId: document.getElementById('category').value,
-                word: {
-                    id: document.getElementById('id').value,
-                    dutch: document.getElementById('dutch').value,
-                    english: document.getElementById('english').value,
-                    exampleDutch: document.getElementById('exampleDutch').value,
-                    exampleEnglish: document.getElementById('exampleEnglish').value,
-                    imageAsset: document.getElementById('imageAsset').value
-                }
-            };
+  <!-- Sidebar: category list -->
+  <aside class="w-56 shrink-0">
+    <div class="bg-white rounded-xl border p-3 sticky top-16 max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">Categories</p>
+      <button onclick="selectCategory(null)"
+        id="cat-all"
+        class="w-full text-left px-2 py-1.5 rounded-lg text-sm font-medium bg-orange-50 text-orange-600 mb-1">
+        All words
+      </button>
+      <div id="categoryList" class="space-y-0.5"></div>
+    </div>
+  </aside>
 
-            try {
-                const response = await fetch(`/api/words/${type}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (response.ok) {
-                    showMessage('Word added successfully!', 'success');
-                    // Only clear the word details, not category
-                    document.getElementById('id').value = '';
-                    document.getElementById('dutch').value = '';
-                    document.getElementById('english').value = '';
-                    document.getElementById('exampleDutch').value = '';
-                    document.getElementById('exampleEnglish').value = '';
-                    if (type === 'traffic') {
-                        document.getElementById('imageAsset').value = '';
-                    }
-                    loadExistingWords();
-                } else {
-                    const data = await response.json();
-                    showMessage(`Error: ${data.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error adding word:', error);
-                showMessage('Network error or server down', 'error');
-            }
-        });
+  <!-- Main content -->
+  <main class="flex-1 min-w-0">
+    <!-- Stats bar -->
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="currentTitle" class="text-lg font-semibold text-gray-700">All words</h2>
+      <span id="wordCount" class="text-sm text-gray-400"></span>
+    </div>
 
-        async function loadExistingWords() {
-            const type = document.querySelector('input[name="targetFile"]:checked').value;
-            const categoryId = document.getElementById('category').value;
-            const wordsListEl = document.getElementById('existingWordsList');
-            
-            if (!categoryId) {
-                wordsListEl.innerHTML = '<p class="text-gray-500 italic">Select a category to view its words...</p>';
-                return;
-            }
+    <!-- Table -->
+    <div class="bg-white rounded-xl border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase tracking-wide">
+            <th class="text-left px-4 py-3 w-6">#</th>
+            <th class="text-left px-4 py-3">Dutch</th>
+            <th class="text-left px-4 py-3">English</th>
+            <th class="text-left px-4 py-3">Example (NL)</th>
+            <th class="text-left px-4 py-3">Example (EN)</th>
+            <th class="text-left px-4 py-3 w-24">Category</th>
+            <th class="px-4 py-3 w-20"></th>
+          </tr>
+        </thead>
+        <tbody id="wordTable"></tbody>
+      </table>
+      <div id="emptyState" class="hidden text-center text-gray-400 py-12 text-sm">No words found.</div>
+    </div>
+  </main>
+</div>
 
-            wordsListEl.innerHTML = '<p class="text-gray-500 italic">Loading words...</p>';
+<!-- ── Add Word Modal ── -->
+<div id="addModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold">Add Word</h3>
+      <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <form id="addForm" onsubmit="submitAdd(event)" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+          <select id="addCategory" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">ID</label>
+          <input id="addId" type="text" required placeholder="e.g. ver100" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Dutch *</label>
+          <input id="addDutch" type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">English *</label>
+          <input id="addEnglish" type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Example (Dutch)</label>
+        <input id="addExDutch" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Example (English)</label>
+        <input id="addExEnglish" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div id="addImageField" class="hidden">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Image Asset (e.g. a1.png)</label>
+        <input id="addImage" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 rounded-lg text-sm">Add Word</button>
+        <button type="button" onclick="closeAddModal()" class="flex-1 border border-gray-300 text-gray-600 font-medium py-2 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+      </div>
+      <p id="addMsg" class="text-center text-sm font-medium"></p>
+    </form>
+  </div>
+</div>
 
-            try {
-                const response = await fetch(`/api/words/${type}/${categoryId}`);
-                const words = await response.json();
-                
-                if (words.length === 0) {
-                    wordsListEl.innerHTML = '<p class="text-gray-500 italic">No words found in this category.</p>';
-                    return;
-                }
+<script>
+  // ── State ─────────────────────────────────────────────────────────────────
+  let allWords = [];
+  let filteredWords = [];
+  let categories = [];
+  let selectedCategoryId = null;
+  let editingWordId = null;
 
-                let html = '<ul class="divide-y divide-gray-200">';
-                words.forEach(word => {
-                    html += `
-                        <li class="py-3 flex justify-between items-start">
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">${word.dutch} <span class="text-gray-500 ml-2 font-normal">(${word.id})</span></p>
-                                <p class="text-sm text-gray-500">${word.english}</p>
-                                ${word.exampleDutch ? `<p class="text-xs text-gray-400 mt-1 italic">Ex: ${word.exampleDutch}</p>` : ''}
-                                ${word.imageAsset ? `<p class="text-xs text-blue-500 mt-1">Image: ${word.imageAsset}</p>` : ''}
-                            </div>
-                        </li>
-                    `;
-                });
-                html += '</ul>';
-                wordsListEl.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading existing words:', error);
-                wordsListEl.innerHTML = '<p class="text-red-500 text-sm">Error loading words.</p>';
-            }
-        }
+  function source() {
+    return document.querySelector('input[name="source"]:checked').value;
+  }
 
-        document.getElementById('category').addEventListener('change', loadExistingWords);
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  async function init() {
+    await Promise.all([loadCategories(), loadAllWords()]);
+  }
 
-        // Initial load
-        loadCategories();
-    </script>
+  async function onSourceChange() {
+    selectedCategoryId = null;
+    document.getElementById('searchInput').value = '';
+    await init();
+    renderCategoryList();
+    applyFilters();
+  }
+
+  // ── Data loading ──────────────────────────────────────────────────────────
+  async function loadCategories() {
+    try {
+      const res = await fetch(`/api/categories/${source()}`);
+      categories = await res.json();
+      renderCategoryList();
+      populateAddCategorySelect();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadAllWords() {
+    try {
+      const res = await fetch(`/api/words/${source()}`);
+      allWords = await res.json();
+      applyFilters();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ── Filters ───────────────────────────────────────────────────────────────
+  function applyFilters() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    filteredWords = allWords.filter(w => {
+      if (selectedCategoryId && w.categoryId !== selectedCategoryId) return false;
+      if (!q) return true;
+      return (w.dutch ?? '').toLowerCase().includes(q)
+          || (w.english ?? '').toLowerCase().includes(q)
+          || (w.exampleDutch ?? '').toLowerCase().includes(q);
+    });
+    renderTable();
+    document.getElementById('wordCount').textContent = `${filteredWords.length} word${filteredWords.length !== 1 ? 's' : ''}`;
+    const sc = document.getElementById('searchCount');
+    sc.textContent = q ? `${filteredWords.length} result${filteredWords.length !== 1 ? 's' : ''}` : '';
+  }
+
+  function onSearchInput() {
+    applyFilters();
+  }
+
+  function selectCategory(id) {
+    selectedCategoryId = id;
+    editingWordId = null;
+    document.querySelectorAll('[data-catbtn]').forEach(b => b.classList.remove('bg-orange-50', 'text-orange-600', 'font-medium'));
+    const allBtn = document.getElementById('cat-all');
+    if (id === null) {
+      allBtn.classList.add('bg-orange-50', 'text-orange-600', 'font-medium');
+      document.getElementById('currentTitle').textContent = 'All words';
+    } else {
+      allBtn.classList.remove('bg-orange-50', 'text-orange-600', 'font-medium');
+      const cat = categories.find(c => c.id === id);
+      document.getElementById('currentTitle').textContent = cat?.title ?? id;
+      const btn = document.querySelector(`[data-catbtn="${id}"]`);
+      btn?.classList.add('bg-orange-50', 'text-orange-600', 'font-medium');
+    }
+    applyFilters();
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function renderCategoryList() {
+    const el = document.getElementById('categoryList');
+    el.innerHTML = '';
+    categories.forEach(cat => {
+      const isIndented = cat.title.startsWith('  ');
+      const btn = document.createElement('button');
+      btn.dataset.catbtn = cat.id;
+      btn.className = `w-full text-left px-2 py-1.5 rounded-lg text-sm hover:bg-gray-50 ${isIndented ? 'pl-5 text-gray-500' : ''}`;
+      btn.textContent = cat.title.trim();
+      btn.onclick = () => selectCategory(cat.id);
+      el.appendChild(btn);
+    });
+  }
+
+  function populateAddCategorySelect() {
+    const sel = document.getElementById('addCategory');
+    sel.innerHTML = '';
+    categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.title.trim();
+      sel.appendChild(opt);
+    });
+    if (selectedCategoryId) sel.value = selectedCategoryId;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('wordTable');
+    const empty = document.getElementById('emptyState');
+
+    if (filteredWords.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    tbody.innerHTML = '';
+    filteredWords.forEach((word, i) => {
+      const isEditing = word.id === editingWordId;
+      const tr = document.createElement('tr');
+      tr.className = `border-b last:border-0 ${isEditing ? 'editing-row' : 'hover:bg-gray-50'}`;
+      tr.dataset.wordId = word.id;
+
+      if (isEditing) {
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-gray-400">${i + 1}</td>
+          <td class="px-2 py-2"><input class="w-full border rounded px-2 py-1 text-sm" id="e-dutch" value="${esc(word.dutch)}"></td>
+          <td class="px-2 py-2"><input class="w-full border rounded px-2 py-1 text-sm" id="e-english" value="${esc(word.english)}"></td>
+          <td class="px-2 py-2"><input class="w-full border rounded px-2 py-1 text-sm" id="e-exDutch" value="${esc(word.exampleDutch ?? '')}"></td>
+          <td class="px-2 py-2"><input class="w-full border rounded px-2 py-1 text-sm" id="e-exEnglish" value="${esc(word.exampleEnglish ?? '')}"></td>
+          <td class="px-4 py-2 text-xs text-gray-400">${esc(word.categoryTitle ?? '')}</td>
+          <td class="px-4 py-2">
+            <div class="flex gap-2 justify-end">
+              <button onclick="saveEdit('${esc(word.id)}','${esc(word.categoryId)}')"
+                class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded font-medium">Save</button>
+              <button onclick="cancelEdit()"
+                class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded font-medium">Cancel</button>
+            </div>
+          </td>`;
+      } else {
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-gray-400 text-xs">${i + 1}</td>
+          <td class="px-4 py-2 font-medium">${esc(word.dutch)}</td>
+          <td class="px-4 py-2 text-gray-600">${esc(word.english)}</td>
+          <td class="px-4 py-2 text-gray-400 text-xs italic">${esc(word.exampleDutch ?? '')}</td>
+          <td class="px-4 py-2 text-gray-400 text-xs italic">${esc(word.exampleEnglish ?? '')}</td>
+          <td class="px-4 py-2 text-xs text-gray-400">${esc(word.categoryTitle ?? '')}</td>
+          <td class="px-4 py-2">
+            <div class="flex gap-2 justify-end">
+              <button onclick="startEdit('${esc(word.id)}')"
+                class="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
+              <button onclick="deleteWord('${esc(word.id)}','${esc(word.categoryId)}','${esc(word.dutch)}')"
+                class="text-xs text-red-400 hover:text-red-600 font-medium">Delete</button>
+            </div>
+          </td>`;
+      }
+      tbody.appendChild(tr);
+    });
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ── Edit ──────────────────────────────────────────────────────────────────
+  function startEdit(wordId) {
+    editingWordId = wordId;
+    renderTable();
+    // Focus first input
+    setTimeout(() => document.getElementById('e-dutch')?.focus(), 50);
+  }
+
+  function cancelEdit() {
+    editingWordId = null;
+    renderTable();
+  }
+
+  async function saveEdit(wordId, categoryId) {
+    const dutch = document.getElementById('e-dutch').value.trim();
+    const english = document.getElementById('e-english').value.trim();
+    if (!dutch || !english) return;
+
+    const word = {
+      dutch,
+      english,
+      exampleDutch: document.getElementById('e-exDutch').value,
+      exampleEnglish: document.getElementById('e-exEnglish').value,
+    };
+
+    try {
+      const res = await fetch(`/api/words/${source()}/${encodeURIComponent(categoryId)}/${encodeURIComponent(wordId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+
+      // Update local state
+      const w = allWords.find(w => w.id === wordId);
+      if (w) Object.assign(w, word);
+      editingWordId = null;
+      applyFilters();
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+    }
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+  async function deleteWord(wordId, categoryId, dutch) {
+    if (!confirm(`Delete "${dutch}"? This edits vocabulary.ts directly.`)) return;
+    try {
+      const res = await fetch(`/api/words/${source()}/${encodeURIComponent(categoryId)}/${encodeURIComponent(wordId)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      allWords = allWords.filter(w => w.id !== wordId);
+      applyFilters();
+    } catch (e) {
+      alert('Delete failed: ' + e.message);
+    }
+  }
+
+  // ── Add ───────────────────────────────────────────────────────────────────
+  function openAddModal() {
+    populateAddCategorySelect();
+    const isTraffic = source() === 'traffic';
+    document.getElementById('addImageField').classList.toggle('hidden', !isTraffic);
+    document.getElementById('addModal').classList.remove('hidden');
+    document.getElementById('addDutch').focus();
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+    document.getElementById('addForm').reset();
+    document.getElementById('addMsg').textContent = '';
+  }
+
+  async function submitAdd(e) {
+    e.preventDefault();
+    const payload = {
+      categoryId: document.getElementById('addCategory').value,
+      word: {
+        id: document.getElementById('addId').value.trim(),
+        dutch: document.getElementById('addDutch').value.trim(),
+        english: document.getElementById('addEnglish').value.trim(),
+        exampleDutch: document.getElementById('addExDutch').value.trim(),
+        exampleEnglish: document.getElementById('addExEnglish').value.trim(),
+        imageAsset: document.getElementById('addImage').value.trim(),
+      }
+    };
+
+    try {
+      const res = await fetch(`/api/words/${source()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const msg = document.getElementById('addMsg');
+      msg.className = 'text-center text-sm font-medium text-green-600';
+      msg.textContent = 'Word added!';
+      // Reload words and close after a beat
+      await loadAllWords();
+      setTimeout(closeAddModal, 800);
+    } catch (e) {
+      const msg = document.getElementById('addMsg');
+      msg.className = 'text-center text-sm font-medium text-red-600';
+      msg.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (editingWordId) cancelEdit();
+      closeAddModal();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  init();
+</script>
 </body>
 </html>

@@ -13,84 +13,186 @@ const project = new Project();
 const VOCAB_FILE = path.resolve(__dirname, '../../src/data/vocabulary.ts');
 const TRAFFIC_FILE = path.resolve(__dirname, '../../src/data/traffic_categories.ts');
 
-function getCategories(filePath, arrayName) {
-    if (!fs.existsSync(filePath)) return [];
-    project.addSourceFileAtPath(filePath);
-    const sourceFile = project.getSourceFileOrThrow(filePath);
-    const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName);
-    const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
-    
-    return arrayExpr.getElements().map(element => {
-        const obj = element.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-        const idProp = obj.getPropertyOrThrow('id').asKindOrThrow(SyntaxKind.PropertyAssignment);
-        const titleProp = obj.getPropertyOrThrow('title').asKindOrThrow(SyntaxKind.PropertyAssignment);
-        
-        return {
-            id: idProp.getInitializerOrThrow().getText().replace(/['"]/g, ''),
-            title: titleProp.getInitializerOrThrow().getText().replace(/['"]/g, '')
-        };
-    });
+function getSourceFile(filePath) {
+    const existing = project.getSourceFile(filePath);
+    if (existing) {
+        existing.refreshFromFileSystemSync();
+        return existing;
+    }
+    return project.addSourceFileAtPath(filePath);
 }
+
+function filePath(type) {
+    return type === 'vocab' ? VOCAB_FILE : TRAFFIC_FILE;
+}
+
+function arrayName(type) {
+    return type === 'vocab' ? 'VOCABULARY_DATA' : 'TRAFFIC_CATEGORIES';
+}
+
+// Recursively find a category element by id (handles subCategories)
+function findCategoryElement(elements, categoryId) {
+    for (const element of elements) {
+        const obj = element.asKind(SyntaxKind.ObjectLiteralExpression);
+        if (!obj) continue;
+        const idProp = obj.getProperty('id');
+        if (idProp?.getKind() === SyntaxKind.PropertyAssignment) {
+            const id = idProp.getInitializer().getText().replace(/^['"`]|['"`]$/g, '');
+            if (id === categoryId) return obj;
+        }
+        // Check subCategories
+        const subCatProp = obj.getProperty('subCategories');
+        if (subCatProp?.getKind() === SyntaxKind.PropertyAssignment) {
+            const subArr = subCatProp.getInitializer()?.asKind(SyntaxKind.ArrayLiteralExpression);
+            if (subArr) {
+                const found = findCategoryElement(subArr.getElements(), categoryId);
+                if (found) return found;
+            }
+        }
+    }
+    return null;
+}
+
+function extractWords(wordsArray, categoryId, categoryTitle) {
+    return wordsArray.getElements().map(element => {
+        const obj = element.asKind(SyntaxKind.ObjectLiteralExpression);
+        if (!obj) return null;
+        const wordData = { categoryId, categoryTitle };
+        obj.getProperties().forEach(prop => {
+            if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+                const name = prop.getName();
+                const init = prop.getInitializer();
+                const kind = init?.getKind();
+                if (kind === SyntaxKind.StringLiteral || kind === SyntaxKind.NoSubstitutionTemplateLiteral) {
+                    wordData[name] = init.getText().replace(/^['"`]|['"`]$/g, '').replace(/\\'/g, "'");
+                } else {
+                    wordData[name] = init?.getText() ?? '';
+                }
+            }
+        });
+        return wordData;
+    }).filter(Boolean);
+}
+
+function getAllWordsFromElements(elements) {
+    const words = [];
+    for (const element of elements) {
+        const obj = element.asKind(SyntaxKind.ObjectLiteralExpression);
+        if (!obj) continue;
+
+        const idVal = obj.getProperty('id')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') ?? '';
+        const titleVal = obj.getProperty('title')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') ?? '';
+
+        const wordsProp = obj.getProperty('words');
+        if (wordsProp?.getKind() === SyntaxKind.PropertyAssignment) {
+            const arr = wordsProp.getInitializer()?.asKind(SyntaxKind.ArrayLiteralExpression);
+            if (arr) words.push(...extractWords(arr, idVal, titleVal));
+        }
+
+        const subCatProp = obj.getProperty('subCategories');
+        if (subCatProp?.getKind() === SyntaxKind.PropertyAssignment) {
+            const subArr = subCatProp.getInitializer()?.asKind(SyntaxKind.ArrayLiteralExpression);
+            if (subArr) words.push(...getAllWordsFromElements(subArr.getElements()));
+        }
+    }
+    return words;
+}
+
+// ── GET all categories ──────────────────────────────────────────────────────
 
 app.get('/api/categories/:type', (req, res) => {
     try {
-        if (req.params.type === 'vocab') {
-            res.json(getCategories(VOCAB_FILE, 'VOCABULARY_DATA'));
-        } else if (req.params.type === 'traffic') {
-            res.json(getCategories(TRAFFIC_FILE, 'TRAFFIC_CATEGORIES'));
-        } else {
-            res.status(400).json({ error: 'Invalid type' });
+        const fp = filePath(req.params.type);
+        if (!fs.existsSync(fp)) return res.json([]);
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(req.params.type));
+        const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+
+        const cats = [];
+        function collectCategories(elements, prefix = '') {
+            elements.forEach(element => {
+                const obj = element.asKind(SyntaxKind.ObjectLiteralExpression);
+                if (!obj) return;
+                const id = obj.getProperty('id')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') ?? '';
+                const title = obj.getProperty('title')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') ?? '';
+                cats.push({ id, title: prefix + title });
+                const subCatProp = obj.getProperty('subCategories');
+                if (subCatProp?.getKind() === SyntaxKind.PropertyAssignment) {
+                    const subArr = subCatProp.getInitializer()?.asKind(SyntaxKind.ArrayLiteralExpression);
+                    if (subArr) collectCategories(subArr.getElements(), '  ');
+                }
+            });
         }
+        collectCategories(arrayExpr.getElements());
+        res.json(cats);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: e.message });
     }
 });
 
+// ── GET all words (search) ──────────────────────────────────────────────────
+
+app.get('/api/words/:type', (req, res) => {
+    try {
+        const fp = filePath(req.params.type);
+        if (!fs.existsSync(fp)) return res.json([]);
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(req.params.type));
+        const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+        res.json(getAllWordsFromElements(arrayExpr.getElements()));
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ── GET words in a category ─────────────────────────────────────────────────
+
+app.get('/api/words/:type/:categoryId', (req, res) => {
+    try {
+        const { type, categoryId } = req.params;
+        const fp = filePath(type);
+        if (!fs.existsSync(fp)) return res.json([]);
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(type));
+        const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+        const catObj = findCategoryElement(arrayExpr.getElements(), categoryId);
+        if (!catObj) return res.json([]);
+        const wordsProp = catObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
+        const wordsArray = wordsProp.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+        const title = catObj.getProperty('title')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') ?? categoryId;
+        res.json(extractWords(wordsArray, categoryId, title));
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ── POST add word ───────────────────────────────────────────────────────────
+
 app.post('/api/words/:type', (req, res) => {
     try {
         const { type } = req.params;
         const { categoryId, word } = req.body;
-        
-        const filePath = type === 'vocab' ? VOCAB_FILE : TRAFFIC_FILE;
-        const arrayName = type === 'vocab' ? 'VOCABULARY_DATA' : 'TRAFFIC_CATEGORIES';
-        
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'Data file not found' });
-        }
-
-        project.addSourceFileAtPath(filePath);
-        const sourceFile = project.getSourceFileOrThrow(filePath);
-        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName);
+        const fp = filePath(type);
+        if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Data file not found' });
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(type));
         const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
-        
-        const categoryExt = arrayExpr.getElements().find(element => {
-            const obj = element.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-            const idProp = obj.getProperty('id');
-            if (idProp && idProp.getKind() === SyntaxKind.PropertyAssignment) {
-                 return idProp.getInitializer().getText().replace(/['"]/g, '') === categoryId;
-            }
-            return false;
-        });
-
-        if (!categoryExt) {
-            return res.status(404).json({ error: 'Category not found' });
-        }
-
-        const categoryObj = categoryExt.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-        const wordsProp = categoryObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
+        const catObj = findCategoryElement(arrayExpr.getElements(), categoryId);
+        if (!catObj) return res.status(404).json({ error: 'Category not found' });
+        const wordsProp = catObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
         const wordsArray = wordsProp.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
-        
-        // Build the object string
-        let objStr = `{ id: '${word.id}', `;
-        if (type === 'vocab') {
-            objStr += `dutch: '${word.dutch.replace(/'/g, "\\'")}', english: '${word.english.replace(/'/g, "\\'")}', exampleDutch: '${word.exampleDutch.replace(/'/g, "\\'")}', exampleEnglish: '${word.exampleEnglish.replace(/'/g, "\\'")}' }`;
-        } else {
-            objStr += `dutch: '${word.dutch.replace(/'/g, "\\'")}', english: '${word.english.replace(/'/g, "\\'")}', exampleDutch: '${word.exampleDutch.replace(/'/g, "\\'")}', exampleEnglish: '${word.exampleEnglish.replace(/'/g, "\\'")}', imageAsset: require('../assets/images/traffic_signs/all/${word.imageAsset}') }`;
+
+        const esc = s => (s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        let objStr = `{ id: '${esc(word.id)}', dutch: '${esc(word.dutch)}', english: '${esc(word.english)}', exampleDutch: '${esc(word.exampleDutch)}', exampleEnglish: '${esc(word.exampleEnglish)}'`;
+        if (type === 'traffic' && word.imageAsset) {
+            objStr += `, imageAsset: require('../assets/images/traffic_signs/all/${esc(word.imageAsset)}')`;
         }
-        
+        objStr += ' }';
+
         wordsArray.addElement(objStr, { useNewLines: true });
-        
         sourceFile.saveSync();
         res.json({ success: true });
     } catch (e) {
@@ -99,58 +201,77 @@ app.post('/api/words/:type', (req, res) => {
     }
 });
 
-app.get('/api/words/:type/:categoryId', (req, res) => {
+// ── PUT edit word ───────────────────────────────────────────────────────────
+
+app.put('/api/words/:type/:categoryId/:wordId', (req, res) => {
     try {
-        const { type, categoryId } = req.params;
-        const filePath = type === 'vocab' ? VOCAB_FILE : TRAFFIC_FILE;
-        const arrayName = type === 'vocab' ? 'VOCABULARY_DATA' : 'TRAFFIC_CATEGORIES';
-        
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'Data file not found' });
-        }
-
-        project.addSourceFileAtPath(filePath);
-        const sourceFile = project.getSourceFileOrThrow(filePath);
-        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName);
+        const { type, categoryId, wordId } = req.params;
+        const { word } = req.body;
+        const fp = filePath(type);
+        if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Data file not found' });
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(type));
         const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
-        
-        const categoryExt = arrayExpr.getElements().find(element => {
-            const obj = element.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-            const idProp = obj.getProperty('id');
-            if (idProp && idProp.getKind() === SyntaxKind.PropertyAssignment) {
-                 return idProp.getInitializer().getText().replace(/['"]/g, '') === categoryId;
-            }
-            return false;
-        });
-
-        if (!categoryExt) {
-            return res.json([]);
-        }
-
-        const categoryObj = categoryExt.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-        const wordsProp = categoryObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
+        const catObj = findCategoryElement(arrayExpr.getElements(), categoryId);
+        if (!catObj) return res.status(404).json({ error: 'Category not found' });
+        const wordsProp = catObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
         const wordsArray = wordsProp.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
-        
-        const words = wordsArray.getElements().map(element => {
-            const obj = element.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
-            const wordData = {};
-            obj.getProperties().forEach(prop => {
-                if (prop.getKind() === SyntaxKind.PropertyAssignment) {
-                    const name = prop.getName();
-                    const init = prop.getInitializer();
-                    if (init.getKind() === SyntaxKind.StringLiteral || init.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral) {
-                        wordData[name] = init.getText().replace(/^['"`]|['"`]$/g, '').replace(/\\'/g, "'");
-                    } else if (init.getKind() === SyntaxKind.CallExpression) {
-                        wordData[name] = init.getText();
-                    } else {
-                        wordData[name] = init.getText();
-                    }
-                }
-            });
-            return wordData;
+
+        const wordElement = wordsArray.getElements().find(el => {
+            const obj = el.asKind(SyntaxKind.ObjectLiteralExpression);
+            if (!obj) return false;
+            const idProp = obj.getProperty('id');
+            return idProp?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') === wordId;
         });
 
-        res.json(words);
+        if (!wordElement) return res.status(404).json({ error: 'Word not found' });
+
+        const wordObj = wordElement.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+        const esc = s => (s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        const fieldsToUpdate = ['dutch', 'english', 'exampleDutch', 'exampleEnglish'];
+        fieldsToUpdate.forEach(field => {
+            if (word[field] === undefined) return;
+            const prop = wordObj.getProperty(field);
+            if (prop?.getKind() === SyntaxKind.PropertyAssignment) {
+                prop.setInitializer(`'${esc(word[field])}'`);
+            }
+        });
+
+        sourceFile.saveSync();
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ── DELETE word ─────────────────────────────────────────────────────────────
+
+app.delete('/api/words/:type/:categoryId/:wordId', (req, res) => {
+    try {
+        const { type, categoryId, wordId } = req.params;
+        const fp = filePath(type);
+        if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Data file not found' });
+        const sourceFile = getSourceFile(fp);
+        const arrayDecl = sourceFile.getVariableDeclarationOrThrow(arrayName(type));
+        const arrayExpr = arrayDecl.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+        const catObj = findCategoryElement(arrayExpr.getElements(), categoryId);
+        if (!catObj) return res.status(404).json({ error: 'Category not found' });
+        const wordsProp = catObj.getPropertyOrThrow('words').asKindOrThrow(SyntaxKind.PropertyAssignment);
+        const wordsArray = wordsProp.getInitializerIfKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+
+        const idx = wordsArray.getElements().findIndex(el => {
+            const obj = el.asKind(SyntaxKind.ObjectLiteralExpression);
+            if (!obj) return false;
+            return obj.getProperty('id')?.getInitializer()?.getText().replace(/^['"`]|['"`]$/g, '') === wordId;
+        });
+
+        if (idx === -1) return res.status(404).json({ error: 'Word not found' });
+
+        wordsArray.removeElement(idx);
+        sourceFile.saveSync();
+        res.json({ success: true });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: e.message });
@@ -159,5 +280,5 @@ app.get('/api/words/:type/:categoryId', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Admin UI server running on http://localhost:${PORT}`);
+    console.log(`Admin UI running on http://localhost:${PORT}`);
 });
