@@ -79,6 +79,34 @@ public class DutchVocabAIModule: Module {
     /// that is intentional and why review happens at the end of a scene rather than
     /// per turn: the engine holds one conversation, so correcting mid-scene would
     /// destroy the scene being corrected.
+    AsyncFunction("isVisionAvailableAsync") { () -> Bool in
+      return self.runner.visionAvailable
+    }
+
+    /// Builds an exam-style picture question from a photo the learner supplied.
+    AsyncFunction("generatePictureTaskAsync") { (imagePath: String, level: String) -> String in
+      let prompt = "Maak een examenvraag bij deze foto voor niveau \(level)."
+      return try await self.runner.generateWithImage(
+        prompt: prompt,
+        system: Self.pictureTaskSystemPrompt,
+        imagePath: imagePath)
+    }
+
+    /// Marks a spoken answer against the photo itself, not against a caption.
+    AsyncFunction("reviewPictureAnswerAsync") {
+      (imagePath: String, question: String, checkpoints: [String], answer: String) -> String in
+      let checks = checkpoints.enumerated()
+        .map { "\($0.offset + 1). \($0.element)" }
+        .joined(separator: "\n")
+      let prompt = "De vraag was: \(question)\n\n"
+        + "Waar de examinator op let:\n\(checks)\n\n"
+        + "De kandidaat zei (uitgeschreven spraak):\n\(answer)"
+      return try await self.runner.generateWithImage(
+        prompt: prompt,
+        system: Self.pictureReviewSystemPrompt,
+        imagePath: imagePath)
+    }
+
     AsyncFunction("reviewRoleplayAsync") { (lines: [String]) -> String in
       let numbered = lines.enumerated()
         .map { "\($0.offset + 1). \($0.element)" }
@@ -219,6 +247,52 @@ public class DutchVocabAIModule: Module {
     Respond with a JSON array only — no extra text, no markdown fences.
     """
 
+  /// Turns a photo into a Spreken-style picture question.
+  ///
+  /// Mirrors onderdeel 2 of the real exam, which pairs "describe what you see" with a
+  /// question about the candidate themselves — that second half is what makes the task
+  /// speakable for a whole minute instead of three words.
+  private static let pictureTaskSystemPrompt = """
+    You look at a photo and write ONE speaking-exam question about it, in Dutch, for the
+    Inburgering A2 exam.
+
+    Base everything on what is actually visible in the photo. Never invent objects,
+    people or places that are not there. If the photo is unclear, ask about what can
+    still be made out.
+
+    Follow the shape of the real exam:
+    - "context" is one short sentence setting the scene, in Dutch.
+    - "question" asks the candidate to describe something in the photo AND to say
+      something about themselves. For example: "Vertel wat u op de foto ziet. Vertel ook
+      of u dit zelf weleens doet."
+    - "checkpoints" are three short Dutch phrases describing what an examiner listens for.
+
+    Keep all Dutch at A2 level: simple words, short sentences.
+    Respond ONLY with JSON, no other text and no markdown fences:
+    {"context": "...", "question": "...", "checkpoints": ["...", "...", "..."]}
+    """
+
+  /// Marks a spoken answer against the photo itself.
+  private static let pictureReviewSystemPrompt = """
+    You are marking a spoken answer to a Dutch Inburgering A2 picture question. The photo
+    is attached — judge whether the candidate actually described what is in it.
+
+    Be encouraging. This is A2: short, simple, correct sentences are enough to pass.
+    Judge content and language only, never punctuation or capitalisation, because this is
+    transcribed speech. Do not lower the mark for a short answer that does what was asked.
+    If the candidate described something that is not in the photo, say so plainly but kindly.
+
+    Respond ONLY with JSON, no other text and no markdown fences:
+    {
+      "summary": "One encouraging sentence in English about the answer.",
+      "checkpoints": [
+        { "criterion": "the checkpoint text", "met": true or false, "explanation": "Short English note." }
+      ],
+      "languageNotes": "Grammar or word-choice mistakes worth fixing, in English. If none, say 'No real mistakes.'",
+      "improvedAnswer": "The candidate's own answer rewritten in correct, natural A2 Dutch. Keep their ideas and keep it short."
+    }
+    """
+
   /// Wraps a learner turn. An empty string opens the scene, so the model speaks first
   /// and the learner is never staring at a blank transcript.
   private static func roleplayPrompt(_ text: String) -> String {
@@ -293,6 +367,10 @@ final class GemmaRunner: NSObject {
   /// turn learns its scene was evicted instead of replying with no context.
   private var activeSessionId: String?
 
+  /// True when the engine initialised with its vision encoder. False means the
+  /// model loaded text-only and anything image-based must be hidden.
+  private(set) var visionAvailable = false
+
   private var downloadTask: URLSessionDownloadTask?
   private var downloadSession: URLSession?
   private var progressHandler: ((Int64, Int64) -> Void)?
@@ -336,6 +414,7 @@ final class GemmaRunner: NSObject {
     activeConversation = nil
     activeSessionId = nil
     engine = nil
+    visionAvailable = false
     loadError = nil
     loadLock.unlock()
     if deleteFile {
@@ -383,6 +462,39 @@ final class GemmaRunner: NSObject {
       for try await chunk in conversation.sendMessageStream(Message(prompt)) {
         onChunk(chunk.toString)
       }
+    } catch {
+      throw Self.wrapGenerationError(error)
+    }
+  }
+
+  /// Generates from a prompt with an image attached.
+  ///
+  /// `imagePath` must be an absolute file path, not a file:// URL — LiteRT-LM opens
+  /// it directly. Callers are expected to have downscaled the photo first; a full
+  /// camera frame is far larger than the encoder's input.
+  func generateWithImage(prompt: String, system: String, imagePath: String) async throws -> String {
+    let gate = self.gate
+    await gate.acquire()
+    defer { Task { await gate.release() } }
+
+    guard FileManager.default.fileExists(atPath: imagePath) else {
+      throw NSError(domain: "DutchVocabAI", code: 40,
+                    userInfo: [NSLocalizedDescriptionKey: "image_missing: no file at \(imagePath)"])
+    }
+    do {
+      // The engine has to be up before visionAvailable means anything — it is set
+      // during the load. Checking it first always fails on the very first call.
+      _ = try await ensureLoaded()
+      guard visionAvailable else {
+        throw NSError(domain: "DutchVocabAI", code: 41,
+                      userInfo: [NSLocalizedDescriptionKey:
+                        "vision_unavailable: the model loaded without its vision encoder."])
+      }
+
+      let conversation = try await startConversation(system: system)
+      let message = Message(of: .imageFile(imagePath), .text(prompt))
+      let response = try await conversation.sendMessage(message)
+      return response.toString
     } catch {
       throw Self.wrapGenerationError(error)
     }
@@ -668,28 +780,41 @@ final class GemmaRunner: NSObject {
     var lastError: Error = NSError(domain: "DutchVocabAI", code: 2,
                                    userInfo: [NSLocalizedDescriptionKey: "load_failed: no backend succeeded"])
 
-    for backend in backendsToTry {
-      do {
-        let config = try EngineConfig(
-          modelPath: modelFileURL.path,
-          backend: backend,
-          cacheDir: cachePath
-        )
-        let newEngine = Engine(engineConfig: config)
-        try await newEngine.initialize()
+    // Vision is attempted first, then dropped entirely.
+    //
+    // The model file carries a vision encoder, but initialising it costs extra
+    // memory on every load and may simply fail on some devices. Falling back to a
+    // text-only engine keeps grammar check, roleplay and the exams working there
+    // instead of taking the whole feature set down with the camera feature.
+    for wantVision in [true, false] {
+      for backend in backendsToTry {
+        do {
+          let config = try EngineConfig(
+            modelPath: modelFileURL.path,
+            backend: backend,
+            visionBackend: wantVision ? backend : nil,
+            cacheDir: cachePath
+          )
+          let newEngine = Engine(engineConfig: config)
+          try await newEngine.initialize()
 
-        loadLock.lock()
-        self.engine = newEngine
-        loadLock.unlock()
-        return newEngine
-      } catch {
-        lastError = error
-        // Wipe the shader cache after a GPU failure; a stale or incomplete cache
-        // can prevent the CPU backend from initialising correctly on the next try.
-        if backend == .gpu {
-          try? FileManager.default.removeItem(atPath: cachePath)
-          try? FileManager.default.createDirectory(atPath: cachePath,
-                                                   withIntermediateDirectories: true)
+          loadLock.lock()
+          self.engine = newEngine
+          self.visionAvailable = wantVision
+          loadLock.unlock()
+          if !wantVision {
+            NSLog("[DutchVocabAI] Loaded without the vision encoder — photo features are unavailable")
+          }
+          return newEngine
+        } catch {
+          lastError = error
+          // Wipe the shader cache after a GPU failure; a stale or incomplete cache
+          // can prevent the CPU backend from initialising correctly on the next try.
+          if backend == .gpu {
+            try? FileManager.default.removeItem(atPath: cachePath)
+            try? FileManager.default.createDirectory(atPath: cachePath,
+                                                     withIntermediateDirectories: true)
+          }
         }
       }
     }

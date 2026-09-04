@@ -46,6 +46,7 @@ export type AIErrorKind =
   | 'generation_timeout'
   | 'generation_failed'
   | 'session_expired'
+  | 'vision_unavailable'
   | 'not_available';
 
 export interface AIError {
@@ -77,6 +78,17 @@ export interface AIContextValue {
   endRoleplay(sessionId: string): Promise<boolean>;
   /** End-of-scene correction pass. Evicts any live session, so call it after the scene. */
   reviewRoleplay(lines: string[]): Promise<string>;
+
+  // ── Vision ──
+  /** null until the engine has loaded at least once and reported in. */
+  visionAvailable: boolean | null;
+  generatePictureTask(imagePath: string, level: string): Promise<string>;
+  reviewPictureAnswer(
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ): Promise<string>;
 
   // ── Lifecycle ──
   retryLoad(): Promise<void>;
@@ -114,6 +126,14 @@ function classifyError(err: unknown): AIError {
       message: 'The AI model could not be loaded. Restart the app and try again.',
       detail: msg,
       recoverable: true,
+    };
+  }
+  if (msg.includes('vision_unavailable') || msg.includes('image_missing')) {
+    return {
+      kind: 'vision_unavailable',
+      message: 'Photo features are not available on this device.',
+      detail: msg,
+      recoverable: false,
     };
   }
   if (msg.includes('session_expired')) {
@@ -210,6 +230,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<AIError | null>(null);
   const [availability, setAvailability] = useState<AIAvailability | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+  const [visionAvailable, setVisionAvailable] = useState<boolean | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const toastCounter = useRef(0);
 
@@ -284,6 +305,11 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       const result = await fn();
       engineLoadedOnce.current = true;
       setEngineState('model_ready');
+      if (visionAvailable === null) {
+        AIModule.isVisionAvailableAsync()
+          .then(setVisionAvailable)
+          .catch(() => setVisionAvailable(false));
+      }
       aiLog('info', `✓ ${label}: completed in ${Date.now() - t0}ms`);
       return result;
     } catch (err) {
@@ -295,7 +321,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       if (aiError.recoverable) showToast(aiError);
       throw aiError;
     }
-  }, [showToast]);
+  }, [showToast, visionAvailable]);
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -337,6 +363,20 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     withEngineGuard('reviewRoleplay', () => AIModule.reviewRoleplayAsync(lines)),
   [withEngineGuard]);
 
+  const generatePictureTask = useCallback((imagePath: string, level: string) =>
+    withEngineGuard('generatePictureTask', () => AIModule.generatePictureTaskAsync(imagePath, level)),
+  [withEngineGuard]);
+
+  const reviewPictureAnswer = useCallback((
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ) =>
+    withEngineGuard('reviewPictureAnswer',
+      () => AIModule.reviewPictureAnswerAsync(imagePath, question, checkpoints, answer)),
+  [withEngineGuard]);
+
   const translateTexts = useCallback((texts: string[], from: string, to: string) =>
     withEngineGuard('translateTexts', () => AIModule.translateTextsAsync(texts, from, to)),
   [withEngineGuard]);
@@ -372,6 +412,9 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     sendRoleplayTurnStream,
     endRoleplay,
     reviewRoleplay,
+    visionAvailable,
+    generatePictureTask,
+    reviewPictureAnswer,
     retryLoad,
     clearError,
     availability,

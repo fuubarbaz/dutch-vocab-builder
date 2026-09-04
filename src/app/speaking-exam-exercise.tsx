@@ -19,6 +19,7 @@ import {
 import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import { useAI, AIErrorBanner } from '@/context/AIContext';
 import { SPEAKING_TASKS, SPEAKING_PARTS, SpeakingTask } from '@/data/speaking_exam';
+import { SpeakingFeedback, parseSpeakingFeedback } from '@/utils/speakingFeedback';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -30,13 +31,6 @@ const SCENE_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 // ─── AI feedback ────────────────────────────────────────────────────────────
-
-interface SpeakingFeedback {
-  summary: string;
-  checkpoints: Array<{ criterion: string; met: boolean; explanation: string }>;
-  languageNotes: string;
-  improvedAnswer: string;
-}
 
 function buildPrompt(task: SpeakingTask, spoken: string): string {
   const checks = task.checkpoints.map((c, i) => `${i + 1}. ${c}`).join('\n');
@@ -73,23 +67,6 @@ Respond ONLY with JSON, no other text and no markdown fences:
   "languageNotes": "Any grammar or word-choice mistakes worth fixing, in English. If none, say 'No real mistakes.'",
   "improvedAnswer": "The candidate's own answer rewritten in correct, natural A2 Dutch. Keep their ideas and keep it short."
 }`;
-}
-
-function parseFeedback(raw: string): SpeakingFeedback | null {
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try {
-    const parsed = JSON.parse(match[0]);
-    if (!parsed || typeof parsed !== 'object') return null;
-    return {
-      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
-      checkpoints: Array.isArray(parsed.checkpoints) ? parsed.checkpoints : [],
-      languageNotes: typeof parsed.languageNotes === 'string' ? parsed.languageNotes : '',
-      improvedAnswer: typeof parsed.improvedAnswer === 'string' ? parsed.improvedAnswer : '',
-    };
-  } catch {
-    return null;
-  }
 }
 
 // ─── Screen ─────────────────────────────────────────────────────────────────
@@ -195,7 +172,7 @@ export default function SpeakingExamExerciseScreen() {
     setFeedbackFailed(false);
     try {
       const raw = await generate(buildPrompt(task, spoken.trim()));
-      const parsed = parseFeedback(raw);
+      const parsed = parseSpeakingFeedback(raw);
       if (parsed) setFeedback(parsed);
       else setFeedbackFailed(true);
     } catch {

@@ -28,6 +28,20 @@ class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   async reviewRoleplayAsync(_lines: string[]): Promise<string> {
     throw new Error('load_error');
   }
+  async isVisionAvailableAsync(): Promise<boolean> {
+    return false;
+  }
+  async generatePictureTaskAsync(_imagePath: string, _level: string): Promise<string> {
+    throw new Error('load_error');
+  }
+  async reviewPictureAnswerAsync(
+    _imagePath: string,
+    _question: string,
+    _checkpoints: string[],
+    _answer: string,
+  ): Promise<string> {
+    throw new Error('load_error');
+  }
   async translateTextsAsync(texts: string[], _sourceLang: string, _targetLang: string): Promise<string[]> {
     return texts;
   }

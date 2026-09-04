@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
   Mic, ChevronRight, BookOpen, Clock, ListChecks, Video, Image as ImageIcon, Images, Layers,
+  Camera,
 } from 'lucide-react-native';
 import {
   SPEAKING_PARTS, SPEAKING_TASKS, SPEAKING_EXAM_FACTS, SpeakingPartId,
@@ -70,6 +71,23 @@ export default function SpeakingExamScreen() {
             <Text style={styles.cheatSub}>Zinnen die u in elk onderdeel kunt gebruiken</Text>
           </View>
           <ChevronRight size={20} color="#fff" />
+        </Pressable>
+
+        <Pressable
+          style={[styles.photoCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}
+          onPress={() => router.push('/speaking-photo' as any)}
+        >
+          <View style={[styles.partIcon, { backgroundColor: '#10b98118' }]}>
+            <Camera size={20} color="#10b981" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.partTitle, { color: theme.text }]}>Oefenen met uw eigen foto</Text>
+            <Text style={[styles.partInstruction, { color: theme.textSecondary }]}>
+              Maak een foto en krijg er een examenvraag bij. Uw antwoord wordt tegen de foto
+              zelf nagekeken.
+            </Text>
+          </View>
+          <ChevronRight size={20} color={theme.textSecondary} />
         </Pressable>
 
         <Pressable onPress={() => setShowEnglish(v => !v)} hitSlop={8} style={styles.langToggle}>
@@ -171,6 +189,14 @@ const styles = StyleSheet.create({
   cheatTitle: { color: '#fff', fontSize: FontSize.subhead, fontWeight: FontWeight.bold },
   cheatSub: { color: '#ffffffcc', fontSize: FontSize.footnote, marginTop: 1 },
 
+  photoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    padding: Spacing.md,
+  },
   langToggle: { alignSelf: 'flex-end' },
   langToggleText: { fontSize: FontSize.footnote, fontWeight: FontWeight.semibold },
 

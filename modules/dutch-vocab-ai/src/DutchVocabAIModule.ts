@@ -25,6 +25,17 @@ declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> 
   endRoleplaySessionAsync(sessionId: string): Promise<boolean>;
   /** Reviews a finished scene's learner lines. Evicts any live session — end-of-scene only. */
   reviewRoleplayAsync(lines: string[]): Promise<string>;
+  /** True when the engine loaded with its vision encoder. False = photo features off. */
+  isVisionAvailableAsync(): Promise<boolean>;
+  /** Builds an A2 picture question from a photo. `imagePath` is an absolute path, no file://. */
+  generatePictureTaskAsync(imagePath: string, level: string): Promise<string>;
+  /** Marks a spoken answer against the photo itself. */
+  reviewPictureAnswerAsync(
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ): Promise<string>;
   getAIAvailabilityAsync(): Promise<AIAvailability>;
   /** Returns the native error message from the last failed engine load, or null if no error. */
   getLoadErrorAsync(): Promise<string | null>;
@@ -115,6 +126,10 @@ async function reviewRoleplayAsyncFallback(): Promise<string> {
   throw new Error('load_error');
 }
 
+async function visionUnavailableFallback(): Promise<never> {
+  throw new Error('load_error');
+}
+
 // ── Module Export ─────────────────────────────────────────────────────────────
 
 let moduleToExport: DutchVocabAIModule;
@@ -136,6 +151,9 @@ try {
     sendRoleplayTurnStreamAsync: sendRoleplayTurnAsyncFallback,
     endRoleplaySessionAsync: endRoleplaySessionAsyncFallback,
     reviewRoleplayAsync: reviewRoleplayAsyncFallback,
+    isVisionAvailableAsync: async (): Promise<boolean> => false,
+    generatePictureTaskAsync: visionUnavailableFallback,
+    reviewPictureAnswerAsync: visionUnavailableFallback,
     getAIAvailabilityAsync: async (): Promise<AIAvailability> => 'load_error',
     getLoadErrorAsync: async (): Promise<string | null> => nativeLoadError,
     downloadModelAsync: async (): Promise<boolean> => false,
