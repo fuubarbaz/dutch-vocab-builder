@@ -12,15 +12,15 @@ import {
   Package, Truck, KeyRound, Phone, Stethoscope, Pill, Mail, Cake, Gift,
   HelpCircle,
 } from 'lucide-react-native';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
 import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import { useAI, AIErrorBanner } from '@/context/AIContext';
+import { useMistakeJournal } from '@/context/MistakeJournalContext';
+import { useDutchSpeechRecognition } from '@/hooks/useDutchSpeechRecognition';
 import { SPEAKING_TASKS, SPEAKING_PARTS, SpeakingTask } from '@/data/speaking_exam';
+import { SpeakingFeedback, parseSpeakingFeedback } from '@/utils/speakingFeedback';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { SpeakingFeedbackCard } from '@/components/SpeakingFeedbackCard';
 
 /** Scene icons, resolved from the `icon` name in the task data. */
 const SCENE_ICONS: Record<string, React.ComponentType<any>> = {
@@ -30,13 +30,6 @@ const SCENE_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 // ─── AI feedback ────────────────────────────────────────────────────────────
-
-interface SpeakingFeedback {
-  summary: string;
-  checkpoints: Array<{ criterion: string; met: boolean; explanation: string }>;
-  languageNotes: string;
-  improvedAnswer: string;
-}
 
 function buildPrompt(task: SpeakingTask, spoken: string): string {
   const checks = task.checkpoints.map((c, i) => `${i + 1}. ${c}`).join('\n');
@@ -75,23 +68,6 @@ Respond ONLY with JSON, no other text and no markdown fences:
 }`;
 }
 
-function parseFeedback(raw: string): SpeakingFeedback | null {
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try {
-    const parsed = JSON.parse(match[0]);
-    if (!parsed || typeof parsed !== 'object') return null;
-    return {
-      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
-      checkpoints: Array.isArray(parsed.checkpoints) ? parsed.checkpoints : [],
-      languageNotes: typeof parsed.languageNotes === 'string' ? parsed.languageNotes : '',
-      improvedAnswer: typeof parsed.improvedAnswer === 'string' ? parsed.improvedAnswer : '',
-    };
-  } catch {
-    return null;
-  }
-}
-
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function SpeakingExamExerciseScreen() {
@@ -99,6 +75,7 @@ export default function SpeakingExamExerciseScreen() {
   const router = useRouter();
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
   const { generate, engineState } = useAI();
+  const { logSentenceMistake } = useMistakeJournal();
 
   const task = useMemo(
     () => SPEAKING_TASKS.find(t => t.id === taskId) ?? SPEAKING_TASKS[0],
@@ -110,77 +87,25 @@ export default function SpeakingExamExerciseScreen() {
     return i >= 0 && i < SPEAKING_TASKS.length - 1 ? SPEAKING_TASKS[i + 1] : null;
   }, [task]);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [spoken, setSpoken] = useState('');
+  // Exam answers run several sentences and candidates pause mid-answer, so the
+  // silence window is longer than the single-word practice screens use.
+  const speech = useDutchSpeechRecognition({ silenceMs: 5000 });
+  const { isRecording, transcript: spoken, error: micError } = speech;
+
   const [isChecking, setIsChecking] = useState(false);
   const [feedback, setFeedback] = useState<SpeakingFeedback | null>(null);
   const [feedbackFailed, setFeedbackFailed] = useState(false);
   const [showSample, setShowSample] = useState(false);
   const [showEnglish, setShowEnglish] = useState(false);
-  // Speech recognition can fail quietly (permission denied, no nl-NL recogniser,
-  // simulator with no mic). Without this the record button just does nothing.
-  const [micError, setMicError] = useState<string | null>(null);
-
-  // Stops a run-on recording when the candidate goes quiet, mirroring
-  // sentence-practice so the two screens behave the same way.
-  const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const stopRecording = useCallback(() => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    try { ExpoSpeechRecognitionModule.stop(); } catch { /* already stopped */ }
-  }, []);
-
-  const resetSilenceTimeout = useCallback(() => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    // Longer than sentence-practice: exam answers are several sentences and
-    // candidates pause to think mid-answer.
-    silenceTimeout.current = setTimeout(() => stopRecording(), 5000);
-  }, [stopRecording]);
-
-  useSpeechRecognitionEvent('start', () => { setIsRecording(true); resetSilenceTimeout(); });
-  useSpeechRecognitionEvent('end', () => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-  });
-  useSpeechRecognitionEvent('error', (e) => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    // "no-speech" just means they stayed quiet — not worth an error message.
-    if (e?.error !== 'no-speech') {
-      setMicError('Spraakherkenning werkt hier niet. Controleer de microfoon en of Nederlands beschikbaar is.');
-    }
-  });
-  useSpeechRecognitionEvent('result', (e) => {
-    resetSilenceTimeout();
-    const transcript = e.results?.[0]?.transcript;
-    if (transcript) setSpoken(transcript);
-  });
-
-  useEffect(() => () => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    ExpoSpeechRecognitionModule.abort();
-    stopTTS();
-  }, []);
 
   const startRecording = useCallback(async () => {
     stopTTS();
-    setSpoken('');
     setFeedback(null);
     setFeedbackFailed(false);
-    setMicError(null);
+    await speech.start();
+  }, [speech]);
 
-    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!perm.granted) {
-      setMicError('Geen toegang tot de microfoon. Sta dit toe in Instellingen om hardop te oefenen.');
-      return;
-    }
-    try {
-      ExpoSpeechRecognitionModule.start({ lang: 'nl-NL', interimResults: true });
-    } catch {
-      setMicError('Spraakherkenning kon niet starten. Probeer het opnieuw.');
-    }
-  }, []);
+  useEffect(() => () => { stopTTS(); }, []);
 
   const playQuestion = useCallback(() => {
     stopTTS();
@@ -195,20 +120,33 @@ export default function SpeakingExamExerciseScreen() {
     setFeedbackFailed(false);
     try {
       const raw = await generate(buildPrompt(task, spoken.trim()));
-      const parsed = parseFeedback(raw);
-      if (parsed) setFeedback(parsed);
-      else setFeedbackFailed(true);
+      const parsed = parseSpeakingFeedback(raw);
+      if (parsed) {
+        setFeedback(parsed);
+        // Same treatment roleplay gives its corrections: a spoken answer that needed
+        // fixing is a mistake worth seeing again, not just feedback you scroll past.
+        if (parsed.improvedAnswer && parsed.checkpoints.some(c => !c.met)) {
+          await logSentenceMistake({
+            original: spoken.trim(),
+            corrected: parsed.improvedAnswer,
+            note: parsed.languageNotes || undefined,
+            scenario: task.context,
+          });
+        }
+      } else {
+        setFeedbackFailed(true);
+      }
     } catch {
       // Already classified and toasted by AIContext.
       setFeedbackFailed(true);
     } finally {
       setIsChecking(false);
     }
-  }, [generate, isChecking, spoken, task]);
+  }, [generate, isChecking, logSentenceMistake, spoken, task]);
 
   const goTo = (id: string) => {
     stopTTS();
-    ExpoSpeechRecognitionModule.abort();
+    // The hook aborts the recogniser on unmount; replace() unmounts this screen.
     router.replace({ pathname: '/speaking-exam-exercise', params: { taskId: id } } as any);
   };
 
@@ -306,58 +244,7 @@ export default function SpeakingExamExerciseScreen() {
           </View>
         )}
 
-        {feedback && !isChecking && (
-          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-            <View style={styles.feedbackHeader}>
-              <Sparkles size={18} color={theme.primary} />
-              <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>Feedback</Text>
-            </View>
-            <Text style={[styles.summary, { color: theme.text }]}>{feedback.summary}</Text>
-
-            {feedback.checkpoints.map((c, i) => (
-              <View key={i} style={[styles.checkRow, { borderTopColor: theme.border }]}>
-                {c.met
-                  ? <CheckCircle2 size={18} color={theme.success} />
-                  : <XCircle size={18} color={theme.danger} />}
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.checkCriterion, { color: theme.text }]}>{c.criterion}</Text>
-                  {c.explanation ? (
-                    <Text style={[styles.checkExplanation, { color: theme.textSecondary }]}>
-                      {c.explanation}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
-            ))}
-
-            {feedback.languageNotes ? (
-              <View style={[styles.checkRow, { borderTopColor: theme.border }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.checkCriterion, { color: theme.text }]}>Taal</Text>
-                  <Text style={[styles.checkExplanation, { color: theme.textSecondary }]}>
-                    {feedback.languageNotes}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-
-            {feedback.improvedAnswer ? (
-              <View style={[styles.improvedBox, { backgroundColor: theme.surfaceSecondary }]}>
-                <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>Zo kan het ook</Text>
-                <View style={styles.questionRow}>
-                  <Text style={[styles.improvedText, { color: theme.text }]}>{feedback.improvedAnswer}</Text>
-                  <TouchableOpacity
-                    onPress={() => { stopTTS(); ttsSpeak(feedback.improvedAnswer, 0.85); }}
-                    hitSlop={8}
-                    style={styles.iconBtn}
-                  >
-                    <Volume2 size={18} color={theme.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null}
-          </View>
-        )}
+        {feedback && !isChecking && <SpeakingFeedbackCard feedback={feedback} />}
 
         {micError && (
           <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
@@ -416,7 +303,7 @@ export default function SpeakingExamExerciseScreen() {
         ) : null}
 
         <TouchableOpacity
-          onPress={isRecording ? stopRecording : startRecording}
+          onPress={isRecording ? speech.stop : startRecording}
           style={[
             styles.micBtn,
             { backgroundColor: isRecording ? theme.danger : theme.primary },

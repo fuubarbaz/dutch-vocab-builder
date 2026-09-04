@@ -20,11 +20,17 @@ export type RoleplayChunkPayload = {
   done: boolean;
 };
 
+export type TextChunkPayload = {
+  text: string;
+  done: boolean;
+};
+
 export type DutchVocabAIModuleEvents = {
   onChange: (params: ChangeEventPayload) => void;
   onDownloadProgress: (params: DownloadProgressPayload) => void;
   onSmallTalkChunk: (params: SmallTalkChunkPayload) => void;
   onRoleplayChunk: (params: RoleplayChunkPayload) => void;
+  onTextChunk: (params: TextChunkPayload) => void;
 };
 
 export type ChangeEventPayload = {

@@ -6,7 +6,7 @@ import {
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { speak as speakTTS } from '@/utils/tts';
-import AIModule from 'dutch-vocab-ai';
+import { useAI } from '@/context/AIContext';
 import { GRAMMAR_TOPICS, GrammarQuizQuestion } from '@/data/grammar_topics';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +25,7 @@ function parseGrammarResult(raw: string): { isCorrect: boolean; explanation: str
 // ---------------------------------------------------------------------------
 
 export default function GrammarTopicScreen() {
+  const { generate } = useAI();
     const { id } = useLocalSearchParams<{ id: string }>();
     const topic = GRAMMAR_TOPICS.find((t) => t.id === id);
 
@@ -84,7 +85,7 @@ export default function GrammarTopicScreen() {
         setIsEvaluating(true);
         try {
             const prompt = `[grammar-check] Check this Dutch sentence: "${userAnswer}" (expected translation of: "${currentQ.prompt}". Acceptable answer: "${currentQ.correctAnswer}")`;
-            const raw = await AIModule.generateTextAsync(prompt);
+            const raw = await generate(prompt);
             const result = parseGrammarResult(raw);
             setFeedback(result);
             setAnsweredCount((c) => c + 1);

@@ -29,7 +29,7 @@ import {
   ArrowLeft,
   Lightbulb,
 } from 'lucide-react-native';
-import AIModule from 'dutch-vocab-ai';
+import { useAI } from '@/context/AIContext';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import {
@@ -475,6 +475,7 @@ export default function WritingExamExerciseScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const { generate } = useAI();
 
   const exercise = getExerciseById(id ?? '');
   const [showEnglish, setShowEnglish] = useState(showEnParam === '1');
@@ -502,7 +503,7 @@ export default function WritingExamExerciseScreen() {
 
     try {
       const prompt = buildEvaluationPrompt(exercise, userAnswer);
-      const raw = await AIModule.generateTextAsync(prompt);
+      const raw = await generate(prompt);
       const parsed = parseFeedback(raw);
       if (parsed) {
         setFeedback(parsed);

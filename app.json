@@ -56,6 +56,13 @@
       ],
       "expo-notifications",
       "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Dutchify gebruikt een foto uit uw bibliotheek om er een spreekoefening bij te maken.",
+          "cameraPermission": "Dutchify gebruikt de camera om een spreekoefening te maken bij een foto die u zelf maakt."
+        }
+      ],
       "./plugins/withIosLifecycleFix"
     ],
     "experiments": {

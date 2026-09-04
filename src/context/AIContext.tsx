@@ -11,7 +11,9 @@
  *              └────────────────────┴────────────────┘
  *                              (retry)
  *
- * Every AI feature in the app goes through this context.  It provides:
+ * Feature screens go through this context. The download lifecycle in AIModelGate and
+ * Settings talks to the native module directly, because it runs before and around the
+ * engine rather than through it. Everything else should use the hooks here, for:
  *  • A single source of truth for engine state
  *  • Classified, user-friendly errors with recovery actions
  *  • Standardised debug logging (only in __DEV__ mode)
@@ -46,6 +48,7 @@ export type AIErrorKind =
   | 'generation_timeout'
   | 'generation_failed'
   | 'session_expired'
+  | 'vision_unavailable'
   | 'not_available';
 
 export interface AIError {
@@ -66,17 +69,29 @@ export interface AIContextValue {
 
   // ── Generate wrappers ──
   generate(prompt: string): Promise<string>;
-  generateSmallTalk(topic: string, turnCount: number): Promise<string>;
+  /** Streams a plain-text answer via `onTextChunk`, and resolves to the whole of it. */
+  generateStream(prompt: string): Promise<string>;
   generateSmallTalkStream(topic: string, turnCount: number): Promise<void>;
   translateTexts(texts: string[], from: string, to: string): Promise<string[]>;
 
   // ── Roleplay (stateful — see DutchVocabAIModule.swift) ──
   startRoleplay(scenario: string, character: string, level: string): Promise<string>;
-  sendRoleplayTurn(sessionId: string, text: string): Promise<string>;
   sendRoleplayTurnStream(sessionId: string, text: string): Promise<void>;
   endRoleplay(sessionId: string): Promise<boolean>;
   /** End-of-scene correction pass. Evicts any live session, so call it after the scene. */
   reviewRoleplay(lines: string[]): Promise<string>;
+
+  // ── Vision ──
+  /** null until the engine has loaded at least once and reported in. */
+  visionAvailable: boolean | null;
+  generatePictureTask(imagePath: string, level: string): Promise<string>;
+  reviewPictureAnswer(
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ): Promise<string>;
+  describeImage(imagePath: string, level: string): Promise<string>;
 
   // ── Lifecycle ──
   retryLoad(): Promise<void>;
@@ -114,6 +129,14 @@ function classifyError(err: unknown): AIError {
       message: 'The AI model could not be loaded. Restart the app and try again.',
       detail: msg,
       recoverable: true,
+    };
+  }
+  if (msg.includes('vision_unavailable') || msg.includes('image_missing')) {
+    return {
+      kind: 'vision_unavailable',
+      message: 'Photo features are not available on this device.',
+      detail: msg,
+      recoverable: false,
     };
   }
   if (msg.includes('session_expired')) {
@@ -210,6 +233,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<AIError | null>(null);
   const [availability, setAvailability] = useState<AIAvailability | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+  const [visionAvailable, setVisionAvailable] = useState<boolean | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const toastCounter = useRef(0);
 
@@ -284,6 +308,11 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       const result = await fn();
       engineLoadedOnce.current = true;
       setEngineState('model_ready');
+      if (visionAvailable === null) {
+        AIModule.isVisionAvailableAsync()
+          .then(setVisionAvailable)
+          .catch(() => setVisionAvailable(false));
+      }
       aiLog('info', `✓ ${label}: completed in ${Date.now() - t0}ms`);
       return result;
     } catch (err) {
@@ -295,7 +324,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       if (aiError.recoverable) showToast(aiError);
       throw aiError;
     }
-  }, [showToast]);
+  }, [showToast, visionAvailable]);
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -303,8 +332,8 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     withEngineGuard('generateText', () => AIModule.generateTextAsync(prompt)),
   [withEngineGuard]);
 
-  const generateSmallTalk = useCallback((topic: string, turnCount: number) =>
-    withEngineGuard('generateSmallTalk', () => AIModule.generateSmallTalkAsync(topic, turnCount)),
+  const generateStream = useCallback((prompt: string) =>
+    withEngineGuard('generateTextStream', () => AIModule.generateTextStreamAsync(prompt)),
   [withEngineGuard]);
 
   const generateSmallTalkStream = useCallback((topic: string, turnCount: number) =>
@@ -313,10 +342,6 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
 
   const startRoleplay = useCallback((scenario: string, character: string, level: string) =>
     withEngineGuard('startRoleplay', () => AIModule.startRoleplaySessionAsync(scenario, character, level)),
-  [withEngineGuard]);
-
-  const sendRoleplayTurn = useCallback((sessionId: string, text: string) =>
-    withEngineGuard('sendRoleplayTurn', () => AIModule.sendRoleplayTurnAsync(sessionId, text)),
   [withEngineGuard]);
 
   const sendRoleplayTurnStream = useCallback((sessionId: string, text: string) =>
@@ -335,6 +360,24 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
 
   const reviewRoleplay = useCallback((lines: string[]) =>
     withEngineGuard('reviewRoleplay', () => AIModule.reviewRoleplayAsync(lines)),
+  [withEngineGuard]);
+
+  const generatePictureTask = useCallback((imagePath: string, level: string) =>
+    withEngineGuard('generatePictureTask', () => AIModule.generatePictureTaskAsync(imagePath, level)),
+  [withEngineGuard]);
+
+  const reviewPictureAnswer = useCallback((
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ) =>
+    withEngineGuard('reviewPictureAnswer',
+      () => AIModule.reviewPictureAnswerAsync(imagePath, question, checkpoints, answer)),
+  [withEngineGuard]);
+
+  const describeImage = useCallback((imagePath: string, level: string) =>
+    withEngineGuard('describeImage', () => AIModule.describeImageAsync(imagePath, level)),
   [withEngineGuard]);
 
   const translateTexts = useCallback((texts: string[], from: string, to: string) =>
@@ -364,14 +407,17 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     error,
     isFallback,
     generate,
-    generateSmallTalk,
+    generateStream,
     generateSmallTalkStream,
     translateTexts,
     startRoleplay,
-    sendRoleplayTurn,
     sendRoleplayTurnStream,
     endRoleplay,
     reviewRoleplay,
+    visionAvailable,
+    generatePictureTask,
+    reviewPictureAnswer,
+    describeImage,
     retryLoad,
     clearError,
     availability,

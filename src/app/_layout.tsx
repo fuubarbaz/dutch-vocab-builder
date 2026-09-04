@@ -91,6 +91,8 @@ function RootLayoutNav() {
                 <Stack.Screen name="speaking-exam" options={{}} />
                 <Stack.Screen name="speaking-exam-exercise" options={{}} />
                 <Stack.Screen name="speaking-cheatsheet" options={{}} />
+                <Stack.Screen name="speaking-photo" options={{}} />
+                <Stack.Screen name="picture-describe" options={{}} />
                 <Stack.Screen name="mistake-journal" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
               </Stack>
               </AIProvider>

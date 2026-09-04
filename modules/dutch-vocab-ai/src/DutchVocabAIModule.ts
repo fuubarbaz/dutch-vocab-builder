@@ -12,19 +12,31 @@ export type DownloadProgress = {
 
 declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   generateTextAsync(prompt: string): Promise<string>;
+  /** Streams a plain-text answer via `onTextChunk` and also resolves to the whole of it. */
+  generateTextStreamAsync(prompt: string): Promise<string>;
   translateTextsAsync(texts: string[], sourceLang: string, targetLang: string): Promise<string[]>;
-  generateSmallTalkAsync(topic: string, turnCount: number): Promise<string>;
   generateSmallTalkStreamAsync(topic: string, turnCount: number): Promise<void>;
   /** Opens a stateful roleplay scene and resolves to its session id. */
   startRoleplaySessionAsync(scenario: string, character: string, level: string): Promise<string>;
-  /** Sends one learner turn. Pass '' to have the character open the scene. */
-  sendRoleplayTurnAsync(sessionId: string, text: string): Promise<string>;
   /** Streaming variant; emits `onRoleplayChunk` with the accumulated reply. */
   sendRoleplayTurnStreamAsync(sessionId: string, text: string): Promise<void>;
   /** Ends the scene. Resolves false when it had already been evicted. */
   endRoleplaySessionAsync(sessionId: string): Promise<boolean>;
   /** Reviews a finished scene's learner lines. Evicts any live session — end-of-scene only. */
   reviewRoleplayAsync(lines: string[]): Promise<string>;
+  /** True when the engine loaded with its vision encoder. False = photo features off. */
+  isVisionAvailableAsync(): Promise<boolean>;
+  /** Builds an A2 picture question from a photo. `imagePath` is an absolute path, no file://. */
+  generatePictureTaskAsync(imagePath: string, level: string): Promise<string>;
+  /** Marks a spoken answer against the photo itself. */
+  reviewPictureAnswerAsync(
+    imagePath: string,
+    question: string,
+    checkpoints: string[],
+    answer: string,
+  ): Promise<string>;
+  /** Describes a photo in Dutch and English, with the key words visible in it. */
+  describeImageAsync(imagePath: string, level: string): Promise<string>;
   getAIAvailabilityAsync(): Promise<AIAvailability>;
   /** Returns the native error message from the last failed engine load, or null if no error. */
   getLoadErrorAsync(): Promise<string | null>;
@@ -86,15 +98,6 @@ async function generateSmallTalkStreamAsyncFallback(_topic: string, _turnCount: 
   // no-op on fallback; the screen falls back to generateSmallTalkAsync
 }
 
-async function generateSmallTalkAsyncFallback(topic: string): Promise<string> {
-  return JSON.stringify([
-    { speaker: 'A', dutch: 'Hoi! Hoe gaat het met jou?', english: 'Hi! How are you?' },
-    { speaker: 'B', dutch: 'Goed, dank je! En met jou?', english: 'Good, thanks! And you?' },
-    { speaker: 'A', dutch: `Wat vind jij van ${topic}?`, english: `What do you think about ${topic}?` },
-    { speaker: 'B', dutch: 'Dat vind ik heel interessant!', english: 'I find that very interesting!' },
-  ]);
-}
-
 async function translateTextsAsyncFallback(texts: string[]): Promise<string[]> {
   return texts;
 }
@@ -103,7 +106,7 @@ async function startRoleplaySessionAsyncFallback(): Promise<string> {
   throw new Error('load_error');
 }
 
-async function sendRoleplayTurnAsyncFallback(): Promise<string> {
+async function roleplayUnavailableFallback(): Promise<string> {
   throw new Error('load_error');
 }
 
@@ -112,6 +115,10 @@ async function endRoleplaySessionAsyncFallback(): Promise<boolean> {
 }
 
 async function reviewRoleplayAsyncFallback(): Promise<string> {
+  throw new Error('load_error');
+}
+
+async function visionUnavailableFallback(): Promise<never> {
   throw new Error('load_error');
 }
 
@@ -128,14 +135,17 @@ try {
 
   moduleToExport = {
     generateTextAsync: generateTextAsyncFallback,
+    generateTextStreamAsync: async () => { throw new Error('load_error'); },
     translateTextsAsync: translateTextsAsyncFallback,
-    generateSmallTalkAsync: generateSmallTalkAsyncFallback,
     generateSmallTalkStreamAsync: generateSmallTalkStreamAsyncFallback,
     startRoleplaySessionAsync: startRoleplaySessionAsyncFallback,
-    sendRoleplayTurnAsync: sendRoleplayTurnAsyncFallback,
-    sendRoleplayTurnStreamAsync: sendRoleplayTurnAsyncFallback,
+    sendRoleplayTurnStreamAsync: roleplayUnavailableFallback,
     endRoleplaySessionAsync: endRoleplaySessionAsyncFallback,
     reviewRoleplayAsync: reviewRoleplayAsyncFallback,
+    isVisionAvailableAsync: async (): Promise<boolean> => false,
+    generatePictureTaskAsync: visionUnavailableFallback,
+    reviewPictureAnswerAsync: visionUnavailableFallback,
+    describeImageAsync: visionUnavailableFallback,
     getAIAvailabilityAsync: async (): Promise<AIAvailability> => 'load_error',
     getLoadErrorAsync: async (): Promise<string | null> => nativeLoadError,
     downloadModelAsync: async (): Promise<boolean> => false,
