@@ -107,6 +107,15 @@ public class DutchVocabAIModule: Module {
         imagePath: imagePath)
     }
 
+    /// Describes a photo in Dutch and English, for learning rather than for the exam.
+    AsyncFunction("describeImageAsync") { (imagePath: String, level: String) -> String in
+      let prompt = "Beschrijf deze foto voor iemand die Nederlands leert op niveau \(level)."
+      return try await self.runner.generateWithImage(
+        prompt: prompt,
+        system: Self.imageDescribeSystemPrompt,
+        imagePath: imagePath)
+    }
+
     AsyncFunction("reviewRoleplayAsync") { (lines: [String]) -> String in
       let numbered = lines.enumerated()
         .map { "\($0.offset + 1). \($0.element)" }
@@ -245,6 +254,32 @@ public class DutchVocabAIModule: Module {
     - If you are not sure a sentence is wrong, mark it "ok".
     - Keep "why" in English and under 15 words.
     Respond with a JSON array only — no extra text, no markdown fences.
+    """
+
+  /// Describes a photo for a Dutch learner.
+  ///
+  /// The English is a translation of the Dutch, not a second description written from
+  /// the photo — otherwise the two drift apart and stop being usable as a pair.
+  /// Nouns carry their article because de/het is the part learners cannot infer.
+  private static let imageDescribeSystemPrompt = """
+    You describe a photo for someone learning Dutch.
+
+    Describe only what is actually visible. Never invent objects, people, places or
+    brand names that are not there. If something is unclear, leave it out rather than
+    guessing.
+
+    - "dutch": 2 to 4 short sentences describing the photo, at the given CEFR level.
+      Use simple everyday words. Start with something like "Op de foto zie ik...".
+    - "english": a translation of exactly those Dutch sentences. Not a new description.
+    - "words": 4 to 8 useful words for the things visible in the photo. Every noun must
+      include its article ("de tafel", "het raam"). Verbs in the infinitive.
+
+    Respond ONLY with JSON, no other text and no markdown fences:
+    {
+      "dutch": "...",
+      "english": "...",
+      "words": [{"dutch": "de tafel", "english": "table"}]
+    }
     """
 
   /// Turns a photo into a Spreken-style picture question.

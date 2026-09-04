@@ -6,6 +6,8 @@
  * usable JSON out of a 2B model that has been asked politely not to add prose.
  */
 
+import { extractJsonObject } from './aiJson';
+
 export interface SpeakingFeedback {
   summary: string;
   checkpoints: Array<{ criterion: string; met: boolean; explanation: string }>;
@@ -19,21 +21,8 @@ export interface PictureTask {
   checkpoints: string[];
 }
 
-/** Pulls the outermost {...} out of a reply that may be fenced or wrapped in chatter. */
-function extractObject(raw: string): any | null {
-  const cleaned = raw.replace(/```[a-z]*/gi, '').replace(/```/g, '');
-  const match = cleaned.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try {
-    const parsed = JSON.parse(match[0]);
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 export function parseSpeakingFeedback(raw: string): SpeakingFeedback | null {
-  const parsed = extractObject(raw);
+  const parsed = extractJsonObject(raw);
   if (!parsed) return null;
   return {
     summary: typeof parsed.summary === 'string' ? parsed.summary : '',
@@ -51,7 +40,7 @@ export function parseSpeakingFeedback(raw: string): SpeakingFeedback | null {
  * to answer.
  */
 export function parsePictureTask(raw: string): PictureTask | null {
-  const parsed = extractObject(raw);
+  const parsed = extractJsonObject(raw);
   if (!parsed) return null;
 
   const question = typeof parsed.question === 'string' ? parsed.question.trim() : '';

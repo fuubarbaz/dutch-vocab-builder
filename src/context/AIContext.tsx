@@ -89,6 +89,7 @@ export interface AIContextValue {
     checkpoints: string[],
     answer: string,
   ): Promise<string>;
+  describeImage(imagePath: string, level: string): Promise<string>;
 
   // ── Lifecycle ──
   retryLoad(): Promise<void>;
@@ -377,6 +378,10 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       () => AIModule.reviewPictureAnswerAsync(imagePath, question, checkpoints, answer)),
   [withEngineGuard]);
 
+  const describeImage = useCallback((imagePath: string, level: string) =>
+    withEngineGuard('describeImage', () => AIModule.describeImageAsync(imagePath, level)),
+  [withEngineGuard]);
+
   const translateTexts = useCallback((texts: string[], from: string, to: string) =>
     withEngineGuard('translateTexts', () => AIModule.translateTextsAsync(texts, from, to)),
   [withEngineGuard]);
@@ -415,6 +420,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     visionAvailable,
     generatePictureTask,
     reviewPictureAnswer,
+    describeImage,
     retryLoad,
     clearError,
     availability,

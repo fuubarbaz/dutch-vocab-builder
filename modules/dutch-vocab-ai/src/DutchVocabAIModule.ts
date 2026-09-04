@@ -36,6 +36,8 @@ declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> 
     checkpoints: string[],
     answer: string,
   ): Promise<string>;
+  /** Describes a photo in Dutch and English, with the key words visible in it. */
+  describeImageAsync(imagePath: string, level: string): Promise<string>;
   getAIAvailabilityAsync(): Promise<AIAvailability>;
   /** Returns the native error message from the last failed engine load, or null if no error. */
   getLoadErrorAsync(): Promise<string | null>;
@@ -154,6 +156,7 @@ try {
     isVisionAvailableAsync: async (): Promise<boolean> => false,
     generatePictureTaskAsync: visionUnavailableFallback,
     reviewPictureAnswerAsync: visionUnavailableFallback,
+    describeImageAsync: visionUnavailableFallback,
     getAIAvailabilityAsync: async (): Promise<AIAvailability> => 'load_error',
     getLoadErrorAsync: async (): Promise<string | null> => nativeLoadError,
     downloadModelAsync: async (): Promise<boolean> => false,

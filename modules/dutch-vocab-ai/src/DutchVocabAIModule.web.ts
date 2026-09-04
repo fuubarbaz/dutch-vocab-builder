@@ -42,6 +42,9 @@ class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   ): Promise<string> {
     throw new Error('load_error');
   }
+  async describeImageAsync(_imagePath: string, _level: string): Promise<string> {
+    throw new Error('load_error');
+  }
   async translateTextsAsync(texts: string[], _sourceLang: string, _targetLang: string): Promise<string[]> {
     return texts;
   }

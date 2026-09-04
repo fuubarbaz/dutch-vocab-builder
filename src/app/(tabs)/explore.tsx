@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from '
 import { useRouter } from 'expo-router';
 import {
   AudioLines, GraduationCap, PenLine, MessagesSquare,
-  MessageCircle, ChevronRight, Mic2, Drama,
+  MessageCircle, ChevronRight, Mic2, Drama, ScanSearch,
 } from 'lucide-react-native';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -17,6 +17,13 @@ type Tool = {
 };
 
 const LANGUAGE_TOOLS: Tool[] = [
+  {
+    icon: ScanSearch,
+    title: 'Wat zie ik?',
+    subtitle: 'Point your camera, get it described in Dutch',
+    color: '#14b8a6',
+    route: '/picture-describe',
+  },
   {
     icon: AudioLines,
     title: 'Pronunciation Guide',
