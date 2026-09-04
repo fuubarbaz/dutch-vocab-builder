@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import { MessageCircle, Play, Square, Volume2, Languages, RefreshCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle, RotateCcw } from 'lucide-react-native';
 import { speakWithCallback, stopTTS } from '@/utils/tts';
 import AIModule from 'dutch-vocab-ai';
+import { useAI } from '@/context/AIContext';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -98,6 +99,7 @@ export default function SmallTalkScreen() {
   const [showTranslations, setShowTranslations] = useState<Record<number, boolean>>({});
   const [showAllTranslations, setShowAllTranslations] = useState(false);
   const [aiStatus, setAiStatus] = useState<AIAvailability>('checking');
+  const { generateSmallTalkStream } = useAI();
 
   const stopRef = useRef(false);
   const seenTurnCountRef = useRef(0);
@@ -174,26 +176,19 @@ export default function SmallTalkScreen() {
         }
       });
 
-      await AIModule.generateSmallTalkStreamAsync(t, turnCount);
+      await generateSmallTalkStream(t, turnCount);
     } catch (e) {
-      const raw = e instanceof Error ? e.message : String(e);
-      console.warn('[small-talk] generate error:', raw);
-      // Expo wraps native errors as "Call to function '…' has been rejected. → Caused by: <message>"
-      const msg = raw.split('Caused by:').pop()!.trim();
-
-      if (msg.includes('not_downloaded')) {
+      // AIContext has already classified this and shown a toast; all that is left
+      // is pointing the setup guide at the right recovery step.
+      const err = e as { kind?: string; message?: string };
+      if (err?.kind === 'not_downloaded') {
         setAiStatus('not_downloaded');
-        Alert.alert('AI Unavailable', 'The AI model has not been downloaded yet. Go to Settings › On-device AI and tap "Download model".');
-      } else if (msg.includes('load_error') || msg.includes('load_failed')) {
+      } else if (err?.kind === 'load_failed') {
         setAiStatus('load_error');
-        Alert.alert('AI Unavailable', 'The AI model failed to load. Try restarting the app.');
       } else {
         // The model is present and loaded — this one request failed. Saying
         // "AI Unavailable" here sends people to Settings to fix nothing.
-        Alert.alert(
-          'Generation failed',
-          `Could not generate this conversation. Please try again.\n\n${msg.replace(/^generation_failed:\s*/, '')}`,
-        );
+        Alert.alert('Generation failed', err?.message ?? 'Could not generate this conversation. Please try again.');
       }
     } finally {
       subscription?.remove();

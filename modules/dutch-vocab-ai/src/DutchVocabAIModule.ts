@@ -12,13 +12,12 @@ export type DownloadProgress = {
 
 declare class DutchVocabAIModule extends NativeModule<DutchVocabAIModuleEvents> {
   generateTextAsync(prompt: string): Promise<string>;
+  /** Streams a plain-text answer via `onTextChunk` and also resolves to the whole of it. */
+  generateTextStreamAsync(prompt: string): Promise<string>;
   translateTextsAsync(texts: string[], sourceLang: string, targetLang: string): Promise<string[]>;
-  generateSmallTalkAsync(topic: string, turnCount: number): Promise<string>;
   generateSmallTalkStreamAsync(topic: string, turnCount: number): Promise<void>;
   /** Opens a stateful roleplay scene and resolves to its session id. */
   startRoleplaySessionAsync(scenario: string, character: string, level: string): Promise<string>;
-  /** Sends one learner turn. Pass '' to have the character open the scene. */
-  sendRoleplayTurnAsync(sessionId: string, text: string): Promise<string>;
   /** Streaming variant; emits `onRoleplayChunk` with the accumulated reply. */
   sendRoleplayTurnStreamAsync(sessionId: string, text: string): Promise<void>;
   /** Ends the scene. Resolves false when it had already been evicted. */
@@ -99,15 +98,6 @@ async function generateSmallTalkStreamAsyncFallback(_topic: string, _turnCount: 
   // no-op on fallback; the screen falls back to generateSmallTalkAsync
 }
 
-async function generateSmallTalkAsyncFallback(topic: string): Promise<string> {
-  return JSON.stringify([
-    { speaker: 'A', dutch: 'Hoi! Hoe gaat het met jou?', english: 'Hi! How are you?' },
-    { speaker: 'B', dutch: 'Goed, dank je! En met jou?', english: 'Good, thanks! And you?' },
-    { speaker: 'A', dutch: `Wat vind jij van ${topic}?`, english: `What do you think about ${topic}?` },
-    { speaker: 'B', dutch: 'Dat vind ik heel interessant!', english: 'I find that very interesting!' },
-  ]);
-}
-
 async function translateTextsAsyncFallback(texts: string[]): Promise<string[]> {
   return texts;
 }
@@ -116,7 +106,7 @@ async function startRoleplaySessionAsyncFallback(): Promise<string> {
   throw new Error('load_error');
 }
 
-async function sendRoleplayTurnAsyncFallback(): Promise<string> {
+async function roleplayUnavailableFallback(): Promise<string> {
   throw new Error('load_error');
 }
 
@@ -145,12 +135,11 @@ try {
 
   moduleToExport = {
     generateTextAsync: generateTextAsyncFallback,
+    generateTextStreamAsync: async () => { throw new Error('load_error'); },
     translateTextsAsync: translateTextsAsyncFallback,
-    generateSmallTalkAsync: generateSmallTalkAsyncFallback,
     generateSmallTalkStreamAsync: generateSmallTalkStreamAsyncFallback,
     startRoleplaySessionAsync: startRoleplaySessionAsyncFallback,
-    sendRoleplayTurnAsync: sendRoleplayTurnAsyncFallback,
-    sendRoleplayTurnStreamAsync: sendRoleplayTurnAsyncFallback,
+    sendRoleplayTurnStreamAsync: roleplayUnavailableFallback,
     endRoleplaySessionAsync: endRoleplaySessionAsyncFallback,
     reviewRoleplayAsync: reviewRoleplayAsyncFallback,
     isVisionAvailableAsync: async (): Promise<boolean> => false,

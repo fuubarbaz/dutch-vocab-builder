@@ -20,7 +20,14 @@ All notable changes to this project will be documented in this file.
 - **Vowel Practice** — listen to a vowel, record yourself, and compare the two.
 - **iOS entitlements plugin** — `plugins/withLLMEntitlements.js` adds `increased-memory-limit` and `extended-virtual-addressing`, both required before the GPU backend will allocate for a model this size.
 
+- **Save a word from a photo** — each word in "Wat zie ik?" can be added straight to your own vocabulary, with the sentence it appeared in as its example.
+- **Article checking against your own vocabulary** — de/het on generated words is verified against the app's 876 curated entries and corrected where they disagree, with the correction marked. It stays silent on words outside the list rather than guessing.
+- **Speaking answers feed the Mistake Journal** — a marked answer that needed fixing is saved the same way roleplay corrections already were.
+
 ### Changed
+- **One speech-recognition hook** — four screens each carried their own copy of the recogniser lifecycle and had drifted apart on error handling. They now share `useDutchSpeechRecognition`, which also fixes a refused microphone permission leaving the record button pulsing forever.
+- **Grammar check streams** — the verdict lands on the first line, so it is useful before the explanation has finished. The streaming call returns its full text as well as emitting it, so a caller never depends on having received the events.
+- **Every AI feature goes through AIContext** — small talk, the writing exam, sentence builder and the grammar/KNM topic screens called the native module directly and hand-parsed error strings, so the same failure looked different in different places. Only the download lifecycle talks to the module directly now.
 - **AI backend: Apple Foundation Models → Gemma 4 E2B on LiteRT-LM** — all language AI now runs on a bundled on-device model instead of Apple Intelligence. This drops the requirement for iOS 26 and eligible hardware; the deployment target is now iOS 17.0 and behaviour no longer varies by device or region. The trade-off is a one-time ~2.6 GB download on first launch.
 - **AIContext** — a single state machine for engine state across every AI feature, with classified errors, recovery actions, non-blocking toasts, and a reusable error banner.
 - **Small Talk** — conversations now stream in turn by turn as they generate, rather than appearing all at once when finished.

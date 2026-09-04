@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
@@ -7,30 +7,20 @@ import {
   Camera, ImagePlus, Mic, Square, Volume2, CheckCircle2, XCircle,
   RotateCcw, Sparkles, Eye, EyeOff,
 } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+import { pickAndPreparePhoto } from '@/utils/photoInput';
 import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import { useAI, AIErrorBanner } from '@/context/AIContext';
+import { useMistakeJournal } from '@/context/MistakeJournalContext';
+import { useDutchSpeechRecognition } from '@/hooks/useDutchSpeechRecognition';
 import {
   SpeakingFeedback, PictureTask, parseSpeakingFeedback, parsePictureTask,
 } from '@/utils/speakingFeedback';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { SpeakingFeedbackCard } from '@/components/SpeakingFeedbackCard';
 
 type Level = 'A1' | 'A2' | 'B1';
 const LEVELS: Level[] = ['A1', 'A2', 'B1'];
-
-/**
- * Longest edge the photo is reduced to before it reaches the model.
- *
- * The vision encoder takes a small fixed input, so sending a full camera frame
- * only costs time and memory. 768px keeps signs and faces legible.
- */
-const MAX_IMAGE_EDGE = 768;
 
 export default function SpeakingPhotoScreen() {
   const theme = Colors[useColorScheme() ?? 'light'];
@@ -38,6 +28,7 @@ export default function SpeakingPhotoScreen() {
     engineState, visionAvailable,
     generatePictureTask, reviewPictureAnswer,
   } = useAI();
+  const { logSentenceMistake } = useMistakeJournal();
 
   const [level, setLevel] = useState<Level>('A2');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -45,93 +36,46 @@ export default function SpeakingPhotoScreen() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildFailed, setBuildFailed] = useState(false);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [spoken, setSpoken] = useState('');
-  const [micError, setMicError] = useState<string | null>(null);
+  const speech = useDutchSpeechRecognition({ silenceMs: 5000 });
+  const { isRecording, transcript: spoken, error: micError } = speech;
 
   const [isChecking, setIsChecking] = useState(false);
   const [feedback, setFeedback] = useState<SpeakingFeedback | null>(null);
   const [feedbackFailed, setFeedbackFailed] = useState(false);
   const [showEnglish, setShowEnglish] = useState(false);
+  // Camera and library refusals are a separate problem from the microphone, and
+  // used to be reported through the same slot as if they were the same thing.
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
-  const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { stopTTS(); }, []);
 
-  const stopRecording = useCallback(() => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    try { ExpoSpeechRecognitionModule.stop(); } catch { /* already stopped */ }
-  }, []);
-
-  const resetSilenceTimeout = useCallback(() => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    silenceTimeout.current = setTimeout(() => stopRecording(), 5000);
-  }, [stopRecording]);
-
-  useSpeechRecognitionEvent('start', () => { setIsRecording(true); resetSilenceTimeout(); });
-  useSpeechRecognitionEvent('end', () => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-  });
-  useSpeechRecognitionEvent('error', (e) => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    if (e?.error !== 'no-speech') {
-      setMicError('Spraakherkenning werkt hier niet. Controleer de microfoon en of Nederlands beschikbaar is.');
-    }
-  });
-  useSpeechRecognitionEvent('result', (e) => {
-    resetSilenceTimeout();
-    const transcript = e.results?.[0]?.transcript;
-    if (transcript) setSpoken(transcript);
-  });
-
-  useEffect(() => () => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    ExpoSpeechRecognitionModule.abort();
-    stopTTS();
-  }, []);
-
-  const resetAnswer = () => {
-    setSpoken('');
+  const resetAnswer = useCallback(() => {
+    speech.reset();
     setFeedback(null);
     setFeedbackFailed(false);
-    setMicError(null);
-  };
+  }, [speech]);
 
+  /** Picks a photo, shrinks it, then asks the model to write a question about it. */
   /** Picks a photo, shrinks it, then asks the model to write a question about it. */
   const usePhoto = useCallback(async (fromCamera: boolean) => {
     stopTTS();
-    const perm = fromCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      setMicError(fromCamera
-        ? 'Geen toegang tot de camera. Sta dit toe in Instellingen.'
-        : 'Geen toegang tot uw foto\'s. Sta dit toe in Instellingen.');
+    setPhotoError(null);
+
+    const photo = await pickAndPreparePhoto(fromCamera);
+    if (photo.status === 'cancelled') return;
+    if (photo.status === 'denied') {
+      setPhotoError(photo.message);
       return;
     }
-
-    const picked = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.9 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
-    if (picked.canceled || !picked.assets?.[0]) return;
 
     resetAnswer();
     setTask(null);
     setBuildFailed(false);
     setIsBuilding(true);
+    setImageUri(photo.uri);
 
     try {
-      const shrunk = await manipulateAsync(
-        picked.assets[0].uri,
-        [{ resize: { width: MAX_IMAGE_EDGE } }],
-        { compress: 0.85, format: SaveFormat.JPEG },
-      );
-      setImageUri(shrunk.uri);
-
-      // LiteRT-LM opens the path directly, so the file:// scheme has to go.
-      const path = shrunk.uri.replace(/^file:\/\//, '');
-      const raw = await generatePictureTask(path, level);
+      const raw = await generatePictureTask(photo.path, level);
       const parsed = parsePictureTask(raw);
       if (parsed) setTask(parsed);
       else setBuildFailed(true);
@@ -141,39 +85,44 @@ export default function SpeakingPhotoScreen() {
     } finally {
       setIsBuilding(false);
     }
-  }, [generatePictureTask, level]);
+  }, [generatePictureTask, level, resetAnswer]);
 
   const startRecording = useCallback(async () => {
     stopTTS();
-    resetAnswer();
-    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!perm.granted) {
-      setMicError('Geen toegang tot de microfoon. Sta dit toe in Instellingen om hardop te oefenen.');
-      return;
-    }
-    try {
-      ExpoSpeechRecognitionModule.start({ lang: 'nl-NL', interimResults: true });
-    } catch {
-      setMicError('Spraakherkenning kon niet starten. Probeer het opnieuw.');
-    }
-  }, []);
+    setFeedback(null);
+    setFeedbackFailed(false);
+    await speech.start();
+  }, [speech]);
 
   const checkAnswer = useCallback(async () => {
     if (!spoken.trim() || !task || !imageUri || isChecking) return;
     setIsChecking(true);
     setFeedbackFailed(false);
     try {
-      const path = imageUri.replace(/^file:\/\//, '');
-      const raw = await reviewPictureAnswer(path, task.question, task.checkpoints, spoken.trim());
+      const raw = await reviewPictureAnswer(
+        imageUri.replace(/^file:\/\//, ''), task.question, task.checkpoints, spoken.trim());
       const parsed = parseSpeakingFeedback(raw);
-      if (parsed) setFeedback(parsed);
-      else setFeedbackFailed(true);
+      if (parsed) {
+        setFeedback(parsed);
+        // Same treatment roleplay gives its corrections: a spoken answer that needed
+        // fixing is a mistake worth seeing again, not just feedback you scroll past.
+        if (parsed.improvedAnswer && parsed.checkpoints.some(c => !c.met)) {
+          await logSentenceMistake({
+            original: spoken.trim(),
+            corrected: parsed.improvedAnswer,
+            note: parsed.languageNotes || undefined,
+            scenario: task?.context || 'Eigen foto',
+          });
+        }
+      } else {
+        setFeedbackFailed(true);
+      }
     } catch {
       setFeedbackFailed(true);
     } finally {
       setIsChecking(false);
     }
-  }, [imageUri, isChecking, reviewPictureAnswer, spoken, task]);
+  }, [imageUri, isChecking, logSentenceMistake, reviewPictureAnswer, spoken, task]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -281,10 +230,12 @@ export default function SpeakingPhotoScreen() {
           </View>
         ) : null}
 
-        {micError && (
+        {(micError || photoError) && (
           <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-            <Text style={[styles.summary, { color: theme.danger }]}>Microfoon</Text>
-            <Text style={[styles.note, { color: theme.textSecondary }]}>{micError}</Text>
+            <Text style={[styles.summary, { color: theme.danger }]}>
+              {micError ? 'Microfoon' : 'Foto'}
+            </Text>
+            <Text style={[styles.note, { color: theme.textSecondary }]}>{micError ?? photoError}</Text>
           </View>
         )}
 
@@ -305,53 +256,7 @@ export default function SpeakingPhotoScreen() {
           </View>
         )}
 
-        {feedback && !isChecking && (
-          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-            <View style={styles.questionRow}>
-              <Sparkles size={18} color={theme.primary} />
-              <Text style={[styles.label, { color: theme.textSecondary }]}>FEEDBACK</Text>
-            </View>
-            <Text style={[styles.summary, { color: theme.text }]}>{feedback.summary}</Text>
-
-            {feedback.checkpoints.map((c, i) => (
-              <View key={i} style={[styles.checkRow, { borderTopColor: theme.border }]}>
-                {c.met
-                  ? <CheckCircle2 size={18} color={theme.success} />
-                  : <XCircle size={18} color={theme.danger} />}
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.checkCriterion, { color: theme.text }]}>{c.criterion}</Text>
-                  {c.explanation ? (
-                    <Text style={[styles.note, { color: theme.textSecondary }]}>{c.explanation}</Text>
-                  ) : null}
-                </View>
-              </View>
-            ))}
-
-            {feedback.languageNotes ? (
-              <View style={[styles.checkRow, { borderTopColor: theme.border }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.checkCriterion, { color: theme.text }]}>Taal</Text>
-                  <Text style={[styles.note, { color: theme.textSecondary }]}>{feedback.languageNotes}</Text>
-                </View>
-              </View>
-            ) : null}
-
-            {feedback.improvedAnswer ? (
-              <View style={[styles.improvedBox, { backgroundColor: theme.surfaceSecondary }]}>
-                <Text style={[styles.label, { color: theme.textSecondary }]}>ZO KAN HET OOK</Text>
-                <View style={styles.questionRow}>
-                  <Text style={[styles.spokenText, { color: theme.text }]}>{feedback.improvedAnswer}</Text>
-                  <TouchableOpacity
-                    onPress={() => { stopTTS(); ttsSpeak(feedback.improvedAnswer, 0.85); }}
-                    hitSlop={8}
-                  >
-                    <Volume2 size={18} color={theme.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null}
-          </View>
-        )}
+        {feedback && !isChecking && <SpeakingFeedbackCard feedback={feedback} />}
       </ScrollView>
 
       <View style={[styles.bar, { backgroundColor: theme.cardBackground, borderTopColor: theme.border }]}>
@@ -363,7 +268,7 @@ export default function SpeakingPhotoScreen() {
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
-              onPress={isRecording ? stopRecording : startRecording}
+              onPress={isRecording ? speech.stop : startRecording}
               style={[styles.mainBtn, { backgroundColor: isRecording ? theme.danger : theme.primary }]}
             >
               {isRecording ? <Square size={20} color="#fff" /> : <Mic size={22} color="#fff" />}

@@ -6,7 +6,7 @@ import {
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Globe } from 'lucide-react-native';
-import AIModule from 'dutch-vocab-ai';
+import { useAI } from '@/context/AIContext';
 
 import { KNM_TOPICS, KNMLanguage, KNMQuestion } from '@/data/knm_topics';
 
@@ -58,6 +58,7 @@ function parseAIQuestion(raw: string): AIQuestion | null {
 // ---------------------------------------------------------------------------
 
 export default function KNMTopicScreen() {
+  const { generate } = useAI();
   const { id, lang } = useLocalSearchParams<{ id: string; lang?: string }>();
   const [language, setLanguage] = useState<KNMLanguage>((lang as KNMLanguage) ?? 'en');
   const [tab, setTab] = useState<'learn' | 'practice'>('learn');
@@ -129,7 +130,7 @@ Respond ONLY in JSON format:
   "explanation": "..."
 }`;
 
-      const raw = await AIModule.generateTextAsync(prompt);
+      const raw = await generate(prompt);
       const parsed = parseAIQuestion(raw);
       if (parsed) {
         // Normalize correctAnswer letter (A/B/C/D) to the actual option text

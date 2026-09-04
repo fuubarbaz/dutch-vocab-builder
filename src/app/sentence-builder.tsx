@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { ArrowRight, CheckCircle2, XCircle, BrainCircuit } from 'lucide-react-native';
-import AIModule from 'dutch-vocab-ai';
+import { useAI } from '@/context/AIContext';
 
 type GrammarExercise = {
     englishPrompt: string;
@@ -131,6 +131,7 @@ const RULES: GrammarRule[] = [
 ];
 
 export default function SentenceBuilderScreen() {
+  const { generate } = useAI();
     const [currentRuleIndex, setCurrentRuleIndex] = useState(0);
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -150,7 +151,7 @@ export default function SentenceBuilderScreen() {
             // Pass expected keywords so Swift can evaluate dynamically
             const expectedWords = currentExercise.expectedDutch.join(', ');
             const prompt = `User sentence: "${userInput}". Rule practicing: ${currentRule.keyword}. Expected keywords: [${expectedWords}]`;
-            const result = await AIModule.generateTextAsync(prompt);
+            const result = await generate(prompt);
             setFeedback(result);
         } catch (error) {
             console.error('Dutch Vocab AI Error:', error);

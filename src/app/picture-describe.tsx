@@ -1,28 +1,26 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import {
-  Camera, ImagePlus, Volume2, Eye, EyeOff, ScanSearch,
+  Camera, ImagePlus, Volume2, Eye, EyeOff, ScanSearch, Plus, Check,
 } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { pickAndPreparePhoto } from '@/utils/photoInput';
 import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import { useAI, AIErrorBanner } from '@/context/AIContext';
-import { ImageDescription, parseImageDescription } from '@/utils/imageDescription';
+import { useFavorites } from '@/context/FavoritesContext';
+import { ImageDescription, DescribedWord, parseImageDescription } from '@/utils/imageDescription';
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
 type Level = 'A1' | 'A2' | 'B1';
 const LEVELS: Level[] = ['A1', 'A2', 'B1'];
 
-/** The vision encoder takes a small fixed input; a full camera frame is wasted work. */
-const MAX_IMAGE_EDGE = 768;
-
 export default function PictureDescribeScreen() {
   const theme = Colors[useColorScheme() ?? 'light'];
   const { engineState, visionAvailable, describeImage } = useAI();
+  const { addCustomWord } = useFavorites();
 
   const [level, setLevel] = useState<Level>('A2');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -31,42 +29,50 @@ export default function PictureDescribeScreen() {
   const [failed, setFailed] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [showEnglish, setShowEnglish] = useState(true);
+  // Which words have been saved this session, so the button can confirm itself.
+  const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+
+  const descriptionRef = useRef<ImageDescription | null>(null);
+  descriptionRef.current = description;
 
   useEffect(() => () => { stopTTS(); }, []);
+
+  /** Puts a word from the photo straight into the learner's own vocabulary. */
+  const saveWord = useCallback(async (word: DescribedWord) => {
+    if (savedWords.has(word.dutch)) return;
+    await addCustomWord({
+      id: `custom_${Date.now()}_${word.dutch.replace(/\s+/g, '-')}`,
+      dutch: word.dutch,
+      english: word.english,
+      // The description is the sentence the word was actually seen in, which is a
+      // better example than anything invented separately.
+      exampleDutch: descriptionRef.current?.dutch ?? '',
+      exampleEnglish: descriptionRef.current?.english ?? '',
+      categoryId: 'nouns',
+      isCustom: true,
+    });
+    setSavedWords(prev => new Set(prev).add(word.dutch));
+  }, [addCustomWord, savedWords]);
 
   const describe = useCallback(async (fromCamera: boolean) => {
     stopTTS();
     setPermissionError(null);
 
-    const perm = fromCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      setPermissionError(fromCamera
-        ? 'Geen toegang tot de camera. Sta dit toe in Instellingen.'
-        : 'Geen toegang tot uw foto\'s. Sta dit toe in Instellingen.');
+    const photo = await pickAndPreparePhoto(fromCamera);
+    if (photo.status === 'cancelled') return;
+    if (photo.status === 'denied') {
+      setPermissionError(photo.message);
       return;
     }
 
-    const picked = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.9 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
-    if (picked.canceled || !picked.assets?.[0]) return;
-
     setDescription(null);
+    setSavedWords(new Set());
     setFailed(false);
     setIsBusy(true);
+    setImageUri(photo.uri);
 
     try {
-      const shrunk = await manipulateAsync(
-        picked.assets[0].uri,
-        [{ resize: { width: MAX_IMAGE_EDGE } }],
-        { compress: 0.85, format: SaveFormat.JPEG },
-      );
-      setImageUri(shrunk.uri);
-
-      // LiteRT-LM opens the path directly, so the file:// scheme has to go.
-      const raw = await describeImage(shrunk.uri.replace(/^file:\/\//, ''), level);
+      const raw = await describeImage(photo.path, level);
       const parsed = parseImageDescription(raw);
       if (parsed) setDescription(parsed);
       else setFailed(true);
@@ -195,7 +201,14 @@ export default function PictureDescribeScreen() {
                 {description.words.map((w, i) => (
                   <View key={i} style={[styles.wordRow, { borderTopColor: theme.border }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.wordDutch, { color: theme.text }]}>{w.dutch}</Text>
+                      <View style={styles.wordDutchRow}>
+                        <Text style={[styles.wordDutch, { color: theme.text }]}>{w.dutch}</Text>
+                        {w.articleCorrected && (
+                          <Text style={[styles.corrected, { color: theme.success }]}>
+                            lidwoord gecontroleerd
+                          </Text>
+                        )}
+                      </View>
                       {w.english ? (
                         <Text style={[styles.note, { color: theme.textSecondary }]}>{w.english}</Text>
                       ) : null}
@@ -205,6 +218,15 @@ export default function PictureDescribeScreen() {
                       hitSlop={8}
                     >
                       <Volume2 size={18} color={theme.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => saveWord(w)}
+                      hitSlop={8}
+                      disabled={savedWords.has(w.dutch)}
+                    >
+                      {savedWords.has(w.dutch)
+                        ? <Check size={18} color={theme.success} />
+                        : <Plus size={18} color={theme.primary} />}
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -278,7 +300,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: Spacing.sm,
   },
+  wordDutchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
   wordDutch: { fontSize: FontSize.subhead, fontWeight: FontWeight.medium },
+  corrected: { fontSize: FontSize.caption, fontStyle: 'italic' },
 
   bar: {
     flexDirection: 'row',

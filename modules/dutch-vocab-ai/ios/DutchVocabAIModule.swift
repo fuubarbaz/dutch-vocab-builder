@@ -6,11 +6,17 @@ import UIKit
 private let MODEL_FILENAME = "gemma-4-E2B-it.litertlm"
 private let MODEL_URL = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
 
+// The repo also publishes a "-gpu" build at 2.0 GB against this one's 2.6 GB, which
+// looks like an easy 600 MB saving. It is not: it loads without complaint and then
+// generates nothing usable. Tried on 2026-09-04 and reverted. Do not switch to it
+// again without generating real output from it first.
+
 // Minimum acceptable size for a complete model file.  The real file is ~2.6 GB;
 // anything materially smaller is treated as a corrupt or interrupted download
 // and is removed so the user is re-prompted to download cleanly.  This is the
 // single most common cause of the "AI model cannot be loaded" error.
 private let MODEL_MIN_BYTES: Int64 = 2_000_000_000  // 2.0 GB safety floor
+
 
 public class DutchVocabAIModule: Module {
   private let runner = GemmaRunner.shared
@@ -18,16 +24,27 @@ public class DutchVocabAIModule: Module {
   public func definition() -> ModuleDefinition {
     Name("DutchVocabAI")
 
-    Events("onDownloadProgress", "onSmallTalkChunk", "onRoleplayChunk")
+    Events("onDownloadProgress", "onSmallTalkChunk", "onRoleplayChunk", "onTextChunk")
 
     AsyncFunction("generateTextAsync") { (prompt: String) -> String in
       return try await self.runner.generate(prompt: prompt, system: Self.tutorSystemPrompt)
     }
 
-    AsyncFunction("generateSmallTalkAsync") { (topic: String, turnCount: Int) -> String in
-      let turns = max(4, min(turnCount, 10))
-      let userPrompt = "Generate a \(turns)-turn Dutch conversation about: \(topic)"
-      return try await self.runner.generate(prompt: userPrompt, system: Self.smallTalkSystemPrompt)
+    /// Streaming twin of generateTextAsync, for plain-text answers.
+    ///
+    /// Only worth using where the output is rendered as it arrives. The JSON-returning
+    /// calls (feedback, picture tasks, descriptions) cannot show half an object, so
+    /// they stay blocking on purpose.
+    AsyncFunction("generateTextStreamAsync") { (prompt: String) -> String in
+      var accumulated = ""
+      try await self.runner.generateStream(prompt: prompt, system: Self.tutorSystemPrompt) { chunk in
+        accumulated += chunk
+        self.sendEvent("onTextChunk", ["text": accumulated, "done": false])
+      }
+      self.sendEvent("onTextChunk", ["text": accumulated, "done": true])
+      // Returned as well as streamed: the events are for showing progress, but the
+      // caller should never depend on having received them to get an answer.
+      return accumulated
     }
 
     AsyncFunction("generateSmallTalkStreamAsync") { (topic: String, turnCount: Int) -> Void in
@@ -54,10 +71,6 @@ public class DutchVocabAIModule: Module {
     AsyncFunction("startRoleplaySessionAsync") { (scenario: String, character: String, level: String) -> String in
       let system = Self.roleplaySystemPrompt(scenario: scenario, character: character, level: level)
       return try await self.runner.startRoleplay(system: system)
-    }
-
-    AsyncFunction("sendRoleplayTurnAsync") { (sessionId: String, text: String) -> String in
-      return try await self.runner.roleplayTurn(sessionId: sessionId, prompt: Self.roleplayPrompt(text))
     }
 
     AsyncFunction("sendRoleplayTurnStreamAsync") { (sessionId: String, text: String) -> Void in
@@ -414,7 +427,21 @@ final class GemmaRunner: NSObject {
 
   // MARK: Public API
 
+  /// Deletes any model file that is not the one we currently load.
+  ///
+  /// Switching MODEL_FILENAME otherwise strands a 2 GB+ file in Application Support
+  /// forever, which is a lot of a user's phone to leave behind by accident.
+  private func removeStaleModelsIfPresent() {
+    let directory = modelDirectory
+    guard let entries = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return }
+    for name in entries where name.hasPrefix("gemma-") && name.hasSuffix(".litertlm") && name != MODEL_FILENAME {
+      try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+      NSLog("[DutchVocabAI] Removed stale model file \(name)")
+    }
+  }
+
   func availability() -> AIAvailabilityState {
+    removeStaleModelsIfPresent()
     if engine != nil { return .available }
     if isDownloading { return .downloading }
     // If the file is gone (deleted by iOS under storage pressure, or never downloaded),
@@ -559,20 +586,6 @@ final class GemmaRunner: NSObject {
     }
   }
 
-  func roleplayTurn(sessionId: String, prompt: String) async throws -> String {
-    let gate = self.gate
-    await gate.acquire()
-    defer { Task { await gate.release() } }
-
-    do {
-      let conversation = try conversationForSession(sessionId)
-      let response = try await conversation.sendMessage(Message(prompt))
-      return response.toString
-    } catch {
-      throw Self.wrapGenerationError(error)
-    }
-  }
-
   func roleplayTurnStream(
     sessionId: String,
     prompt: String,
@@ -707,7 +720,7 @@ final class GemmaRunner: NSObject {
       self.downloadCompletion = completion
       self.isDownloading = true
 
-      // Prevent the screen from auto-locking while a ~2.6 GB download is in progress.
+      // Prevent the screen from auto-locking while a ~2.0 GB download is in progress.
       DispatchQueue.main.async {
         UIApplication.shared.isIdleTimerDisabled = true
       }
@@ -901,7 +914,7 @@ extension GemmaRunner: URLSessionDownloadDelegate {
       }
       try FileManager.default.moveItem(at: location, to: destination)
 
-      // Exclude the 2.6 GB model file from iCloud and iTunes backups.
+      // Exclude the 2.0 GB model file from iCloud and iTunes backups.
       // Without this flag iOS may: (a) upload the file to iCloud, consuming
       // the user's storage quota, or (b) delete it under App Thinning /
       // On-Demand Resources storage pressure, causing silent re-download cycles.

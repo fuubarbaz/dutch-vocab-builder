@@ -2,16 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Pressable, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent
-} from 'expo-speech-recognition';
-import levenshtein from 'fast-levenshtein';
 
 import Colors, { Spacing, BorderRadius, FontSize, FontWeight } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useDutchSpeechRecognition } from '@/hooks/useDutchSpeechRecognition';
+import { pronunciationAccuracy } from '@/utils/pronunciationAccuracy';
 import { PRACTICE_SENTENCES, SENTENCE_TOPICS, Sentence } from '@/data/sentences';
-import { normalizeDutchText } from '@/utils/text';
 import { speak as ttsSpeak, stopTTS } from '@/utils/tts';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 
@@ -39,15 +35,21 @@ export default function SentencePracticeScreen() {
   const [pool, setPool] = useState<Sentence[]>([]);
   const [poolIndex, setPoolIndex] = useState(0);
   const [targetSentence, setTargetSentence] = useState<Sentence | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [spokenText, setSpokenText] = useState('');
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+
+  const speech = useDutchSpeechRecognition({
+    meterVolume: true,
+    onVolume: (level) => { audioLevel.value = withTiming(level, { duration: 100 }); },
+    onResult: (text) => {
+      const target = targetRef.current;
+      if (target) setAccuracy(pronunciationAccuracy(target.dutch, text));
+    },
+  });
+  const { isRecording, isProcessing: isVoiceProcessing, transcript: spokenText } = speech;
 
   const audioLevel = useSharedValue(0);
   const pulseScale = useSharedValue(1);
-  const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetRef = useRef<Sentence | null>(null);
 
   const animatedRecordButtonStyle = useAnimatedStyle(() => ({
@@ -68,7 +70,7 @@ export default function SentencePracticeScreen() {
     setPool(p);
     setPoolIndex(0);
     setTargetSentence(p[0] ?? null);
-    setSpokenText('');
+    speech.reset();
     setAccuracy(null);
     setPhase('quiz');
   };
@@ -82,63 +84,20 @@ export default function SentencePracticeScreen() {
   };
 
   // Speech recognition
-  const resetSilenceTimeout = () => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    silenceTimeout.current = setTimeout(() => stopRecording(), 3000);
-  };
-
-  useSpeechRecognitionEvent('start', () => { setIsRecording(true); resetSilenceTimeout(); });
-  useSpeechRecognitionEvent('end', () => {
-    setIsRecording(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    audioLevel.value = withTiming(0);
-  });
-  useSpeechRecognitionEvent('error', () => {
-    setIsRecording(false); setIsVoiceProcessing(false);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    audioLevel.value = withTiming(0);
-  });
-  useSpeechRecognitionEvent('result', (e) => {
-    resetSilenceTimeout();
-    if (e.results?.[0]) {
-      const t = e.results[0].transcript;
-      setSpokenText(t);
-      const s = targetRef.current;
-      if (s) {
-        const dist = levenshtein.get(
-          normalizeDutchText(s.dutch).toLowerCase(),
-          normalizeDutchText(t).toLowerCase()
-        );
-        const maxLen = Math.max(s.dutch.length, t.length);
-        setAccuracy(maxLen === 0 ? 100 : Math.max(0, Math.round((1 - dist / maxLen) * 100)));
-      }
-      if (e.isFinal) setIsVoiceProcessing(false);
-    }
-  });
-  useSpeechRecognitionEvent('volumechange', (e) => {
-    audioLevel.value = withTiming(Math.max(0.1, Math.min(1, (e.value + 2) / 12)), { duration: 100 });
-  });
-
-  useEffect(() => () => {
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    ExpoSpeechRecognitionModule.abort();
-  }, []);
+  // Driven by isRecording rather than by the start call: a refused microphone
+  // permission used to leave the button pulsing forever.
+  useEffect(() => {
+    pulseScale.value = isRecording
+      ? withRepeat(withSequence(withTiming(1.1, { duration: 500 }), withTiming(1, { duration: 500 })), -1, true)
+      : withTiming(1);
+  }, [isRecording, pulseScale]);
 
   const startRecording = async () => {
-    setSpokenText(''); setAccuracy(null); setIsVoiceProcessing(false);
-    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!perm.granted) return;
-    ExpoSpeechRecognitionModule.start({ lang: 'nl-NL', interimResults: true, volumeChangeEventOptions: { enabled: true } });
-    pulseScale.value = withRepeat(withSequence(withTiming(1.1, { duration: 500 }), withTiming(1, { duration: 500 })), -1, true);
+    setAccuracy(null);
+    await speech.start();
   };
 
-  const stopRecording = async () => {
-    setIsRecording(false); setIsVoiceProcessing(true);
-    pulseScale.value = withTiming(1);
-    if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-    try { ExpoSpeechRecognitionModule.stop(); setTimeout(() => setIsVoiceProcessing(false), 5000); }
-    catch { setIsVoiceProcessing(false); }
-  };
+  const stopRecording = () => speech.stop();
 
   const speakSentence = async () => {
     if (!targetSentence) return;
@@ -152,7 +111,7 @@ export default function SentencePracticeScreen() {
     const nextIdx = poolIndex + 1 < pool.length ? poolIndex + 1 : 0;
     setPoolIndex(nextIdx);
     setTargetSentence(pool[nextIdx]);
-    setSpokenText(''); setAccuracy(null);
+    speech.reset(); setAccuracy(null);
   };
 
   const handleBack = () => {
@@ -160,7 +119,7 @@ export default function SentencePracticeScreen() {
       const prev = poolIndex - 1;
       setPoolIndex(prev);
       setTargetSentence(pool[prev]);
-      setSpokenText(''); setAccuracy(null);
+      speech.reset(); setAccuracy(null);
     }
   };
 
@@ -231,7 +190,7 @@ export default function SentencePracticeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => { ExpoSpeechRecognitionModule.abort(); setPhase('setup'); }}>
+        <Pressable onPress={() => { speech.abort(); setPhase('setup'); }}>
           <Ionicons name="arrow-back" size={28} color={theme.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Sentence Practice</Text>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { CheckCircle2, XCircle, BrainCircuit, RotateCcw, AlertCircle } from 'lucide-react-native';
+import AIModule from 'dutch-vocab-ai';
 import { useAI, AIErrorBanner } from '@/context/AIContext';
 
 type GrammarResult = {
@@ -21,12 +22,6 @@ function parseGrammarResult(raw: string): GrammarResult | null {
         .replace(/\{[\s\S]*\}/g, '')
         .trim();
     return { isCorrect, explanation };
-}
-
-function _removed() {
-    // availability boilerplate removed — handled by AIContext
-    // keeping this stub so git diff is clear
-    return null;
 }
 
 const SETUP_GUIDES: any = {
@@ -60,7 +55,7 @@ const SETUP_GUIDES: any = {
 };
 
 export default function GrammarCheckScreen() {
-    const { generate, engineState, error: aiError, isFallback, retryLoad } = useAI();
+    const { generateStream, engineState, error: aiError, isFallback, retryLoad } = useAI();
     const [userInput, setUserInput] = useState('');
     const [result, setResult] = useState<GrammarResult | null>(null);
     const [history, setHistory] = useState<Array<{ sentence: string; result: GrammarResult }>>([]);
@@ -70,10 +65,24 @@ export default function GrammarCheckScreen() {
     const checkGrammar = async () => {
         if (!userInput.trim() || isEvaluating) return;
         setResult(null);
+
+        // Streamed rather than awaited whole: the verdict lands on the first line, so
+        // the answer is useful long before the explanation has finished arriving.
+        let subscription: ReturnType<typeof AIModule.addListener> | null = null;
         try {
             const prompt = `[grammar-check] Check this Dutch sentence. Reply with CORRECT or INCORRECT on the first line, then a plain-text explanation. Do NOT return JSON.\n\nSentence: "${userInput}"`;
-            const raw = await generate(prompt);
-            const parsed = parseGrammarResult(raw);
+
+            let latest = '';
+            subscription = AIModule.addListener('onTextChunk', ({ text }) => {
+                latest = text;
+                const partial = parseGrammarResult(text);
+                if (partial) setResult(partial);
+            });
+
+            const full = await generateStream(prompt);
+
+            // Prefer the returned text; `latest` only helps if chunks actually arrived.
+            const parsed = parseGrammarResult(full || latest);
             if (!parsed) {
                 setResult({ isCorrect: false, explanation: 'Could not parse response. Please try again.' });
                 return;
@@ -82,6 +91,8 @@ export default function GrammarCheckScreen() {
             setHistory(prev => [{ sentence: userInput, result: parsed }, ...prev]);
         } catch {
             // AIContext already shows a toast and sets engineState → error
+        } finally {
+            subscription?.remove();
         }
     };
 

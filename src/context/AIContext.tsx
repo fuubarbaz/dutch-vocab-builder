@@ -11,7 +11,9 @@
  *              └────────────────────┴────────────────┘
  *                              (retry)
  *
- * Every AI feature in the app goes through this context.  It provides:
+ * Feature screens go through this context. The download lifecycle in AIModelGate and
+ * Settings talks to the native module directly, because it runs before and around the
+ * engine rather than through it. Everything else should use the hooks here, for:
  *  • A single source of truth for engine state
  *  • Classified, user-friendly errors with recovery actions
  *  • Standardised debug logging (only in __DEV__ mode)
@@ -67,13 +69,13 @@ export interface AIContextValue {
 
   // ── Generate wrappers ──
   generate(prompt: string): Promise<string>;
-  generateSmallTalk(topic: string, turnCount: number): Promise<string>;
+  /** Streams a plain-text answer via `onTextChunk`, and resolves to the whole of it. */
+  generateStream(prompt: string): Promise<string>;
   generateSmallTalkStream(topic: string, turnCount: number): Promise<void>;
   translateTexts(texts: string[], from: string, to: string): Promise<string[]>;
 
   // ── Roleplay (stateful — see DutchVocabAIModule.swift) ──
   startRoleplay(scenario: string, character: string, level: string): Promise<string>;
-  sendRoleplayTurn(sessionId: string, text: string): Promise<string>;
   sendRoleplayTurnStream(sessionId: string, text: string): Promise<void>;
   endRoleplay(sessionId: string): Promise<boolean>;
   /** End-of-scene correction pass. Evicts any live session, so call it after the scene. */
@@ -330,8 +332,8 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     withEngineGuard('generateText', () => AIModule.generateTextAsync(prompt)),
   [withEngineGuard]);
 
-  const generateSmallTalk = useCallback((topic: string, turnCount: number) =>
-    withEngineGuard('generateSmallTalk', () => AIModule.generateSmallTalkAsync(topic, turnCount)),
+  const generateStream = useCallback((prompt: string) =>
+    withEngineGuard('generateTextStream', () => AIModule.generateTextStreamAsync(prompt)),
   [withEngineGuard]);
 
   const generateSmallTalkStream = useCallback((topic: string, turnCount: number) =>
@@ -340,10 +342,6 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
 
   const startRoleplay = useCallback((scenario: string, character: string, level: string) =>
     withEngineGuard('startRoleplay', () => AIModule.startRoleplaySessionAsync(scenario, character, level)),
-  [withEngineGuard]);
-
-  const sendRoleplayTurn = useCallback((sessionId: string, text: string) =>
-    withEngineGuard('sendRoleplayTurn', () => AIModule.sendRoleplayTurnAsync(sessionId, text)),
   [withEngineGuard]);
 
   const sendRoleplayTurnStream = useCallback((sessionId: string, text: string) =>
@@ -409,11 +407,10 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     error,
     isFallback,
     generate,
-    generateSmallTalk,
+    generateStream,
     generateSmallTalkStream,
     translateTexts,
     startRoleplay,
-    sendRoleplayTurn,
     sendRoleplayTurnStream,
     endRoleplay,
     reviewRoleplay,
